@@ -1,0 +1,317 @@
+{
+	"folders": [
+		{
+			"name": "🎯 Verber Root",
+			"path": "."
+		},
+		{
+			"name": "⚙️ Backend (Go)",
+			"path": "./backend"
+		},
+		{
+			"name": "🎨 Frontend (React)",
+			"path": "./frontend"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/node_modules": true,
+			"**/dist": true,
+			"**/build": true,
+			"**/.git": true,
+			"**/vendor": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/dist": true,
+			"**/build": true,
+			"**/vendor": true
+		},
+		"go.toolsManagement.autoUpdate": true,
+		"go.useCodeSnippetsOnFunctionSuggest": true,
+		"go.lintOnSave": "package",
+		"go.formatTool": "goimports",
+		"go.useLanguageServer": true,
+		"typescript.preferences.includePackageJsonAutoImports": "on",
+		"typescript.suggest.autoImports": true,
+		"typescript.tsdk": "frontend/node_modules/typescript/lib",
+		"typescript.enablePromptUseWorkspaceTsdk": true,
+		"editor.formatOnSave": true,
+		"editor.codeActionsOnSave": {
+			"source.organizeImports": "explicit",
+			"source.fixAll.eslint": "explicit"
+		},
+		"terminal.integrated.defaultProfile.windows": "PowerShell",
+		"docker.showStartPage": false,
+		"git.enableSmartCommit": true,
+		"git.confirmSync": false,
+		"workbench.colorCustomizations": {
+			"titleBar.activeBackground": "#1e40af",
+			"titleBar.activeForeground": "#ffffff"
+		},
+		"powershell.cwd": "🎨 Frontend (React)"
+	},
+	"extensions": {
+		"recommendations": [
+			"golang.go",
+			"ms-vscode.vscode-typescript-next",
+			"bradlc.vscode-tailwindcss",
+			"esbenp.prettier-vscode",
+			"ms-azuretools.vscode-docker",
+			"ms-vscode.vscode-json",
+			"redhat.vscode-yaml",
+			"formulahendry.auto-rename-tag",
+			"christian-kohler.path-intellisense",
+			"ms-vscode.powershell",
+			"GitKraken.gitlens",
+			"ms-vscode.vscode-eslint"
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "🐳 Start Development Environment",
+				"type": "shell",
+				"command": "docker-compose up -d",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": {
+					"kind": "build",
+					"isDefault": true
+				},
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared",
+					"showReuseMessage": false
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🛑 Stop All Services",
+				"type": "shell",
+				"command": "docker-compose down",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "📊 View All Logs",
+				"type": "shell",
+				"command": "docker-compose logs -f",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "test",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": true,
+					"panel": "dedicated"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🔧 Backend Logs",
+				"type": "shell",
+				"command": "docker-compose logs -f backend",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "test",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": true,
+					"panel": "dedicated"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🎨 Frontend Logs",
+				"type": "shell",
+				"command": "docker-compose logs -f frontend",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "test",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": true,
+					"panel": "dedicated"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🔄 Rebuild Backend",
+				"type": "shell",
+				"command": "docker-compose build --no-cache backend",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🔄 Rebuild Frontend",
+				"type": "shell",
+				"command": "docker-compose build --no-cache frontend",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🔄 Restart Backend",
+				"type": "shell",
+				"command": "docker-compose restart backend",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🔄 Restart Frontend",
+				"type": "shell",
+				"command": "docker-compose restart frontend",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🗄️ Database Shell",
+				"type": "shell",
+				"command": "docker-compose exec postgres psql -U verber_user -d verber_db",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Verber Root}"
+				},
+				"group": "test",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": true,
+					"panel": "dedicated"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "📦 Install Frontend Dependencies",
+				"type": "shell",
+				"command": "npm install",
+				"options": {
+					"cwd": "${workspaceFolder:🎨 Frontend (React)}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			},
+			{
+				"label": "🧹 Go Mod Tidy",
+				"type": "shell",
+				"command": "go mod tidy",
+				"options": {
+					"cwd": "${workspaceFolder:⚙️ Backend (Go)}"
+				},
+				"group": "build",
+				"presentation": {
+					"echo": true,
+					"reveal": "always",
+					"focus": false,
+					"panel": "shared"
+				},
+				"problemMatcher": []
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "🔧 Debug Backend (Local)",
+				"type": "go",
+				"request": "launch",
+				"mode": "auto",
+				"program": "${workspaceFolder:⚙️ Backend (Go)}/cmd",
+				"env": {
+					"DB_HOST": "localhost",
+					"DB_PORT": "5432",
+					"DB_USER": "verber_user",
+					"DB_PASSWORD": "verber_password",
+					"DB_NAME": "verber_db",
+					"REDIS_HOST": "localhost",
+					"REDIS_PORT": "6379",
+					"JWT_SECRET": "your-super-secret-jwt-key-change-this-in-production",
+					"PORT": "8080",
+					"GIN_MODE": "debug"
+				},
+				"console": "integratedTerminal"
+			},
+			{
+				"name": "🧪 Debug Backend Tests",
+				"type": "go",
+				"request": "launch",
+				"mode": "test",
+				"program": "${workspaceFolder:⚙️ Backend (Go)}",
+				"env": {
+					"DB_HOST": "localhost",
+					"DB_PORT": "5432",
+					"DB_USER": "verber_user",
+					"DB_PASSWORD": "verber_password",
+					"DB_NAME": "verber_db_test",
+					"REDIS_HOST": "localhost",
+					"REDIS_PORT": "6379",
+					"JWT_SECRET": "test-secret",
+					"GIN_MODE": "test"
+				},
+				"console": "integratedTerminal"
+			}
+		]
+	}
+}

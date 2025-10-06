@@ -1,0 +1,9 @@
+# Railway deployment configuration
+[build]
+  command = "go build -o main cmd/server/main.go"
+
+[deploy]
+  startCommand = "./main"
+
+[env]
+  PORT = "8080"

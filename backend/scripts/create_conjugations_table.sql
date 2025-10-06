@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS verb_conjugations (
+    id SERIAL PRIMARY KEY,
+    verb_id INTEGER REFERENCES verbs(id) ON DELETE CASCADE,
+    present_1 VARCHAR(255), present_2 VARCHAR(255), present_3 VARCHAR(255), present_4 VARCHAR(255), present_5 VARCHAR(255), present_6 VARCHAR(255),
+    imparfait_1 VARCHAR(255), imparfait_2 VARCHAR(255), imparfait_3 VARCHAR(255), imparfait_4 VARCHAR(255), imparfait_5 VARCHAR(255), imparfait_6 VARCHAR(255),
+    passe_simple_1 VARCHAR(255), passe_simple_2 VARCHAR(255), passe_simple_3 VARCHAR(255), passe_simple_4 VARCHAR(255), passe_simple_5 VARCHAR(255), passe_simple_6 VARCHAR(255),
+    futur_simple_1 VARCHAR(255), futur_simple_2 VARCHAR(255), futur_simple_3 VARCHAR(255), futur_simple_4 VARCHAR(255), futur_simple_5 VARCHAR(255), futur_simple_6 VARCHAR(255),
+    passe_compose_1 VARCHAR(255), passe_compose_2 VARCHAR(255), passe_compose_3 VARCHAR(255), passe_compose_4 VARCHAR(255), passe_compose_5 VARCHAR(255), passe_compose_6 VARCHAR(255),
+    plus_que_parfait_1 VARCHAR(255), plus_que_parfait_2 VARCHAR(255), plus_que_parfait_3 VARCHAR(255), plus_que_parfait_4 VARCHAR(255), plus_que_parfait_5 VARCHAR(255), plus_que_parfait_6 VARCHAR(255),
+    passe_anterieur_1 VARCHAR(255), passe_anterieur_2 VARCHAR(255), passe_anterieur_3 VARCHAR(255), passe_anterieur_4 VARCHAR(255), passe_anterieur_5 VARCHAR(255), passe_anterieur_6 VARCHAR(255),
+    futur_anterieur_1 VARCHAR(255), futur_anterieur_2 VARCHAR(255), futur_anterieur_3 VARCHAR(255), futur_anterieur_4 VARCHAR(255), futur_anterieur_5 VARCHAR(255), futur_anterieur_6 VARCHAR(255),
+    subjonctif_present_1 VARCHAR(255), subjonctif_present_2 VARCHAR(255), subjonctif_present_3 VARCHAR(255), subjonctif_present_4 VARCHAR(255), subjonctif_present_5 VARCHAR(255), subjonctif_present_6 VARCHAR(255),
+    subjonctif_imparfait_1 VARCHAR(255), subjonctif_imparfait_2 VARCHAR(255), subjonctif_imparfait_3 VARCHAR(255), subjonctif_imparfait_4 VARCHAR(255), subjonctif_imparfait_5 VARCHAR(255), subjonctif_imparfait_6 VARCHAR(255),
+    subjonctif_passe_1 VARCHAR(255), subjonctif_passe_2 VARCHAR(255), subjonctif_passe_3 VARCHAR(255), subjonctif_passe_4 VARCHAR(255), subjonctif_passe_5 VARCHAR(255), subjonctif_passe_6 VARCHAR(255),
+    subjonctif_plus_que_parfait_1 VARCHAR(255), subjonctif_plus_que_parfait_2 VARCHAR(255), subjonctif_plus_que_parfait_3 VARCHAR(255), subjonctif_plus_que_parfait_4 VARCHAR(255), subjonctif_plus_que_parfait_5 VARCHAR(255), subjonctif_plus_que_parfait_6 VARCHAR(255),
+    conditionnel_present_1 VARCHAR(255), conditionnel_present_2 VARCHAR(255), conditionnel_present_3 VARCHAR(255), conditionnel_present_4 VARCHAR(255), conditionnel_present_5 VARCHAR(255), conditionnel_present_6 VARCHAR(255),
+    conditionnel_passe_1 VARCHAR(255), conditionnel_passe_2 VARCHAR(255), conditionnel_passe_3 VARCHAR(255), conditionnel_passe_4 VARCHAR(255), conditionnel_passe_5 VARCHAR(255), conditionnel_passe_6 VARCHAR(255),
+    conditionnel_passe_ii_1 VARCHAR(255), conditionnel_passe_ii_2 VARCHAR(255), conditionnel_passe_ii_3 VARCHAR(255), conditionnel_passe_ii_4 VARCHAR(255), conditionnel_passe_ii_5 VARCHAR(255), conditionnel_passe_ii_6 VARCHAR(255),
+    imperatif_1 VARCHAR(255), imperatif_2 VARCHAR(255), imperatif_3 VARCHAR(255), imperatif_4 VARCHAR(255), imperatif_5 VARCHAR(255), imperatif_6 VARCHAR(255),
+    imperatif_passe_1 VARCHAR(255), imperatif_passe_2 VARCHAR(255), imperatif_passe_3 VARCHAR(255), imperatif_passe_4 VARCHAR(255), imperatif_passe_5 VARCHAR(255), imperatif_passe_6 VARCHAR(255),
+    UNIQUE(verb_id)
+);

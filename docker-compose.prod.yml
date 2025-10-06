@@ -1,0 +1,104 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: verber-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-verber_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-verber_password}
+      POSTGRES_DB: ${POSTGRES_DB:-verber_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-verber_user} -d ${POSTGRES_DB:-verber_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - verber-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: verber-redis-prod
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - verber-network
+
+  # Go Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: verber-backend-prod
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-verber_user}:${POSTGRES_PASSWORD:-verber_password}@postgres:5432/${POSTGRES_DB:-verber_db}?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - ENVIRONMENT=production
+      - PORT=8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - verber-network
+
+  # React Frontend (Production)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8080/api}
+        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:8080}
+    container_name: verber-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - verber-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  verber-network:
+    driver: bridge

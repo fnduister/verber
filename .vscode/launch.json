@@ -1,0 +1,205 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🔧 Debug Go Backend (Local)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/backend/cmd",
+      "env": {
+        "DB_HOST": "localhost",
+        "DB_PORT": "5432",
+        "DB_USER": "verber_user",
+        "DB_PASSWORD": "verber_password",
+        "DB_NAME": "verber_db",
+        "REDIS_HOST": "localhost",
+        "REDIS_PORT": "6379",
+        "JWT_SECRET": "your-super-secret-jwt-key-change-this-in-production",
+        "PORT": "8080",
+        "GIN_MODE": "debug"
+      },
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "🧪 Debug Go Tests",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/backend",
+      "env": {
+        "DB_HOST": "localhost",
+        "DB_PORT": "5432",
+        "DB_USER": "verber_user",
+        "DB_PASSWORD": "verber_password",
+        "DB_NAME": "verber_db_test",
+        "REDIS_HOST": "localhost",
+        "REDIS_PORT": "6379",
+        "JWT_SECRET": "test-secret",
+        "GIN_MODE": "test"
+      },
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "🎨 Debug React App (Local)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "e:/Personal Projects/verber/frontend/src",
+      "sourceMapPathOverrides": {
+        "e:/Personal Projects/Personal%20Projects/verber/frontend/src/*": "e:/Personal Projects/verber/frontend/src/*",
+        "webpack:///./src/*": "e:/Personal Projects/verber/frontend/src/*",
+        "webpack:///src/*": "e:/Personal Projects/verber/frontend/src/*",
+        "webpack:///app/src/*": "e:/Personal Projects/verber/frontend/src/*",
+        "webpack:///*": "e:/Personal Projects/verber/frontend/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "preLaunchTask": "npm: start - frontend"
+    },
+    {
+      "name": "🎨 Debug React App (Local - No Auto-Start)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder:🎨 Frontend (React)}/src",
+      "sourceMapPathOverrides": {
+        "e:/Personal Projects/Personal%20Projects/*": "e:/Personal Projects/*",
+        "E:/Personal Projects/Personal%20Projects/*": "E:/Personal Projects/*",
+        "e:/Personal Projects/Personal%20Projects/verber/frontend/src/*": "${webRoot}/*",
+        "E:/Personal Projects/Personal%20Projects/verber/frontend/src/*": "${webRoot}/*",
+        "webpack:///./src/*": "${webRoot}/*",
+        "webpack:///src/*": "${webRoot}/*",
+        "webpack:///app/src/*": "${webRoot}/*",
+        "webpack:///*": "${workspaceFolder:🎨 Frontend (React)}/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    },
+    {
+      "name": "🎨 Debug React App",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///src/*": "${webRoot}/src/*",
+        "webpack:///app/src/*": "${webRoot}/src/*",
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///app/*": "${webRoot}/*",
+        "webpack://*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    },
+    {
+      "name": "🎨 Debug React App (Auto-Start)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///src/*": "${webRoot}/src/*",
+        "webpack:///app/src/*": "${webRoot}/src/*",
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///app/*": "${webRoot}/*",
+        "webpack://*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "preLaunchTask": "npm: start - frontend"
+    },
+    {
+      "name": "🎨 Debug React App (Edge)",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///src/*": "${webRoot}/src/*",
+        "webpack:///app/src/*": "${webRoot}/src/*",
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///app/*": "${webRoot}/*",
+        "webpack://*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    },
+    {
+      "name": "🎨 Debug React App (Edge Auto-Start)",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///src/*": "${webRoot}/src/*",
+        "webpack:///app/src/*": "${webRoot}/src/*",
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///app/*": "${webRoot}/*",
+        "webpack://*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "preLaunchTask": "npm: start - frontend"
+    },
+    {
+      "name": "🔗 Attach to React App (Chrome)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///src/*": "${webRoot}/src/*",
+        "webpack:///app/src/*": "${webRoot}/src/*",
+        "webpack:///app/*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Debug Full Stack",
+      "configurations": [
+        "🔧 Debug Go Backend (Local)",
+        "🎨 Debug React App"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "🚀 Debug Full Stack (Edge)",
+      "configurations": [
+        "🔧 Debug Go Backend (Local)",
+        "🎨 Debug React App (Edge)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

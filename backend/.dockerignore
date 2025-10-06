@@ -1,0 +1,38 @@
+# Docker ignore file for backend
+.env
+.env.local
+.env.*.local
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+tmp/
+*.log
+.air.toml
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

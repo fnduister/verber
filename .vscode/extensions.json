@@ -1,0 +1,19 @@
+{
+  "recommendations": [
+    "golang.go",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "ms-azuretools.vscode-docker",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.powershell",
+    "GitKraken.gitlens",
+    "ms-vscode.vscode-eslint",
+    "ms-vscode.vscode-thunder-client",
+    "humao.rest-client",
+    "rangav.vscode-thunder-client"
+  ]
+}
