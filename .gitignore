@@ -23,3 +23,5 @@
 # Build artifacts
 /backend/bin/
 /backend/pkg/
+
+.env
