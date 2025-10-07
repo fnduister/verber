@@ -5,13 +5,15 @@ This guide will help you deploy your Verber application to a production server u
 ## 📋 Prerequisites
 
 ### Server Requirements
+
 - **Ubuntu 20.04+ LTS** (recommended)
-- **2+ vCPUs, 4+ GB RAM** 
+- **2+ vCPUs, 4+ GB RAM**
 - **20+ GB storage**
 - **Root/sudo access**
 - **Public IP address**
 
 ### Domain Setup
+
 - Domain name pointing to your server IP
 - DNS A record: `yourdomain.com` → `your.server.ip`
 - DNS A record: `www.yourdomain.com` → `your.server.ip`
@@ -19,6 +21,7 @@ This guide will help you deploy your Verber application to a production server u
 ## 🚀 Quick Deployment
 
 ### 1. Prepare Your Server
+
 ```bash
 # Connect to your server
 ssh root@your-server-ip
@@ -30,6 +33,7 @@ su - deployer
 ```
 
 ### 2. Upload Your Code
+
 ```bash
 # Clone your repository (replace with your actual repo URL)
 git clone https://github.com/yourusername/verber.git /opt/verber
@@ -40,19 +44,23 @@ chmod +x deploy.sh
 ```
 
 ### 3. Run Deployment Script
+
 ```bash
 # Run the automated deployment
 ./deploy.sh
 ```
 
 The script will ask you for:
+
 - **Domain name** (e.g., `myverberapp.com`)
 - **Email address** (for SSL certificate)
 - **Database password** (secure, 20+ characters)
 - **JWT secret** (secure, 64+ characters)
 
 ### 4. Wait for Completion
+
 The deployment script will automatically:
+
 - ✅ Install Docker & dependencies
 - ✅ Configure firewall
 - ✅ Build and start your application
@@ -64,6 +72,7 @@ The deployment script will automatically:
 ## 🔧 Post-Deployment Management
 
 ### Daily Operations
+
 ```bash
 # Check application status
 /opt/verber/monitor.sh
@@ -79,6 +88,7 @@ cd /opt/verber && docker-compose -f docker-compose.prod.yml logs -f
 ```
 
 ### Troubleshooting
+
 ```bash
 # Check container status
 cd /opt/verber
@@ -103,6 +113,7 @@ docker logs verber-postgres-prod
 ## 🔒 Security Features
 
 ### Automatic Security Setup
+
 - ✅ UFW firewall (only SSH, HTTP, HTTPS open)
 - ✅ SSL/HTTPS with Let's Encrypt
 - ✅ Secure database credentials
@@ -110,6 +121,7 @@ docker logs verber-postgres-prod
 - ✅ Nginx security headers
 
 ### Backup & Recovery
+
 - ✅ Daily automated database backups (2:00 AM)
 - ✅ 7-day backup retention
 - ✅ Manual backup script available
@@ -117,6 +129,7 @@ docker logs verber-postgres-prod
 ## 📊 Monitoring
 
 ### Health Checks
+
 ```bash
 # Quick status check
 /opt/verber/monitor.sh
@@ -131,6 +144,7 @@ free -h
 ```
 
 ### Log Locations
+
 - **Application**: `docker-compose logs`
 - **Nginx**: `/var/log/nginx/`
 - **SSL**: `/var/log/letsencrypt/`
@@ -139,6 +153,7 @@ free -h
 ## 🔄 Updates & Maintenance
 
 ### Regular Updates
+
 ```bash
 # Update application code
 /opt/verber/update.sh
@@ -153,6 +168,7 @@ docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### Scaling Considerations
+
 - **Database**: Consider managed PostgreSQL for high traffic
 - **File Storage**: Consider object storage for user uploads
 - **Load Balancing**: Add load balancer for multiple instances
@@ -161,6 +177,7 @@ docker-compose -f docker-compose.prod.yml up -d --build
 ## 🆘 Emergency Procedures
 
 ### Application Down
+
 ```bash
 # Check all services
 cd /opt/verber
@@ -175,6 +192,7 @@ docker-compose -f docker-compose.prod.yml logs
 ```
 
 ### Database Issues
+
 ```bash
 # Access database directly
 docker exec -it verber-postgres-prod psql -U verber_user verber_db
@@ -186,6 +204,7 @@ docker exec -i verber-postgres-prod psql -U verber_user verber_db < verber_backu
 ```
 
 ### SSL Certificate Issues
+
 ```bash
 # Renew certificate manually
 sudo certbot renew --force-renewal
@@ -200,12 +219,14 @@ sudo certbot --nginx -d yourdomain.com
 ## 🌟 Performance Optimization
 
 ### Production Tuning
+
 1. **Database**: Tune PostgreSQL settings for your workload
 2. **Redis**: Configure memory limits and eviction policies
 3. **Nginx**: Enable caching for static assets
 4. **Docker**: Limit container resources if needed
 
 ### Monitoring Tools
+
 - **Server**: Consider Netdata, Grafana, or New Relic
 - **Application**: Add application performance monitoring
 - **Uptime**: Use UptimeRobot or similar service
@@ -214,6 +235,7 @@ sudo certbot --nginx -d yourdomain.com
 ## 📞 Support
 
 If you encounter issues:
+
 1. Check the troubleshooting section above
 2. Review application logs
 3. Check server resources (CPU, memory, disk)
@@ -223,12 +245,14 @@ If you encounter issues:
 ## 🎉 Success!
 
 Once deployed, your Verber application will be available at:
+
 - **Production URL**: `https://yourdomain.com`
 - **Admin Interface**: Access via your application's admin panel
 - **Database**: Managed automatically via Docker
 - **SSL**: Automatic renewal every 60 days
 
 Your application is now production-ready with:
+
 - ✅ High availability setup
 - ✅ Automatic backups
 - ✅ SSL security
