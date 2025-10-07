@@ -56,7 +56,6 @@ const FindError: React.FC = () => {
         for (let i = 0; i < maxSteps; i++) {
             const stepTense = randElement(currentTenses);
             
-            console.log('Selected tense for step', i + 1, ':', stepTense);
             // Get error word (wrong tense)
             const errorVerb = randElement(currentVerbs);
             const errorVerbData = findVerbByInfinitive(allVerbs, errorVerb);

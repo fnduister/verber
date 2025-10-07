@@ -55,140 +55,140 @@ type VerbConjugation struct {
 	Verb   Verb `json:"verb" gorm:"foreignKey:VerbID;constraint:OnDelete:CASCADE"`
 
 	// Present tense (6 forms: je, tu, il/elle, nous, vous, ils/elles)
-	Present1 string `json:"present_1"` // je
-	Present2 string `json:"present_2"` // tu
-	Present3 string `json:"present_3"` // il/elle
-	Present4 string `json:"present_4"` // nous
-	Present5 string `json:"present_5"` // vous
-	Present6 string `json:"present_6"` // ils/elles
+	Present1 string `json:"present_1" gorm:"column:present_1"` // je
+	Present2 string `json:"present_2" gorm:"column:present_2"` // tu
+	Present3 string `json:"present_3" gorm:"column:present_3"` // il/elle
+	Present4 string `json:"present_4" gorm:"column:present_4"` // nous
+	Present5 string `json:"present_5" gorm:"column:present_5"` // vous
+	Present6 string `json:"present_6" gorm:"column:present_6"` // ils/elles
 
 	// Imparfait (6 forms)
-	Imparfait1 string `json:"imparfait_1"`
-	Imparfait2 string `json:"imparfait_2"`
-	Imparfait3 string `json:"imparfait_3"`
-	Imparfait4 string `json:"imparfait_4"`
-	Imparfait5 string `json:"imparfait_5"`
-	Imparfait6 string `json:"imparfait_6"`
+	Imparfait1 string `json:"imparfait_1" gorm:"column:imparfait_1"`
+	Imparfait2 string `json:"imparfait_2" gorm:"column:imparfait_2"`
+	Imparfait3 string `json:"imparfait_3" gorm:"column:imparfait_3"`
+	Imparfait4 string `json:"imparfait_4" gorm:"column:imparfait_4"`
+	Imparfait5 string `json:"imparfait_5" gorm:"column:imparfait_5"`
+	Imparfait6 string `json:"imparfait_6" gorm:"column:imparfait_6"`
 
 	// Passé Simple (6 forms)
-	PasseSimple1 string `json:"passe_simple_1"`
-	PasseSimple2 string `json:"passe_simple_2"`
-	PasseSimple3 string `json:"passe_simple_3"`
-	PasseSimple4 string `json:"passe_simple_4"`
-	PasseSimple5 string `json:"passe_simple_5"`
-	PasseSimple6 string `json:"passe_simple_6"`
+	PasseSimple1 string `json:"passe_simple_1" gorm:"column:passe_simple_1"`
+	PasseSimple2 string `json:"passe_simple_2" gorm:"column:passe_simple_2"`
+	PasseSimple3 string `json:"passe_simple_3" gorm:"column:passe_simple_3"`
+	PasseSimple4 string `json:"passe_simple_4" gorm:"column:passe_simple_4"`
+	PasseSimple5 string `json:"passe_simple_5" gorm:"column:passe_simple_5"`
+	PasseSimple6 string `json:"passe_simple_6" gorm:"column:passe_simple_6"`
 
 	// Futur Simple (6 forms)
-	FuturSimple1 string `json:"futur_simple_1"`
-	FuturSimple2 string `json:"futur_simple_2"`
-	FuturSimple3 string `json:"futur_simple_3"`
-	FuturSimple4 string `json:"futur_simple_4"`
-	FuturSimple5 string `json:"futur_simple_5"`
-	FuturSimple6 string `json:"futur_simple_6"`
+	FuturSimple1 string `json:"futur_simple_1" gorm:"column:futur_simple_1"`
+	FuturSimple2 string `json:"futur_simple_2" gorm:"column:futur_simple_2"`
+	FuturSimple3 string `json:"futur_simple_3" gorm:"column:futur_simple_3"`
+	FuturSimple4 string `json:"futur_simple_4" gorm:"column:futur_simple_4"`
+	FuturSimple5 string `json:"futur_simple_5" gorm:"column:futur_simple_5"`
+	FuturSimple6 string `json:"futur_simple_6" gorm:"column:futur_simple_6"`
 
 	// Passé Composé (6 forms)
-	PasseCompose1 string `json:"passe_compose_1"`
-	PasseCompose2 string `json:"passe_compose_2"`
-	PasseCompose3 string `json:"passe_compose_3"`
-	PasseCompose4 string `json:"passe_compose_4"`
-	PasseCompose5 string `json:"passe_compose_5"`
-	PasseCompose6 string `json:"passe_compose_6"`
+	PasseCompose1 string `json:"passe_compose_1" gorm:"column:passe_compose_1"`
+	PasseCompose2 string `json:"passe_compose_2" gorm:"column:passe_compose_2"`
+	PasseCompose3 string `json:"passe_compose_3" gorm:"column:passe_compose_3"`
+	PasseCompose4 string `json:"passe_compose_4" gorm:"column:passe_compose_4"`
+	PasseCompose5 string `json:"passe_compose_5" gorm:"column:passe_compose_5"`
+	PasseCompose6 string `json:"passe_compose_6" gorm:"column:passe_compose_6"`
 
 	// Plus-que-parfait (6 forms)
-	PlusQueParfait1 string `json:"plus_que_parfait_1"`
-	PlusQueParfait2 string `json:"plus_que_parfait_2"`
-	PlusQueParfait3 string `json:"plus_que_parfait_3"`
-	PlusQueParfait4 string `json:"plus_que_parfait_4"`
-	PlusQueParfait5 string `json:"plus_que_parfait_5"`
-	PlusQueParfait6 string `json:"plus_que_parfait_6"`
+	PlusQueParfait1 string `json:"plus_que_parfait_1" gorm:"column:plus_que_parfait_1"`
+	PlusQueParfait2 string `json:"plus_que_parfait_2" gorm:"column:plus_que_parfait_2"`
+	PlusQueParfait3 string `json:"plus_que_parfait_3" gorm:"column:plus_que_parfait_3"`
+	PlusQueParfait4 string `json:"plus_que_parfait_4" gorm:"column:plus_que_parfait_4"`
+	PlusQueParfait5 string `json:"plus_que_parfait_5" gorm:"column:plus_que_parfait_5"`
+	PlusQueParfait6 string `json:"plus_que_parfait_6" gorm:"column:plus_que_parfait_6"`
 
 	// Passé Antérieur (6 forms)
-	PasseAnterieur1 string `json:"passe_anterieur_1"`
-	PasseAnterieur2 string `json:"passe_anterieur_2"`
-	PasseAnterieur3 string `json:"passe_anterieur_3"`
-	PasseAnterieur4 string `json:"passe_anterieur_4"`
-	PasseAnterieur5 string `json:"passe_anterieur_5"`
-	PasseAnterieur6 string `json:"passe_anterieur_6"`
+	PasseAnterieur1 string `json:"passe_anterieur_1" gorm:"column:passe_anterieur_1"`
+	PasseAnterieur2 string `json:"passe_anterieur_2" gorm:"column:passe_anterieur_2"`
+	PasseAnterieur3 string `json:"passe_anterieur_3" gorm:"column:passe_anterieur_3"`
+	PasseAnterieur4 string `json:"passe_anterieur_4" gorm:"column:passe_anterieur_4"`
+	PasseAnterieur5 string `json:"passe_anterieur_5" gorm:"column:passe_anterieur_5"`
+	PasseAnterieur6 string `json:"passe_anterieur_6" gorm:"column:passe_anterieur_6"`
 
 	// Futur Antérieur (6 forms)
-	FuturAnterieur1 string `json:"futur_anterieur_1"`
-	FuturAnterieur2 string `json:"futur_anterieur_2"`
-	FuturAnterieur3 string `json:"futur_anterieur_3"`
-	FuturAnterieur4 string `json:"futur_anterieur_4"`
-	FuturAnterieur5 string `json:"futur_anterieur_5"`
-	FuturAnterieur6 string `json:"futur_anterieur_6"`
+	FuturAnterieur1 string `json:"futur_anterieur_1" gorm:"column:futur_anterieur_1"`
+	FuturAnterieur2 string `json:"futur_anterieur_2" gorm:"column:futur_anterieur_2"`
+	FuturAnterieur3 string `json:"futur_anterieur_3" gorm:"column:futur_anterieur_3"`
+	FuturAnterieur4 string `json:"futur_anterieur_4" gorm:"column:futur_anterieur_4"`
+	FuturAnterieur5 string `json:"futur_anterieur_5" gorm:"column:futur_anterieur_5"`
+	FuturAnterieur6 string `json:"futur_anterieur_6" gorm:"column:futur_anterieur_6"`
 
 	// Subjonctif Présent (6 forms)
-	SubjonctifPresent1 string `json:"subjonctif_present_1"`
-	SubjonctifPresent2 string `json:"subjonctif_present_2"`
-	SubjonctifPresent3 string `json:"subjonctif_present_3"`
-	SubjonctifPresent4 string `json:"subjonctif_present_4"`
-	SubjonctifPresent5 string `json:"subjonctif_present_5"`
-	SubjonctifPresent6 string `json:"subjonctif_present_6"`
+	SubjonctifPresent1 string `json:"subjonctif_present_1" gorm:"column:subjonctif_present_1"`
+	SubjonctifPresent2 string `json:"subjonctif_present_2" gorm:"column:subjonctif_present_2"`
+	SubjonctifPresent3 string `json:"subjonctif_present_3" gorm:"column:subjonctif_present_3"`
+	SubjonctifPresent4 string `json:"subjonctif_present_4" gorm:"column:subjonctif_present_4"`
+	SubjonctifPresent5 string `json:"subjonctif_present_5" gorm:"column:subjonctif_present_5"`
+	SubjonctifPresent6 string `json:"subjonctif_present_6" gorm:"column:subjonctif_present_6"`
 
 	// Subjonctif Imparfait (6 forms)
-	SubjonctifImparfait1 string `json:"subjonctif_imparfait_1"`
-	SubjonctifImparfait2 string `json:"subjonctif_imparfait_2"`
-	SubjonctifImparfait3 string `json:"subjonctif_imparfait_3"`
-	SubjonctifImparfait4 string `json:"subjonctif_imparfait_4"`
-	SubjonctifImparfait5 string `json:"subjonctif_imparfait_5"`
-	SubjonctifImparfait6 string `json:"subjonctif_imparfait_6"`
+	SubjonctifImparfait1 string `json:"subjonctif_imparfait_1" gorm:"column:subjonctif_imparfait_1"`
+	SubjonctifImparfait2 string `json:"subjonctif_imparfait_2" gorm:"column:subjonctif_imparfait_2"`
+	SubjonctifImparfait3 string `json:"subjonctif_imparfait_3" gorm:"column:subjonctif_imparfait_3"`
+	SubjonctifImparfait4 string `json:"subjonctif_imparfait_4" gorm:"column:subjonctif_imparfait_4"`
+	SubjonctifImparfait5 string `json:"subjonctif_imparfait_5" gorm:"column:subjonctif_imparfait_5"`
+	SubjonctifImparfait6 string `json:"subjonctif_imparfait_6" gorm:"column:subjonctif_imparfait_6"`
 
 	// Subjonctif Passé (6 forms)
-	SubjonctifPasse1 string `json:"subjonctif_passe_1"`
-	SubjonctifPasse2 string `json:"subjonctif_passe_2"`
-	SubjonctifPasse3 string `json:"subjonctif_passe_3"`
-	SubjonctifPasse4 string `json:"subjonctif_passe_4"`
-	SubjonctifPasse5 string `json:"subjonctif_passe_5"`
-	SubjonctifPasse6 string `json:"subjonctif_passe_6"`
+	SubjonctifPasse1 string `json:"subjonctif_passe_1" gorm:"column:subjonctif_passe_1"`
+	SubjonctifPasse2 string `json:"subjonctif_passe_2" gorm:"column:subjonctif_passe_2"`
+	SubjonctifPasse3 string `json:"subjonctif_passe_3" gorm:"column:subjonctif_passe_3"`
+	SubjonctifPasse4 string `json:"subjonctif_passe_4" gorm:"column:subjonctif_passe_4"`
+	SubjonctifPasse5 string `json:"subjonctif_passe_5" gorm:"column:subjonctif_passe_5"`
+	SubjonctifPasse6 string `json:"subjonctif_passe_6" gorm:"column:subjonctif_passe_6"`
 
 	// Subjonctif Plus-que-parfait (6 forms)
-	SubjonctifPlusQueParfait1 string `json:"subjonctif_plus_que_parfait_1"`
-	SubjonctifPlusQueParfait2 string `json:"subjonctif_plus_que_parfait_2"`
-	SubjonctifPlusQueParfait3 string `json:"subjonctif_plus_que_parfait_3"`
-	SubjonctifPlusQueParfait4 string `json:"subjonctif_plus_que_parfait_4"`
-	SubjonctifPlusQueParfait5 string `json:"subjonctif_plus_que_parfait_5"`
-	SubjonctifPlusQueParfait6 string `json:"subjonctif_plus_que_parfait_6"`
+	SubjonctifPlusQueParfait1 string `json:"subjonctif_plus_que_parfait_1" gorm:"column:subjonctif_plus_que_parfait_1"`
+	SubjonctifPlusQueParfait2 string `json:"subjonctif_plus_que_parfait_2" gorm:"column:subjonctif_plus_que_parfait_2"`
+	SubjonctifPlusQueParfait3 string `json:"subjonctif_plus_que_parfait_3" gorm:"column:subjonctif_plus_que_parfait_3"`
+	SubjonctifPlusQueParfait4 string `json:"subjonctif_plus_que_parfait_4" gorm:"column:subjonctif_plus_que_parfait_4"`
+	SubjonctifPlusQueParfait5 string `json:"subjonctif_plus_que_parfait_5" gorm:"column:subjonctif_plus_que_parfait_5"`
+	SubjonctifPlusQueParfait6 string `json:"subjonctif_plus_que_parfait_6" gorm:"column:subjonctif_plus_que_parfait_6"`
 
 	// Conditionnel Présent (6 forms)
-	ConditionnelPresent1 string `json:"conditionnel_present_1"`
-	ConditionnelPresent2 string `json:"conditionnel_present_2"`
-	ConditionnelPresent3 string `json:"conditionnel_present_3"`
-	ConditionnelPresent4 string `json:"conditionnel_present_4"`
-	ConditionnelPresent5 string `json:"conditionnel_present_5"`
-	ConditionnelPresent6 string `json:"conditionnel_present_6"`
+	ConditionnelPresent1 string `json:"conditionnel_present_1" gorm:"column:conditionnel_present_1"`
+	ConditionnelPresent2 string `json:"conditionnel_present_2" gorm:"column:conditionnel_present_2"`
+	ConditionnelPresent3 string `json:"conditionnel_present_3" gorm:"column:conditionnel_present_3"`
+	ConditionnelPresent4 string `json:"conditionnel_present_4" gorm:"column:conditionnel_present_4"`
+	ConditionnelPresent5 string `json:"conditionnel_present_5" gorm:"column:conditionnel_present_5"`
+	ConditionnelPresent6 string `json:"conditionnel_present_6" gorm:"column:conditionnel_present_6"`
 
 	// Conditionnel Passé (6 forms)
-	ConditionnelPasse1 string `json:"conditionnel_passe_1"`
-	ConditionnelPasse2 string `json:"conditionnel_passe_2"`
-	ConditionnelPasse3 string `json:"conditionnel_passe_3"`
-	ConditionnelPasse4 string `json:"conditionnel_passe_4"`
-	ConditionnelPasse5 string `json:"conditionnel_passe_5"`
-	ConditionnelPasse6 string `json:"conditionnel_passe_6"`
+	ConditionnelPasse1 string `json:"conditionnel_passe_1" gorm:"column:conditionnel_passe_1"`
+	ConditionnelPasse2 string `json:"conditionnel_passe_2" gorm:"column:conditionnel_passe_2"`
+	ConditionnelPasse3 string `json:"conditionnel_passe_3" gorm:"column:conditionnel_passe_3"`
+	ConditionnelPasse4 string `json:"conditionnel_passe_4" gorm:"column:conditionnel_passe_4"`
+	ConditionnelPasse5 string `json:"conditionnel_passe_5" gorm:"column:conditionnel_passe_5"`
+	ConditionnelPasse6 string `json:"conditionnel_passe_6" gorm:"column:conditionnel_passe_6"`
 
 	// Conditionnel Passé II (6 forms)
-	ConditionnelPasseII1 string `json:"conditionnel_passe_ii_1"`
-	ConditionnelPasseII2 string `json:"conditionnel_passe_ii_2"`
-	ConditionnelPasseII3 string `json:"conditionnel_passe_ii_3"`
-	ConditionnelPasseII4 string `json:"conditionnel_passe_ii_4"`
-	ConditionnelPasseII5 string `json:"conditionnel_passe_ii_5"`
-	ConditionnelPasseII6 string `json:"conditionnel_passe_ii_6"`
+	ConditionnelPasseII1 string `json:"conditionnel_passe_ii_1" gorm:"column:conditionnel_passe_ii_1"`
+	ConditionnelPasseII2 string `json:"conditionnel_passe_ii_2" gorm:"column:conditionnel_passe_ii_2"`
+	ConditionnelPasseII3 string `json:"conditionnel_passe_ii_3" gorm:"column:conditionnel_passe_ii_3"`
+	ConditionnelPasseII4 string `json:"conditionnel_passe_ii_4" gorm:"column:conditionnel_passe_ii_4"`
+	ConditionnelPasseII5 string `json:"conditionnel_passe_ii_5" gorm:"column:conditionnel_passe_ii_5"`
+	ConditionnelPasseII6 string `json:"conditionnel_passe_ii_6" gorm:"column:conditionnel_passe_ii_6"`
 
 	// Impératif (6 forms, but only 3 are typically used)
-	Imperatif1 string `json:"imperatif_1"` // (empty)
-	Imperatif2 string `json:"imperatif_2"` // tu form
-	Imperatif3 string `json:"imperatif_3"` // (empty)
-	Imperatif4 string `json:"imperatif_4"` // nous form
-	Imperatif5 string `json:"imperatif_5"` // vous form
-	Imperatif6 string `json:"imperatif_6"` // (empty)
+	Imperatif1 string `json:"imperatif_1" gorm:"column:imperatif_1"` // (empty)
+	Imperatif2 string `json:"imperatif_2" gorm:"column:imperatif_2"` // tu form
+	Imperatif3 string `json:"imperatif_3" gorm:"column:imperatif_3"` // (empty)
+	Imperatif4 string `json:"imperatif_4" gorm:"column:imperatif_4"` // nous form
+	Imperatif5 string `json:"imperatif_5" gorm:"column:imperatif_5"` // vous form
+	Imperatif6 string `json:"imperatif_6" gorm:"column:imperatif_6"` // (empty)
 
 	// Impératif Passé (6 forms, but only 3 are typically used)
-	ImperatifPasse1 string `json:"imperatif_passe_1"` // (empty)
-	ImperatifPasse2 string `json:"imperatif_passe_2"` // tu form
-	ImperatifPasse3 string `json:"imperatif_passe_3"` // (empty)
-	ImperatifPasse4 string `json:"imperatif_passe_4"` // nous form
-	ImperatifPasse5 string `json:"imperatif_passe_5"` // vous form
-	ImperatifPasse6 string `json:"imperatif_passe_6"` // (empty)
+	ImperatifPasse1 string `json:"imperatif_passe_1" gorm:"column:imperatif_passe_1"` // (empty)
+	ImperatifPasse2 string `json:"imperatif_passe_2" gorm:"column:imperatif_passe_2"` // tu form
+	ImperatifPasse3 string `json:"imperatif_passe_3" gorm:"column:imperatif_passe_3"` // (empty)
+	ImperatifPasse4 string `json:"imperatif_passe_4" gorm:"column:imperatif_passe_4"` // nous form
+	ImperatifPasse5 string `json:"imperatif_passe_5" gorm:"column:imperatif_passe_5"` // vous form
+	ImperatifPasse6 string `json:"imperatif_passe_6" gorm:"column:imperatif_passe_6"` // (empty)
 }
 
 // Game represents a multiplayer game session

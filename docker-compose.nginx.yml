@@ -12,6 +12,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-verber_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Remove external port mapping - only accessible internally
+    expose:
+      - "5432"
     healthcheck:
       test:
         [
@@ -32,6 +35,9 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    # Remove external port mapping - only accessible internally
+    expose:
+      - "6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -48,13 +54,14 @@ services:
       target: production
     container_name: verber-backend-prod
     restart: always
+    # Expose port for host nginx to access
     ports:
       - "8080:8080"
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-verber_user}:${POSTGRES_PASSWORD:-verber_password}@postgres:5432/${POSTGRES_DB:-verber_db}?sslmode=disable
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - FRONTEND_URL=${FRONTEND_URL:-https://verber.sicole.com}
       - ENVIRONMENT=production
       - PORT=8080
     depends_on:
@@ -74,20 +81,20 @@ services:
     networks:
       - verber-network
 
-  # React Frontend (Production)
+  # React Frontend (Production) - Served through nginx proxy
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8080/api}
-        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:8080}
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-https://verber.sicole.com/api}
+        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-wss://verber.sicole.com}
     container_name: verber-frontend-prod
     restart: always
+    # Map to port 3001 for nginx proxy
     ports:
-      - "80:80"
-      - "443:443"
+      - "3001:80"
     depends_on:
       - backend
     networks:

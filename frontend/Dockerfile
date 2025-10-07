@@ -23,6 +23,16 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Declare build arguments
+ARG REACT_APP_API_URL=http://localhost:8080/api
+ARG REACT_APP_WS_URL=ws://localhost:8080
+ARG REACT_APP_ENVIRONMENT=development
+
+# Set environment variables from build args
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_WS_URL=$REACT_APP_WS_URL
+ENV REACT_APP_ENVIRONMENT=$REACT_APP_ENVIRONMENT
+
 # Copy package files
 COPY package*.json ./
 

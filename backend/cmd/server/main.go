@@ -45,8 +45,9 @@ func main() {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{cfg.FrontendURL}
 	corsConfig.AllowCredentials = true
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept", "X-Requested-With"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	corsConfig.ExposeHeaders = []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"}
 	router.Use(cors.New(corsConfig))
 
 	// Initialize handlers
@@ -55,6 +56,14 @@ func main() {
 	// Public routes
 	public := router.Group("/api")
 	{
+		// Manual OPTIONS handlers for CORS preflight
+		public.OPTIONS("/auth/register", func(c *gin.Context) {
+			c.Status(204)
+		})
+		public.OPTIONS("/auth/login", func(c *gin.Context) {
+			c.Status(204)
+		})
+		
 		public.POST("/auth/register", h.Register)
 		public.POST("/auth/login", h.Login)
 		public.POST("/auth/refresh", h.RefreshToken)

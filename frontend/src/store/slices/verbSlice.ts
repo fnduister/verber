@@ -27,27 +27,33 @@ export const fetchVerbs = createAsyncThunk(
             // Check cache first
             const cachedVerbs = JSON.parse(localStorage.getItem('verbs') || '[]');
             const cachedTimestamp = localStorage.getItem('verbs_timestamp');
+            console.log('VerbSlice - Cache check:', cachedVerbs.length, 'cached verbs');
 
             // if cached is valid and has more than 0 verbs, return it
             if (cachedVerbs.length > 0 && cachedTimestamp) {
                 const timestamp = parseInt(cachedTimestamp, 10);
                 const now = Date.now();
-                
+
                 if (now - timestamp < CACHE_DURATION) {
+                    console.log('VerbSlice - Using cached verbs:', cachedVerbs.length, 'verbs');
                     return cachedVerbs;
                 }
             }
-            
+
             // Fetch from API
+            console.log('VerbSlice - Fetching verbs from API...');
             const response = await api.get('/verbs');
             const verbs = response.data;
-            
+            console.log('VerbSlice - Fetched verbs:', verbs.length, 'verbs');
+            console.log('VerbSlice - First few verbs:', verbs.slice(0, 3));
+
             // Cache the results
             localStorage.setItem('verbs', JSON.stringify(verbs));
             localStorage.setItem('verbs_timestamp', Date.now().toString());
-            
+
             return verbs;
         } catch (error: any) {
+            console.error('VerbSlice - Error fetching verbs:', error);
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch verbs');
         }
     }
@@ -61,23 +67,23 @@ export const fetchTenses = createAsyncThunk(
             // Check cache first
             const cachedTenses = localStorage.getItem('tenses');
             const cachedTimestamp = localStorage.getItem('tenses_timestamp');
-            
+
             if (cachedTenses && cachedTimestamp) {
                 const timestamp = parseInt(cachedTimestamp, 10);
                 const now = Date.now();
-                
+
                 if (now - timestamp < CACHE_DURATION) {
                     return JSON.parse(cachedTenses);
                 }
             }
-            
+
             // If no API endpoint for tenses, use hardcoded list matching database structure
             const tenses = [...AVAILABLE_TENSES];
-            
+
             // Cache the results
             localStorage.setItem('tenses', JSON.stringify(tenses));
             localStorage.setItem('tenses_timestamp', Date.now().toString());
-            
+
             return tenses;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch tenses');

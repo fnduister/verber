@@ -18,7 +18,7 @@ import {
     TextField,
     Typography
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -60,15 +60,28 @@ const GameRoom = () => {
 
     const currentGame = GAME_METADATA[gameId || 'find-error'] || GAME_METADATA['find-error'];
     const gameType = gameId || 'find-error';
-    const verbOptions = allVerbs.map((v) => v.infinitive);
+    const verbOptions = useMemo(() => {
+        console.log('GameRoom - Computing verb options from', allVerbs.length, 'verbs');
+        const options = allVerbs.map((verb) => verb.infinitive);
+        console.log('GameRoom - Verb options:', options.slice(0, 10), '...');
+        return options;
+    }, [allVerbs]);
 
-    // Fetch verbs and tenses on component mount
+    // Fetch verbs and tenses when component mounts
     useEffect(() => {
-        dispatch(fetchVerbs());
-        dispatch(fetchTenses());
-    }, [dispatch]);
+        console.log('GameRoom - Component mounted, checking verbs and tenses');
+        console.log('GameRoom - All verbs count:', allVerbs.length);
+        console.log('GameRoom - All tenses count:', allTenses.length);
 
-    useEffect(() => {
+        if (allVerbs.length === 0) {
+            console.log('GameRoom - Dispatching fetchVerbs...');
+            dispatch(fetchVerbs());
+        }
+        if (allTenses.length === 0) {
+            console.log('GameRoom - Dispatching fetchTenses...');
+            dispatch(fetchTenses());
+        }
+    }, [dispatch, allVerbs.length, allTenses.length]); useEffect(() => {
         if (![5, 10, 15].includes(ongoingGameInfo.maxStep)) {
             dispatch(setOngoingGameInfo({ maxStep: 5 }));
         }
@@ -141,7 +154,10 @@ const GameRoom = () => {
     };
 
     // Show loading spinner while fetching data
+    console.log('GameRoom - Render check: loading =', loading, ', allVerbs.length =', allVerbs.length);
+
     if (loading && allVerbs.length === 0) {
+        console.log('GameRoom - Showing loading spinner');
         return (
             <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
                 <Box sx={{ textAlign: 'center' }}>
@@ -366,16 +382,16 @@ const GameRoom = () => {
                         </Select>
                     </FormControl>
 
-                        <FormControl variant="filled" sx={{ minWidth: 200 }}>
-                            <InputLabel>Vitesse</InputLabel>
-                            <Select value={ongoingGameInfo.maxTime.toString()} onChange={handleSpeedChange}>
-                                {GAME_SPEEDS.map((speed) => (
-                                    <MenuItem key={speed.value} value={speed.value}>
-                                        {speed.name} ({speed.value}s)
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                    <FormControl variant="filled" sx={{ minWidth: 200 }}>
+                        <InputLabel>Vitesse</InputLabel>
+                        <Select value={ongoingGameInfo.maxTime.toString()} onChange={handleSpeedChange}>
+                            {GAME_SPEEDS.map((speed) => (
+                                <MenuItem key={speed.value} value={speed.value}>
+                                    {speed.name} ({speed.value}s)
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </Stack>
             </Box>
 

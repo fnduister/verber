@@ -156,7 +156,7 @@ type VerbConjugation struct {
 
 func main() {
 	// Database connection
-	dsn := "host=postgres user=verber_user password=verber_password dbname=verber_db port=5432 sslmode=disable TimeZone=UTC"
+	dsn := "host=localhost user=verber_user password=verber_secure_db_password_2025! dbname=verber_db port=5432 sslmode=disable TimeZone=UTC"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)

@@ -1,0 +1,35 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+
+# Spawn the deploy script
+spawn sudo -u fndui ./deploy.sh
+
+# Handle the initial prompt
+expect "Are you ready to proceed with deployment? (y/N):"
+send "y\r"
+
+# Handle domain name
+expect "Enter your domain name (e.g., myverberapp.com):"
+send "verber.sicole.com\r"
+
+# Handle email
+expect "Enter your email for SSL certificate (Let's Encrypt):"
+send "fndui@hotmail.com\r"
+
+# Handle database password
+expect "Enter database password:"
+send "verber_secure_db_password_2025!\r"
+
+# Handle JWT secret
+expect "Enter JWT secret:"
+send "super_secure_jwt_secret_for_verber_production_environment_2025_long_key\r"
+
+# Handle sudo password prompts
+expect {
+    "password for fndui:" {
+        send "your_sudo_password\r"
+        exp_continue
+    }
+    eof
+}

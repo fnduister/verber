@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { findVerbByInfinitive, getConjugation, getTenseConjugations, testConjugationMapping } from '../utils/tenseUtils';
+import api from '../services/api';
 
 interface TestResults {
   verb: string;
@@ -20,17 +21,17 @@ export const ConjugationTestComponent: React.FC = () => {
     setLoading(true);
     try {
       // Fetch avoir verb from API
-      const response = await fetch('http://localhost:8080/api/verbs');
-      const verbs = await response.json();
+      const response = await api.get('/verbs');
+      const verbs = response.data;
       const avoir = findVerbByInfinitive(verbs, 'avoir');
-      
+
       if (!avoir) {
         console.error('Could not find avoir verb');
         return;
       }
 
       console.log('Raw conjugations data:', avoir.conjugations);
-      
+
       // Test specific conjugations
       const tests = [
         { tense: 'present', person: 1, expected: 'ai' },
@@ -83,7 +84,7 @@ export const ConjugationTestComponent: React.FC = () => {
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h2>Conjugation Function Test Results</h2>
       <p><strong>Verb:</strong> {testResults.verb}</p>
-      
+
       <table border={1} style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
