@@ -31,9 +31,12 @@
     "scripts": {
         "start": "react-scripts start",
         "dev": "set PORT=3002 && react-scripts start",
+        "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+        "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
         "build": "react-scripts build",
         "test": "react-scripts test",
-        "eject": "react-scripts eject"
+        "eject": "react-scripts eject",
+        "prepare": "cd .. && husky install frontend/.husky"
     },
     "eslintConfig": {
         "extends": [
@@ -54,11 +57,25 @@
         ]
     },
     "devDependencies": {
-        "@types/react-beautiful-dnd": "^13.1.6"
+        "@types/react-beautiful-dnd": "^13.1.6",
+        "eslint": "^8.39.0",
+        "@typescript-eslint/parser": "^5.62.0",
+        "@typescript-eslint/eslint-plugin": "^5.62.0",
+        "eslint-plugin-react": "^7.33.1",
+        "eslint-plugin-react-hooks": "^4.6.2",
+        "eslint-config-react-app": "^7.0.1",
+        "husky": "^8.0.3",
+        "lint-staged": "^13.2.3"
     },
     "overrides": {
         "nth-check": ">=2.0.1",
         "postcss": ">=8.4.31",
         "webpack-dev-server": ">=4.0.0"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "eslint --fix",
+            "git add"
+        ]
     }
 }
