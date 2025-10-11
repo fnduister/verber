@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -155,9 +156,18 @@ type VerbConjugation struct {
 }
 
 func main() {
-	// Database connection
-	dsn := "host=localhost user=verber_user password=verber_secure_db_password_2025! dbname=verber_db port=5432 sslmode=disable TimeZone=UTC"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+
+	// Database connection using environment variable
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "host=localhost user=verber_user password=verber_password_change_this dbname=verber_db port=5432 sslmode=disable TimeZone=UTC"
+	}
+	
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}

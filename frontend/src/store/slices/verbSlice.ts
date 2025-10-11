@@ -21,41 +21,79 @@ const initialState: VerbState = {
 
 // Async thunk to fetch verbs
 export const fetchVerbs = createAsyncThunk(
-    'verb/fetchVerbs',
+    'verbs/fetchVerbs',
     async (_, { rejectWithValue }) => {
+        console.log('🚀 fetchVerbs called');
+
+        // iOS debugging information
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        const userAgent = navigator.userAgent;
+
+        console.log('🍎 iOS Debug Info:', { isIOS, isSafari, userAgent });
+
+        // Check localStorage availability
         try {
-            // Check cache first
-            const cachedVerbs = JSON.parse(localStorage.getItem('verbs') || '[]');
-            const cachedTimestamp = localStorage.getItem('verbs_timestamp');
-            console.log('VerbSlice - Cache check:', cachedVerbs.length, 'cached verbs');
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            console.log('✅ localStorage is available');
+        } catch (e) {
+            console.error('❌ localStorage is not available:', e);
+        }
 
-            // if cached is valid and has more than 0 verbs, return it
-            if (cachedVerbs.length > 0 && cachedTimestamp) {
-                const timestamp = parseInt(cachedTimestamp, 10);
-                const now = Date.now();
+        // iOS-specific retry logic
+        const maxRetries = (isIOS || isSafari) ? 3 : 1;
+        let lastError;
 
-                if (now - timestamp < CACHE_DURATION) {
-                    console.log('VerbSlice - Using cached verbs:', cachedVerbs.length, 'verbs');
-                    return cachedVerbs;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Attempt ${attempt}/${maxRetries} to fetch verbs`);
+
+                const response = await api.get('/verbs');
+                console.log('📊 Verbs API response:', {
+                    status: response.status,
+                    dataType: typeof response.data,
+                    dataLength: response.data?.length,
+                    firstVerb: response.data?.[0],
+                    attempt,
+                    isIOS,
+                    isSafari
+                });
+
+                return response.data;
+
+            } catch (error: any) {
+                lastError = error;
+                console.error(`💥 fetchVerbs error (attempt ${attempt}):`, {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    isNetworkError: !error.response,
+                    isIOS,
+                    isSafari,
+                    userAgent
+                });
+
+                // Enhanced iOS-specific error messages
+                if (isIOS || isSafari) {
+                    if (!error.response) {
+                        console.error('🍎 iOS Network Error - possible CORS or network connectivity issue');
+                    } else if (error.response.status === 0) {
+                        console.error('🍎 iOS Status 0 - likely CORS preflight failure');
+                    }
+                }
+
+                // Wait before retry (iOS/Safari only)
+                if (attempt < maxRetries && (isIOS || isSafari)) {
+                    const delay = attempt * 1000; // 1s, 2s delays
+                    console.log(`⏰ Waiting ${delay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
-
-            // Fetch from API
-            console.log('VerbSlice - Fetching verbs from API...');
-            const response = await api.get('/verbs');
-            const verbs = response.data;
-            console.log('VerbSlice - Fetched verbs:', verbs.length, 'verbs');
-            console.log('VerbSlice - First few verbs:', verbs.slice(0, 3));
-
-            // Cache the results
-            localStorage.setItem('verbs', JSON.stringify(verbs));
-            localStorage.setItem('verbs_timestamp', Date.now().toString());
-
-            return verbs;
-        } catch (error: any) {
-            console.error('VerbSlice - Error fetching verbs:', error);
-            return rejectWithValue(error.response?.data?.message || 'Failed to fetch verbs');
         }
+
+        console.error('🚫 All retry attempts failed');
+        return rejectWithValue(lastError?.message || 'Failed to fetch verbs after retries');
     }
 );
 
