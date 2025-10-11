@@ -42,7 +42,7 @@ jobs:
         fi
     
     - name: 📢 Notify on Failure
-      if: failure() && secrets.DISCORD_WEBHOOK
+      if: failure() && secrets.DISCORD_WEBHOOK != ''
       uses: sarisia/actions-status-discord@v1
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}

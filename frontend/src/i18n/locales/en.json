@@ -1,0 +1,245 @@
+{
+  "app": {
+    "title": "Verber - Learn Verbs Through Play",
+    "welcome": "Welcome"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "games": "Games",
+    "exercises": "Exercises",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "header": {
+    "appName": "🎯 Verber",
+    "myProfile": "My Profile",
+    "level": "Level {{level}}",
+    "xp": "{{xp}} XP"
+  },
+  "language": {
+    "changeLanguage": "Change Language"
+  },
+  "home": {
+    "title": "Welcome to Verber",
+    "welcomeBack": "Welcome back",
+    "subtitle": "Learn French verbs through interactive games and challenges",
+    "getStarted": "Get Started",
+    "signIn": "Sign In",
+    "features": {
+      "interactiveGames": {
+        "title": "🎮 Interactive Games",
+        "description": "Learn verbs through fun drag-and-drop games, matching exercises, and interactive challenges."
+      },
+      "multiplayer": {
+        "title": "👥 Multiplayer Challenges",
+        "description": "Compete with friends in real-time verb challenges and climb the leaderboards."
+      },
+      "trackProgress": {
+        "title": "📈 Track Progress",
+        "description": "Monitor your learning journey with detailed statistics and personalized progress tracking."
+      }
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "loginSuccess": "Login successful!",
+    "loginError": "Login error",
+    "registerSuccess": "Registration successful!",
+    "registerError": "Registration error",
+    "welcomeBack": "Welcome Back!",
+    "signInSubtitle": "Sign in to continue your learning journey",
+    "signingIn": "Signing In...",
+    "signIn": "Sign In",
+    "dontHaveAccount": "Don't have an account?",
+    "createOneHere": "Create one here",
+    "createAccount": "Create Account",
+    "joinVerber": "Join Verber and start learning French verbs!",
+    "creatingAccount": "Creating Account...",
+    "alreadyHaveAccount": "Already have an account?",
+    "signInHere": "Sign in here",
+    "age": "Age",
+    "grade": "Grade",
+    "passwordHelperText": "Minimum 6 characters",
+    "grades": {
+      "6thGrade": "6th Grade",
+      "7thGrade": "7th Grade", 
+      "8thGrade": "8th Grade",
+      "9thGrade": "9th Grade",
+      "10thGrade": "10th Grade",
+      "11thGrade": "11th Grade",
+      "12thGrade": "12th Grade",
+      "university": "University",
+      "other": "Other"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcomeBack": "Welcome back, {{username}}! 👋",
+    "chooseGame": "Choose a game to start learning",
+    "currentLevel": "Current Level",
+    "totalXP": "Total XP",
+    "verbsAvailable": "Verbs Available",
+    "startGame": "Start Game"
+  },
+  "games": {
+    "find-error": {
+      "title": "🎯 Find Error",
+      "description": "Identify and correct errors in sentences. Perfect for honing your grammar skills."
+    },
+    "matching": {
+      "title": "🎴 Matching Game",
+      "description": "Match infinitives with their correct conjugated forms. Perfect for visual learners.",
+      "instruction": "🎴 Match the verbs with their conjugations!"
+    },
+    "write-me": {
+      "title": "✍️ Fill in the Blanks",
+      "description": "Complete sentences with the correct verb forms. Practice in context.",
+      "instruction": "✍️ Complete the sentences with the correct verb forms!"
+    },
+    "race": {
+      "title": "🏁 Conjugation Race",
+      "description": "Compete against the clock to conjugate verbs correctly. How fast can you go?",
+      "instruction": "🏁 Conjugate as fast as you can!"
+    },
+    "speedRound": {
+      "title": "⚡ Speed Round",
+      "description": "Answer a series of conjugation questions as quickly as possible."
+    },
+    "complete": {
+      "title": "📝 Complete Mode",
+      "description": "Complete training mode with all features enabled."
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "loading": "Loading game...",
+    "common": {
+      "questionCount": "Question {{current}}/{{total}}",
+      "score": "Score: {{score}}",
+      "timeRemaining": "{{time}}s remaining",
+      "excellent": "🎉 Excellent! Correct answer!",
+      "incorrect": "😔 Incorrect!",
+      "correctAnswerWas": "The correct answer was:",
+      "nextQuestion": "Next Question",
+      "tryAgain": "Try Again",
+      "wellDone": "Well done!",
+      "keepGoing": "Keep going!"
+    },
+    "findError": {
+      "instruction": "🔍 Find the error!"
+    }
+  },
+  "gameRoom": {
+    "predefinedGroups": "Predefined Groups",
+    "addVerbGroup": "Create Verb Group",
+    "addTenseGroup": "Create Tense Group",
+    "sound": "Sound",
+    "title": "Game Room",
+    "loading": "Loading verbs and tenses...",
+    "verbSelection": "Verb Selection",
+    "tenseSelection": "Tense Selection",
+    "settings": "Game Settings",
+    "chooseVerbs": "Choose verbs",
+    "chooseTenses": "Choose tenses",
+    "verbsPlaceholder": "Verbs",
+    "tensesPlaceholder": "Tenses",
+    "numberOfQuestions": "Number of questions",
+    "timePerQuestion": "Time per question",
+    "start": "Start",
+    "prerequisitesFor": "Prerequisites for {{game}}",
+    "prerequisiteDescription": "This game requires a minimum level for an optimal experience:",
+    "verbsSelected": "verbs selected",
+    "tensesSelected": "tenses selected",
+    "minimumRequired": "minimum required",
+    "prerequisiteTip": "Add more verbs and tenses to unlock this game and enjoy a richer learning experience!",
+    "selectionRequired": "Selection required",
+    "selectionRequiredMessage": "Please select at least some verbs and tenses to start the game.",
+    "readyToPlay": "Ready to play!",
+    "selectionComplete": "You have selected {{verbs}} verbs and {{tenses}} tenses. Perfect for {{game}}!",
+    "customGroups": "Custom groups",
+    "presetGroups": "Preset groups",
+    "createVerbGroup": "Create verb group",
+    "createTenseGroup": "Create tense group",
+    "groupName": "Group name",
+    "add": "Add",
+    "questions": "questions"
+  },
+  "gameScore": {
+    "fantastic": "🎉 Fantastic!",
+    "goodEffort": "💪 Good Effort!",
+    "successRate": "{{percentage}}% success rate",
+    "correctAnswers": "Correct answers: {{correct}} / {{total}}",
+    "playAgain": "Play Again",
+    "backToDashboard": "Dashboard"
+  },
+  "audio": {
+    "title": "🎵 Test Audio System",
+    "description": "Test the game audio feedback system. Make sure your browser allows audio playback.",
+    "disabled": "Audio is currently disabled. Enable it below to test sounds.",
+    "settings": "Audio Settings",
+    "enabled": "Audio Enabled",
+    "disabled_label": "Audio Disabled",
+    "volume": "Volume: {{volume}}%",
+    "testSounds": "Test Sounds",
+    "successSounds": "✅ Success Sounds",
+    "failureSounds": "❌ Failure Sounds",
+    "regularSuccess": "Regular Success",
+    "gameCompleteSuccess": "Game Complete Success",
+    "regularFailure": "Regular Failure",
+    "gameOverFailure": "Game Over Failure",
+    "forcePlay": "Force Play",
+    "diagnostics": "Diagnostics",
+    "diagnosticsDescription": "Use these tools to diagnose audio loading issues. Check the browser console for detailed output.",
+    "checkStatus": "Check Audio Status",
+    "testAccess": "Test File Access",
+    "lastPlayed": "Last played: {{sound}}"
+  },
+  "tenses": {
+    "present": "Present",
+    "passe_compose": "Past Participle",
+    "imparfait": "Imperfect",
+    "plus_que_parfait": "Past Perfect",
+    "passe_simple": "Simple Past",
+    "passe_anterieur": "Past Anterior",
+    "futur_simple": "Simple Future",
+    "futur_anterieur": "Future Perfect",
+    "conditionnel_present": "Present Conditional",
+    "conditionnel_passe": "Past Conditional",
+    "subjonctif_present": "Present Subjunctive",
+    "subjonctif_passe": "Past Subjunctive",
+    "subjonctif_imparfait": "Imperfect Subjunctive",
+    "subjonctif_plus_que_parfait": "Past Perfect Subjunctive",
+    "present_imperatif": "Present Imperative",
+    "passe_imperatif": "Past Imperative"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish",
+    "retry": "Retry",
+    "playAgain": "Play Again",
+    "tenses": "Tenses",
+    "verbs": "Verbs"
+  }
+}

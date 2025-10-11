@@ -20,7 +20,7 @@ jobs:
     
     steps:
     - name: 📢 Notify Rollback Start
-      if: secrets.DISCORD_WEBHOOK
+      if: secrets.DISCORD_WEBHOOK != ''
       uses: sarisia/actions-status-discord@v1
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -90,7 +90,7 @@ jobs:
           fi
     
     - name: 📢 Notify Rollback Success
-      if: success() && secrets.DISCORD_WEBHOOK
+      if: success() && secrets.DISCORD_WEBHOOK != ''
       uses: sarisia/actions-status-discord@v1
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -103,7 +103,7 @@ jobs:
         color: 0x00ff00  # Green
     
     - name: 📢 Notify Rollback Failure
-      if: failure() && secrets.DISCORD_WEBHOOK
+      if: failure() && secrets.DISCORD_WEBHOOK != ''
       uses: sarisia/actions-status-discord@v1
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}

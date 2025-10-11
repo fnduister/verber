@@ -1,10 +1,12 @@
 import { EmojiEvents, PlayArrow, Timer, TrendingUp } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Chip, Container, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Container, LinearProgress, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import GameScoreDialog from '../../../components/GameScoreDialog';
 import { TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { getPronoun, randElement, shuffle } from '../../../utils/gameUtils';
@@ -30,6 +32,9 @@ interface RaceGameInfo {
 const Race: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
+
+    // Audio feedback
+    const { playSuccess, playFailure } = useAudio();
 
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
@@ -138,6 +143,14 @@ const Race: React.FC = () => {
         setAnimateBackground(correct ? '#4caf50' : '#f44336');
         setTimeout(() => setAnimateBackground('white'), 1500);
 
+        // Audio feedback - determine if this is the last step
+        const isLastStep = gameScore.currentStep + 1 >= gameScore.maxStep;
+        if (correct) {
+            playSuccess(isLastStep);
+        } else {
+            playFailure(isLastStep);
+        }
+
         // Update score
         if (correct) {
             setGameScore(prev => ({
@@ -162,7 +175,7 @@ const Race: React.FC = () => {
                 // Timer will restart automatically via useEffect dependency change
             }
         }, 1500);
-    }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer]);
+    }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer, playSuccess, playFailure]);
 
     // Timer - using more frequent updates for smoother animation
     useEffect(() => {
@@ -567,37 +580,16 @@ const Race: React.FC = () => {
                     </motion.div>
                 )}
 
-                {/* Score Dialog */}
-                <Dialog open={showScore} onClose={handleClose} maxWidth="sm" fullWidth>
-                    <DialogTitle>
-                        <Typography variant="h4" textAlign="center">
-                            {Math.floor((gameScore.score / (gameScore.maxStep * 100)) * 100) > 50
-                                ? '🎉 Bravo !'
-                                : '💪 Continuez !'}
-                        </Typography>
-                    </DialogTitle>
-                    <DialogContent>
-                        <Stack spacing={2} alignItems="center">
-                            <Typography variant="h2" color="primary">
-                                {gameScore.score}
-                            </Typography>
-                            <Typography variant="h6">
-                                Score: {Math.floor((gameScore.score / (gameScore.maxStep * 100)) * 100)}%
-                            </Typography>
-                            <Typography variant="body1">
-                                Questions correctes: {gameScore.score / 100} / {gameScore.maxStep}
-                            </Typography>
-                        </Stack>
-                    </DialogContent>
-                    <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-                        <Button onClick={handlePlayAgain} variant="contained" color="primary" size="large">
-                            Rejouer
-                        </Button>
-                        <Button onClick={handleClose} variant="outlined" size="large">
-                            Retour au tableau de bord
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                {/* Reusable Score Dialog */}
+                <GameScoreDialog
+                    open={showScore}
+                    onClose={handleClose}
+                    onPlayAgain={handlePlayAgain}
+                    score={gameScore.score}
+                    maxScore={gameScore.maxStep * 100}
+                    correctAnswers={gameScore.score / 100}
+                    totalQuestions={gameScore.maxStep}
+                />
             </Container>
         </Box>
     );

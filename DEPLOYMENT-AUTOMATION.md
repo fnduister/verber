@@ -92,17 +92,30 @@ This guide covers multiple ways to automatically deploy your Verber application 
    sudo apt install -y jq curl openssl
    ```
 
-2. **Setup Webhook Script**
+2. **Setup Webhook Script & Security**
 
    ```bash
    # Copy webhook-deploy.sh to your server
    sudo cp webhook-deploy.sh /opt/verber/
    sudo chmod +x /opt/verber/webhook-deploy.sh
 
-   # Set environment variables
-   export WEBHOOK_SECRET="your-webhook-secret-here"
+   # 🔐 GENERATE SECURE WEBHOOK SECRET (REQUIRED!)
+   ./webhook-deploy.sh generate-secret
+
+   # Set the generated secret (replace with actual generated value)
+   export WEBHOOK_SECRET="$(openssl rand -hex 32)"
    export DEPLOY_BRANCH="main"
-   export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..." # Optional
+
+   # 🏥 Configure health check settings (optional)
+   export HEALTH_CHECK_URL="https://your-domain.com/api/health"
+   export HEALTH_CHECK_TIMEOUT=45  # Seconds to wait before checking
+   export HEALTH_CHECK_RETRIES=5   # Number of retry attempts
+
+   # 📢 Optional notifications
+   export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+
+   # ⚠️  SECURITY WARNING: Never use default secret in production!
+   # The script will refuse to run with 'your-webhook-secret-here'
    ```
 
 3. **Setup Web Server (Nginx)**
@@ -163,6 +176,9 @@ This guide covers multiple ways to automatically deploy your Verber application 
    Restart=always
    Environment=WEBHOOK_SECRET=your-webhook-secret-here
    Environment=DEPLOY_BRANCH=main
+   Environment=HEALTH_CHECK_URL=https://your-domain.com/api/health
+   Environment=HEALTH_CHECK_TIMEOUT=45
+   Environment=HEALTH_CHECK_RETRIES=5
 
    [Install]
    WantedBy=multi-user.target
@@ -181,10 +197,48 @@ This guide covers multiple ways to automatically deploy your Verber application 
      - Secret: `your-webhook-secret-here`
      - Events: `push`
 
+### Health Check Configuration
+
+Configure health check settings for different deployment environments:
+
+```bash
+# 🏠 Local Development
+export HEALTH_CHECK_URL="http://localhost:3000/api/health"
+export HEALTH_CHECK_TIMEOUT=15
+export HEALTH_CHECK_RETRIES=3
+
+# 🌐 Production with Load Balancer
+export HEALTH_CHECK_URL="https://verber.yourdomain.com/api/health"
+export HEALTH_CHECK_TIMEOUT=60
+export HEALTH_CHECK_RETRIES=8
+
+# 🐳 Docker Internal Network
+export HEALTH_CHECK_URL="http://verber-backend:8080/api/health"
+export HEALTH_CHECK_TIMEOUT=30
+export HEALTH_CHECK_RETRIES=5
+
+# 🔒 Internal Network with Authentication
+export HEALTH_CHECK_URL="http://10.0.0.100:8080/api/health"
+export HEALTH_CHECK_TIMEOUT=45
+export HEALTH_CHECK_RETRIES=6
+
+# 📊 Custom Health Endpoint
+export HEALTH_CHECK_URL="https://api.verber.com/status/health"
+export HEALTH_CHECK_TIMEOUT=20
+export HEALTH_CHECK_RETRIES=4
+```
+
+**Configuration Guidelines:**
+
+- **Timeout:** 15-60 seconds (depends on application startup time)
+- **Retries:** 3-10 attempts (balance between reliability and speed)
+- **URL Format:** Must start with `http://` or `https://`
+
 ### Test Webhook
 
 ```bash
-# Test deployment
+# Test deployment with custom health check
+export HEALTH_CHECK_URL="http://localhost:8080/api/health"
 /opt/verber/webhook-deploy.sh test main
 
 # Check webhook logs
@@ -305,6 +359,26 @@ export $(cat /opt/verber/.env | xargs)
 ---
 
 ## 🔐 Security Considerations
+
+### 🚨 Webhook Security (CRITICAL)
+
+```bash
+# ❌ NEVER use default secrets in production
+# The webhook script will reject these and exit with error:
+WEBHOOK_SECRET="your-webhook-secret-here"  # BLOCKED!
+
+# ✅ Generate secure secrets (32+ characters)
+./webhook-deploy.sh generate-secret
+export WEBHOOK_SECRET="$(openssl rand -hex 32)"
+
+# ✅ Validate webhook secret strength
+if [ ${#WEBHOOK_SECRET} -lt 32 ]; then
+  echo "WARNING: Webhook secret should be 32+ characters"
+fi
+
+# ✅ Use environment files for production
+echo "WEBHOOK_SECRET=$(openssl rand -hex 32)" >> /etc/environment
+```
 
 ### SSH Key Security
 

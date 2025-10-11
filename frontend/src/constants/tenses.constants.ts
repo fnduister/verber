@@ -106,9 +106,6 @@ export const TENSE_MAP: Record<string, TenseInfo> = {
     }
 };
 
-// French subject pronouns
-export const FRENCH_PRONOUNS = ['je', 'tu', 'il/elle', 'nous', 'vous', 'ils/elles'] as const;
-
 // Tenses available in the database (matching API structure)
 export const AVAILABLE_TENSES = [
     'present',
