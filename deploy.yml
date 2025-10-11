@@ -57,7 +57,7 @@ jobs:
         fi
         
         # Validate Docker Compose files
-        docker-compose -f docker-compose.prod.yml config
+        docker compose -f docker-compose.prod.yml config
         
         echo "✅ Configuration validation passed"
     
@@ -109,7 +109,7 @@ jobs:
           
           # Create database backup (non-interactive)
           echo "Creating database backup..."
-          docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U ${POSTGRES_USER:-verber_user} ${POSTGRES_DB:-verber_db} > /opt/verber-backups/backup-$(date +%Y%m%d-%H%M%S).sql || echo "Backup failed, continuing..."
+          docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U ${POSTGRES_USER:-verber_user} ${POSTGRES_DB:-verber_db} > /opt/verber-backups/backup-$(date +%Y%m%d-%H%M%S).sql || echo "Backup failed, continuing..."
           
           # Update Docker images in compose file to use the pushed images
           if [ -n "${{ secrets.DOCKER_USERNAME }}" ]; then
@@ -118,11 +118,11 @@ jobs:
           fi
           
           # Pull latest Docker images
-          docker-compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml pull
           
           # Deploy with zero downtime using rolling update
           echo "Starting deployment..."
-          docker-compose -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
+          docker compose -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
           
           # Wait for services to be ready
           echo "Waiting for services to start..."
