@@ -13,7 +13,7 @@ jobs:
     
     env:
       CI: false
-      
+
     steps:
     - uses: actions/checkout@v4
     
@@ -117,4 +117,4 @@ jobs:
     
     - name: Test Docker Compose
       run: |
-        docker-compose -f docker-compose.yml config
+        docker compose -f docker-compose.yml config
