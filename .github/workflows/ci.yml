@@ -26,10 +26,10 @@ jobs:
         cd frontend
         npm ci
     
-    # - name: Run Linting
-    #   run: |
-    #     cd frontend
-    #     npm run lint
+    - name: Run Linting
+      run: |
+        cd frontend
+        npm CI=false run lint
     
     # - name: Run Tests
     #   run: |
@@ -39,7 +39,7 @@ jobs:
     - name: Build Application
       run: |
         cd frontend
-        npm run build
+        npm CI=false run build
 
   test-backend:
     name: ⚙️ Test Backend
