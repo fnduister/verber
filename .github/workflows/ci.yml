@@ -11,6 +11,9 @@ jobs:
     name: 🎨 Test Frontend
     runs-on: ubuntu-latest
     
+    env:
+      CI: false
+      
     steps:
     - uses: actions/checkout@v4
     
@@ -29,7 +32,7 @@ jobs:
     - name: Run Linting
       run: |
         cd frontend
-        npm CI=false run lint
+        npm run lint
     
     # - name: Run Tests
     #   run: |
@@ -39,7 +42,7 @@ jobs:
     - name: Build Application
       run: |
         cd frontend
-        npm CI=false run build
+        npm run build
 
   test-backend:
     name: ⚙️ Test Backend
