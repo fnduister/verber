@@ -4,10 +4,16 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api
 
 const api = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000,
+    timeout: 15000, // Increased timeout for mobile devices
     headers: {
         'Content-Type': 'application/json',
+        // iOS-specific headers
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
     },
+    // iOS Safari sometimes requires explicit credentials
+    withCredentials: false,
 });
 
 // Request interceptor to add auth token
@@ -24,13 +30,23 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle token expiration
+// Response interceptor to handle token expiration and iOS-specific issues
 api.interceptors.response.use(
     (response) => {
+        console.log('API Response success:', response.config.url, response.status);
         return response;
     },
     async (error) => {
+        console.error('API Response error:', error.config?.url, error.response?.status || error.message);
+
         const originalRequest = error.config;
+
+        // iOS-specific network error handling
+        if (!error.response && (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error'))) {
+            console.warn('Network error detected - likely iOS/Safari issue');
+            // Don't retry network errors immediately on iOS
+            return Promise.reject(error);
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
