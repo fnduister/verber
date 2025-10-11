@@ -53,8 +53,7 @@ case "$1" in
     
     "import-verbs")
         echo "📚 Importing verbs to staging database..."
-        docker-compose --env-file $ENV_FILE -f $COMPOSE_FILE exec backend-staging sh -c 'cd /app && go run scripts/import_verbs.go'
-        echo "✅ Verbs imported to staging"
+        ./scripts/import_verbs.sh staging
         ;;
     
     "shell")
