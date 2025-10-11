@@ -22,6 +22,61 @@ DB_PASSWORD=""
 JWT_SECRET=""
 BACKUP_DIR="/opt/verber-backups"
 
+# Parse command line arguments
+SKIP_SETUP=false
+SKIP_INTERACTIVE=false
+AUTO_DEPLOY=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --skip-setup)
+            SKIP_SETUP=true
+            shift
+            ;;
+        --skip-interactive)
+            SKIP_INTERACTIVE=true
+            shift
+            ;;
+        --auto-deploy)
+            AUTO_DEPLOY=true
+            SKIP_SETUP=true
+            SKIP_INTERACTIVE=true
+            shift
+            ;;
+        --domain)
+            DOMAIN="$2"
+            shift 2
+            ;;
+        --email)
+            EMAIL="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --skip-setup        Skip system setup (dependencies, Docker, etc.)"
+            echo "  --skip-interactive  Skip interactive prompts (use env vars)"
+            echo "  --auto-deploy       Full automatic deployment (implies above options)"
+            echo "  --domain DOMAIN     Set domain name"
+            echo "  --email EMAIL       Set email for SSL certificate"
+            echo "  --help, -h          Show this help message"
+            echo ""
+            echo "Environment variables:"
+            echo "  VERBER_DOMAIN       Domain name"
+            echo "  VERBER_EMAIL        Email for SSL"
+            echo "  VERBER_DB_PASSWORD  Database password"
+            echo "  VERBER_JWT_SECRET   JWT secret"
+            exit 0
+            ;;
+        *)
+            print_error "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
 # Helper functions
 print_header() {
     echo -e "\n${BLUE}================================${NC}"
@@ -56,6 +111,26 @@ check_root() {
 
 # Collect deployment information
 collect_info() {
+    if [ "$SKIP_INTERACTIVE" = true ]; then
+        print_header "LOADING CONFIGURATION FROM ENVIRONMENT"
+        
+        # Load from environment variables
+        DOMAIN="${VERBER_DOMAIN:-${DOMAIN}}"
+        EMAIL="${VERBER_EMAIL:-${EMAIL}}"
+        DB_PASSWORD="${VERBER_DB_PASSWORD:-${DB_PASSWORD}}"
+        JWT_SECRET="${VERBER_JWT_SECRET:-${JWT_SECRET}}"
+        
+        # Check if all required variables are set
+        if [[ -z "$DOMAIN" || -z "$EMAIL" || -z "$DB_PASSWORD" || -z "$JWT_SECRET" ]]; then
+            print_error "Missing required environment variables for automatic deployment"
+            print_info "Required: VERBER_DOMAIN, VERBER_EMAIL, VERBER_DB_PASSWORD, VERBER_JWT_SECRET"
+            exit 1
+        fi
+        
+        print_success "Configuration loaded from environment variables"
+        return 0
+    fi
+    
     print_header "VERBER DEPLOYMENT CONFIGURATION"
     
     echo "Please provide the following information for your deployment:"

@@ -1,24 +1,32 @@
 import { Box, Button, Card, CardContent, Container, Grid, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { RootState } from '../../store/store';
 
 const Home: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
+    const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
     return (
         <Container maxWidth="lg">
-            <Box sx={{ py: 8, textAlign: 'center' }}>
+            <Box sx={{ py: 4, textAlign: 'center' }}>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                 >
                     <Typography variant="h1" component="h1" sx={{ mb: 4, fontWeight: 'bold' }}>
-                        Welcome to Verber
+                        {isAuthenticated && user?.username 
+                            ? `${t('home.welcomeBack')}, ${user.username}!`
+                            : t('home.title')
+                        }
                     </Typography>
                     <Typography variant="h5" component="p" sx={{ mb: 6, color: 'text.secondary' }}>
-                        Learn French verbs through interactive games and challenges
+                        {t('home.subtitle')}
                     </Typography>
                 </motion.div>
 
@@ -34,7 +42,7 @@ const Home: React.FC = () => {
                             onClick={() => navigate('/register')}
                             sx={{ mr: 2, px: 4, py: 2 }}
                         >
-                            Get Started
+                            {t('home.getStarted')}
                         </Button>
                         <Button
                             variant="outlined"
@@ -42,7 +50,7 @@ const Home: React.FC = () => {
                             onClick={() => navigate('/login')}
                             sx={{ px: 4, py: 2 }}
                         >
-                            Sign In
+                            {t('home.signIn')}
                         </Button>
                     </Box>
                 </motion.div>
@@ -57,10 +65,10 @@ const Home: React.FC = () => {
                             <Card sx={{ height: '100%' }}>
                                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                                     <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'primary.main' }}>
-                                        🎮 Interactive Games
+                                        {t('home.features.interactiveGames.title')}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
-                                        Learn verbs through fun drag-and-drop games, matching exercises, and interactive challenges.
+                                        {t('home.features.interactiveGames.description')}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -76,10 +84,10 @@ const Home: React.FC = () => {
                             <Card sx={{ height: '100%' }}>
                                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                                     <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'primary.main' }}>
-                                        👥 Multiplayer Challenges
+                                        {t('home.features.multiplayer.title')}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
-                                        Compete with friends in real-time verb challenges and climb the leaderboards.
+                                        {t('home.features.multiplayer.description')}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -95,10 +103,10 @@ const Home: React.FC = () => {
                             <Card sx={{ height: '100%' }}>
                                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                                     <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'primary.main' }}>
-                                        📈 Track Progress
+                                        {t('home.features.trackProgress.title')}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary">
-                                        Monitor your learning journey with detailed statistics and personalized progress tracking.
+                                        {t('home.features.trackProgress.description')}
                                     </Typography>
                                 </CardContent>
                             </Card>

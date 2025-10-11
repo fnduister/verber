@@ -19,7 +19,7 @@ This document describes the reorganized structure of the French verb conjugation
 
 - **`tenses.constants.ts`** - All constants and configuration
   - `TENSE_MAP` - Complete mapping of tense keys to display names and categories
-  - `FRENCH_PRONOUNS` - Subject pronouns array
+  - `PRONOUNS` - Subject pronouns array
   - `AVAILABLE_TENSES` - All available tenses from database
   - `CACHE_DURATION` - Cache configuration
 
@@ -59,7 +59,7 @@ This document describes the reorganized structure of the French verb conjugation
 import { VerbConjugation, Verb } from "../types";
 
 // Import constants
-import { TENSE_MAP, FRENCH_PRONOUNS } from "../constants";
+import { TENSE_MAP, PRONOUNS } from "../constants";
 
 // Import utilities
 import {

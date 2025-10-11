@@ -22,8 +22,17 @@ interface AuthState {
     error: string | null;
 }
 
+const getUserFromStorage = (): User | null => {
+    try {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+        return null;
+    }
+};
+
 const initialState: AuthState = {
-    user: null,
+    user: getUserFromStorage(),
     token: localStorage.getItem('token'),
     isAuthenticated: !!localStorage.getItem('token'),
     loading: false,
@@ -38,6 +47,7 @@ export const loginUser = createAsyncThunk(
             const response = await api.post('/auth/login', credentials);
             const { user, token } = response.data;
             localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
             return { user, token };
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || 'Login failed');
@@ -61,6 +71,7 @@ export const registerUser = createAsyncThunk(
             const response = await api.post('/auth/register', userData);
             const { user, token } = response.data;
             localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
             return { user, token };
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.error || 'Registration failed');
@@ -83,12 +94,27 @@ export const refreshToken = createAsyncThunk(
     }
 );
 
+export const fetchUserProfile = createAsyncThunk(
+    'auth/fetchUserProfile',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/users/profile');
+            const user = response.data;
+            localStorage.setItem('user', JSON.stringify(user));
+            return user;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to fetch user profile');
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
         logout: (state) => {
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
             state.user = null;
             state.token = null;
             state.isAuthenticated = false;
@@ -140,6 +166,21 @@ const authSlice = createSlice({
             })
             .addCase(refreshToken.rejected, (state) => {
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+            })
+            // Fetch user profile
+            .addCase(fetchUserProfile.fulfilled, (state, action) => {
+                state.user = action.payload;
+                state.loading = false;
+            })
+            .addCase(fetchUserProfile.rejected, (state) => {
+                state.loading = false;
+                // If fetching user profile fails, logout the user
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 state.user = null;
                 state.token = null;
                 state.isAuthenticated = false;

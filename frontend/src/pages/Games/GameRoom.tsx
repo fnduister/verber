@@ -1,5 +1,6 @@
 import { Add, Close } from '@mui/icons-material';
 import {
+    Alert,
     Autocomplete,
     Box,
     Button,
@@ -18,12 +19,16 @@ import {
     TextField,
     Typography
 } from '@mui/material';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
+import { AudioSettings } from '../../components/AudioSettings';
 import {
     GAME_METADATA,
     GAME_SPEEDS,
+    MIN_PREREQUISITE_TENSES,
+    MIN_PREREQUISITE_VERBS,
     PRESET_TENSE_GROUPS,
     PRESET_VERB_GROUPS,
     SPECIAL_TENSES,
@@ -42,6 +47,7 @@ import { fetchTenses, fetchVerbs } from '../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../store/store';
 
 const GameRoom = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch<AppDispatch>();
     const { gameId } = useParams<{ gameId: string }>();
 
@@ -60,6 +66,18 @@ const GameRoom = () => {
 
     const currentGame = GAME_METADATA[gameId || 'find-error'] || GAME_METADATA['find-error'];
     const gameType = gameId || 'find-error';
+    
+    // Map game IDs to translation keys
+    const getGameTitleKey = (gameType: string): string => {
+        const keyMap: Record<string, string> = {
+            'find-error': 'games.find-error.title',
+            'matching': 'games.matching.title',
+            'write-me': 'games.write-me.title',
+            'race': 'games.race.title',
+            'complete': 'games.complete.title'
+        };
+        return keyMap[gameType] || 'games.findError.title';
+    };
     const verbOptions = useMemo(() => {
         console.log('GameRoom - Computing verb options from', allVerbs.length, 'verbs');
         const options = allVerbs.map((verb) => verb.infinitive);
@@ -121,8 +139,23 @@ const GameRoom = () => {
         }
     };
 
+    // Check prerequisite requirements for the current game
+    const checkPrerequisites = () => {
+        const minVerbs = MIN_PREREQUISITE_VERBS[gameType] || 0;
+        const minTenses = MIN_PREREQUISITE_TENSES[gameType] || 0;
+        
+        return {
+            verbsMet: currentVerbs.length >= minVerbs,
+            tensesMet: currentTenses.length >= minTenses,
+            minVerbs,
+            minTenses
+        };
+    };
+
+    const prerequisiteStatus = checkPrerequisites();
+
     const canAdvance = () => {
-        return currentVerbs.length === 0 || currentTenses.length === 0;
+        return currentVerbs.length === 0 || currentTenses.length === 0 || !prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet;
     };
 
     const handleStepsChange = (event: SelectChangeEvent) => {
@@ -163,7 +196,7 @@ const GameRoom = () => {
                 <Box sx={{ textAlign: 'center' }}>
                     <CircularProgress size={60} />
                     <Typography variant="h6" sx={{ mt: 2 }}>
-                        Chargement des verbes et temps...
+                        {t('gameRoom.loading')}
                     </Typography>
                 </Box>
             </Container>
@@ -173,14 +206,14 @@ const GameRoom = () => {
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <Typography sx={{ m: 0, mb: 2, ml: 3, fontWeight: 'bold' }} variant="h4">
-                {currentGame.title}
+                {t(getGameTitleKey(gameType))}
             </Typography>
             <Divider sx={{ mb: 3 }} />
 
             {/* Verbs Selection */}
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" sx={{ mb: 2, ml: 3 }}>
-                    Sélection des Verbes
+                    {t('gameRoom.verbSelection')}
                 </Typography>
                 <Stack spacing={2} sx={{ ml: 3, mr: 3 }}>
                     <Autocomplete
@@ -188,7 +221,7 @@ const GameRoom = () => {
                         options={verbOptions}
                         value={currentVerbs}
                         onChange={(_, newValue) => dispatch(setCurrentVerbs(newValue))}
-                        renderInput={(params) => <TextField {...params} label="Choisir les verbes" placeholder="Verbes" />}
+                        renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseVerbs')} placeholder={t('gameRoom.verbsPlaceholder')} />}
                         renderTags={(value, getTagProps) =>
                             value.map((option, index) => (
                                 <Chip
@@ -204,7 +237,7 @@ const GameRoom = () => {
                     {customVerbGroups.length > 0 && (
                         <Box>
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                Groupes personnalisés
+                                {t('gameRoom.predefinedGroups')}
                             </Typography>
                             <Stack direction="row" spacing={1} flexWrap="wrap">
                                 {customVerbGroups.map((group) => {
@@ -227,7 +260,7 @@ const GameRoom = () => {
                     {/* Preset Verb Groups */}
                     <Box>
                         <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            Groupes prédéfinis
+                            {t('gameRoom.predefinedGroups')}
                         </Typography>
                         <Stack direction="row" spacing={1} flexWrap="wrap">
                             {PRESET_VERB_GROUPS.map((group) => {
@@ -266,7 +299,7 @@ const GameRoom = () => {
                         </Paper>
                     ) : (
                         <Button startIcon={<Add />} onClick={() => setAddVerbMode(true)} disabled={currentVerbs.length === 0}>
-                            Créer un groupe de verbes
+                            {t('gameRoom.addVerbGroup')}
                         </Button>
                     )}
                 </Stack>
@@ -275,7 +308,7 @@ const GameRoom = () => {
             {/* Tenses Selection */}
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" sx={{ mb: 2, ml: 3 }}>
-                    Sélection des Temps
+                    {t('gameRoom.tenseSelection')}
                 </Typography>
                 <Stack spacing={2} sx={{ ml: 3, mr: 3 }}>
                     <Autocomplete
@@ -283,7 +316,7 @@ const GameRoom = () => {
                         options={getTenses()}
                         value={currentTenses}
                         onChange={(_, newValue) => dispatch(setCurrentTenses(newValue))}
-                        renderInput={(params) => <TextField {...params} label="Choisir les temps" placeholder="Temps" />}
+                        renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseTenses')} placeholder={t('gameRoom.tensesPlaceholder')} />}
                         getOptionLabel={(option) => TENSE_DISPLAY_NAMES[option] || option}
                         renderTags={(value, getTagProps) =>
                             value.map((option, index) => (
@@ -362,7 +395,7 @@ const GameRoom = () => {
                         </Paper>
                     ) : (
                         <Button startIcon={<Add />} onClick={() => setAddTenseMode(true)} disabled={currentTenses.length === 0}>
-                            Créer un groupe de temps
+                            {t('gameRoom.addTenseGroup')}
                         </Button>
                     )}
                 </Stack>
@@ -370,11 +403,11 @@ const GameRoom = () => {
 
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" sx={{ mb: 2, ml: 3 }}>
-                    Paramètres du jeu
+                    {t('gameRoom.settings')}
                 </Typography>
                 <Stack direction="row" spacing={2} sx={{ ml: 3, mr: 3 }}>
                     <FormControl variant="filled" sx={{ minWidth: 200 }}>
-                        <InputLabel>Nombre de questions</InputLabel>
+                        <InputLabel>{t('gameRoom.numberOfQuestions')}</InputLabel>
                         <Select value={ongoingGameInfo.maxStep.toString()} onChange={handleStepsChange}>
                             <MenuItem value="5">5 questions</MenuItem>
                             <MenuItem value="10">10 questions</MenuItem>
@@ -395,6 +428,68 @@ const GameRoom = () => {
                 </Stack>
             </Box>
 
+            {/* Audio Settings */}
+            <Box sx={{ mb: 4, ml: 3, mr: 3 }}>
+                <AudioSettings compact={true} showTitle={false} />
+            </Box>
+
+            {/* Prerequisite Warning */}
+            {(!prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet) && (
+                <Box sx={{ mb: 3 }}>
+                    <Alert severity="warning" variant="outlined">
+                        <Typography variant="h6" gutterBottom>
+                            🎯 {t('gameRoom.prerequisitesFor', { game: t(getGameTitleKey(gameType)) })}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                            {t('gameRoom.prerequisiteDescription')}
+                        </Typography>
+                        <Stack spacing={1}>
+                            {!prerequisiteStatus.verbsMet && (
+                                <Typography variant="body2" color="warning.main">
+                                    • <strong>{t('common.verbs')} :</strong> {currentVerbs.length}/{prerequisiteStatus.minVerbs} {t('gameRoom.verbsSelected')} 
+                                    ({t('gameRoom.minimumRequired')} : {prerequisiteStatus.minVerbs})
+                                </Typography>
+                            )}
+                            {!prerequisiteStatus.tensesMet && (
+                                <Typography variant="body2" color="warning.main">
+                                    • <strong>{t('common.tenses')} :</strong> {currentTenses.length}/{prerequisiteStatus.minTenses} {t('gameRoom.tensesSelected')} 
+                                    ({t('gameRoom.minimumRequired')} : {prerequisiteStatus.minTenses})
+                                </Typography>
+                            )}
+                        </Stack>
+                        <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
+                            💡 {t('gameRoom.prerequisiteTip')}
+                        </Typography>
+                    </Alert>
+                </Box>
+            )}
+
+            {/* Success Message when prerequisites are met */}
+            {prerequisiteStatus.verbsMet && prerequisiteStatus.tensesMet && currentVerbs.length > 0 && currentTenses.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                    <Alert severity="success" variant="outlined">
+                        <Typography variant="body2">
+                            ✅ <strong>{t('gameRoom.readyToPlay')}</strong> {t('gameRoom.selectionComplete', { 
+                                verbs: currentVerbs.length, 
+                                tenses: currentTenses.length, 
+                                game: t(getGameTitleKey(gameType)) 
+                            })}
+                        </Typography>
+                    </Alert>
+                </Box>
+            )}
+
+            {/* Basic requirement warning (no verbs or tenses selected) */}
+            {(currentVerbs.length === 0 || currentTenses.length === 0) && (
+                <Box sx={{ mb: 3 }}>
+                    <Alert severity="error" variant="outlined">
+                        <Typography variant="body2">
+                            ⚠️ <strong>{t('gameRoom.selectionRequired')}:</strong> {t('gameRoom.selectionRequiredMessage')}
+                        </Typography>
+                    </Alert>
+                </Box>
+            )}
+
             {/* Action Buttons */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                 <Button
@@ -406,7 +501,7 @@ const GameRoom = () => {
                     variant="contained"
                     color="warning"
                 >
-                    Commencer
+                    {t('gameRoom.start')}
                 </Button>
             </Box>
         </Container>

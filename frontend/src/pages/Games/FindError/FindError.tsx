@@ -1,10 +1,14 @@
-import { Cancel, CheckCircle, EmojiEvents, Timer } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Chip, Container, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, Stack, Typography } from '@mui/material';
+import { Cancel, CheckCircle } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from '@mui/material';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import GameHeader from '../../../components/GameHeader';
+import GameScoreDialog from '../../../components/GameScoreDialog';
 import { TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { getPronoun, randElement, shuffle } from '../../../utils/gameUtils';
@@ -25,8 +29,12 @@ interface GameScore {
 }
 
 const FindError: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
+    
+    // Audio feedback
+    const { playSuccess, playFailure } = useAudio();
     
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
@@ -52,6 +60,16 @@ const FindError: React.FC = () => {
     const initializeGame = useCallback(() => {
         const steps: FindErrorGameData[] = [];
         const maxSteps = ongoingGameInfo.maxStep;
+
+        if (currentTenses.length <=2){
+            for(let j=0; j<4; j++){
+                // add a random tense from the tense list different from current tenses
+                const randomTense = randElement(Object.keys(TENSE_DISPLAY_NAMES));
+                if (!currentTenses.includes(randomTense)) {
+                    currentTenses.push(randomTense);
+                }
+            }
+        }
 
         for (let i = 0; i < maxSteps; i++) {
             const stepTense = randElement(currentTenses);
@@ -156,6 +174,14 @@ const FindError: React.FC = () => {
         setAnimateBackground(correct ? '#4caf50' : '#f44336');
         setTimeout(() => setAnimateBackground('white'), 1500);
 
+        // Audio feedback - determine if this is the last step
+        const isLastStep = gameScore.currentStep + 1 >= gameScore.maxStep;
+        if (correct) {
+            playSuccess(isLastStep);
+        } else {
+            playFailure(isLastStep);
+        }
+
         // Update score
         if (correct) {
             setGameScore(prev => ({
@@ -180,7 +206,7 @@ const FindError: React.FC = () => {
                 // Timer will restart automatically via useEffect dependency change
             }
         }, 1500);
-    }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer]);
+    }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer, playSuccess, playFailure]);
 
     // Timer - using more frequent updates for smoother animation
     useEffect(() => {
@@ -254,7 +280,7 @@ const FindError: React.FC = () => {
     if (gameData.length === 0 || gameScore.currentStep >= gameData.length) {
         return (
             <Container maxWidth="md" sx={{ py: 4, textAlign: 'center' }}>
-                <Typography variant="h5">Chargement du jeu...</Typography>
+                <Typography variant="h5">{t('games.loading')}</Typography>
             </Container>
         );
     }
@@ -265,12 +291,10 @@ const FindError: React.FC = () => {
     if (!currentQuestion) {
         return (
             <Container maxWidth="md" sx={{ py: 4, textAlign: 'center' }}>
-                <Typography variant="h5">Chargement du jeu...</Typography>
+                <Typography variant="h5">{t('games.loading')}</Typography>
             </Container>
         );
     }
-    const progressPercent = ((gameScore.currentStep + 1) / gameScore.maxStep) * 100;
-    const timePercent = ongoingGameInfo.maxTime > 0 ? Math.max(0, (timeLeft / ongoingGameInfo.maxTime) * 100) : 100;
 
     return (
         <Box sx={{ 
@@ -293,106 +317,15 @@ const FindError: React.FC = () => {
             }} />
             
         <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-            {/* Enhanced Header with Animated Score and Progress */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-            >
-                <Card sx={{ 
-                    mb: 4, 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-                }}>
-                    <CardContent>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <EmojiEvents sx={{ fontSize: 28 }} />
-                                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                    Question {gameScore.currentStep + 1}/{gameScore.maxStep}
-                                </Typography>
-                            </Box>
-                            <motion.div
-                                key={gameScore.score}
-                                initial={{ scale: 1.2, opacity: 0.8 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <Chip 
-                                    label={`Score: ${gameScore.score}`}
-                                    sx={{ 
-                                        backgroundColor: 'rgba(255,255,255,0.2)',
-                                        color: 'white',
-                                        fontSize: '1.1rem',
-                                        fontWeight: 'bold',
-                                        px: 2,
-                                        py: 1
-                                    }}
-                                />
-                            </motion.div>
-                        </Stack>
-                        <Box sx={{ position: 'relative', mb: 2 }}>
-                            <LinearProgress 
-                                variant="determinate" 
-                                value={progressPercent} 
-                                sx={{ 
-                                    height: 12, 
-                                    borderRadius: 6,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    '& .MuiLinearProgress-bar': {
-                                        backgroundColor: '#4caf50',
-                                        borderRadius: 6,
-                                        boxShadow: '0 2px 8px rgba(76,175,80,0.4)'
-                                    }
-                                }} 
-                            />
-                            <Typography 
-                                variant="caption" 
-                                sx={{ 
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    fontWeight: 'bold',
-                                    textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                                }}
-                            >
-                                {Math.round(progressPercent)}%
-                            </Typography>
-                        </Box>
-                        {ongoingGameInfo.maxTime > 0 && (
-                            <motion.div
-                                animate={timePercent < 20 ? { scale: [1, 1.02, 1] } : {}}
-                                transition={{ duration: 1, repeat: timePercent < 20 ? Infinity : 0 }}
-                            >
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                    <Timer sx={{ fontSize: 20 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                        {timeLeft <= 0 ? 0 : Math.ceil(timeLeft)}s restant
-                                    </Typography>
-                                </Box>
-                                <LinearProgress 
-                                    variant="determinate" 
-                                    value={Math.max(0, timePercent)} 
-                                    sx={{
-                                        height: 10,
-                                        borderRadius: 5,
-                                        backgroundColor: 'rgba(255,255,255,0.2)',
-                                        transition: 'none',
-                                        '& .MuiLinearProgress-bar': {
-                                            backgroundColor: timePercent > 50 ? '#4caf50' : timePercent > 20 ? '#ff9800' : '#f44336',
-                                            borderRadius: 5,
-                                            transition: 'none',
-                                            boxShadow: timePercent < 20 ? '0 0 10px rgba(244,67,54,0.6)' : 'none'
-                                        }
-                                    }}
-                                />
-                            </motion.div>
-                        )}
-                </CardContent>
-            </Card>
-            </motion.div>
+            {/* Game Header Component */}
+            <GameHeader
+                currentStep={gameScore.currentStep}
+                maxStep={gameScore.maxStep}
+                score={gameScore.score}
+                timeLeft={timeLeft}
+                maxTime={ongoingGameInfo.maxTime}
+                showTimer={ongoingGameInfo.maxTime > 0}
+            />
 
             {/* Enhanced Tense Display with Animations */}
             <motion.div
@@ -454,7 +387,7 @@ const FindError: React.FC = () => {
                             textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                         }}
                     >
-                        🔍 Trouvez l'erreur !
+                        {t('games.findError.instruction')}
                     </Typography>
                 </motion.div>
             </motion.div>
@@ -607,7 +540,7 @@ const FindError: React.FC = () => {
                                                 color="success.main" 
                                                 sx={{ fontWeight: 'bold', mb: 1 }}
                                             >
-                                                🎉 Excellent ! Bonne réponse !
+                                                {t('games.common.excellent')}
                                             </Typography>
                                         ) : (
                                             <>
@@ -616,10 +549,10 @@ const FindError: React.FC = () => {
                                                     color="error.main" 
                                                     sx={{ fontWeight: 'bold', mb: 2 }}
                                                 >
-                                                    😔 Incorrect !
+                                                    {t('games.common.incorrect')}
                                                 </Typography>
                                                 <Typography variant="body1" color="text.secondary">
-                                                    La bonne réponse était :
+                                                    {t('games.common.correctAnswerWas')}
                                                 </Typography>
                                                 <Chip 
                                                     label={currentQuestion.correctAnswer}
@@ -636,158 +569,16 @@ const FindError: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {/* Enhanced Score Dialog with Animations */}
-            <Dialog 
-                open={showScore} 
-                onClose={handleClose} 
-                maxWidth="sm" 
-                fullWidth
-                sx={{
-                    '& .MuiDialog-paper': {
-                        borderRadius: 4,
-                        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
-                    }
-                }}
-            >
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, type: "spring" }}
-                >
-                    <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-                        <motion.div
-                            initial={{ y: -20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.2, duration: 0.5 }}
-                        >
-                            <Typography 
-                                variant="h3" 
-                                sx={{ 
-                                    fontWeight: 'bold',
-                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent'
-                                }}
-                            >
-                                {Math.floor((gameScore.score / gameScore.maxScore) * 100) > 50
-                                    ? '🎉 Fantastique !'
-                                    : '💪 Bon effort !'}
-                            </Typography>
-                        </motion.div>
-                    </DialogTitle>
-                    
-                    <DialogContent sx={{ py: 4 }}>
-                        <Stack spacing={4} alignItems="center">
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.4, duration: 0.6, type: "spring" }}
-                            >
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    width: 120,
-                                    height: 120,
-                                    borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                    boxShadow: '0 10px 30px rgba(102,126,234,0.3)'
-                                }}>
-                                    <Typography variant="h2" sx={{ color: 'white', fontWeight: 'bold' }}>
-                                        {gameScore.score}
-                                    </Typography>
-                                </Box>
-                            </motion.div>
-                            
-                            <Stack spacing={2} alignItems="center">
-                                <motion.div
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: 0.6, duration: 0.5 }}
-                                >
-                                    <Chip 
-                                        label={`${Math.floor((gameScore.score / gameScore.maxScore) * 100)}% de réussite`}
-                                        color="primary"
-                                        sx={{ 
-                                            fontSize: '1.2rem', 
-                                            fontWeight: 'bold',
-                                            px: 3,
-                                            py: 2,
-                                            height: 'auto'
-                                        }}
-                                    />
-                                </motion.div>
-                                
-                                <motion.div
-                                    initial={{ x: 20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: 0.8, duration: 0.5 }}
-                                >
-                                    <Typography variant="h6" color="text.secondary" textAlign="center">
-                                        Questions correctes: {gameScore.score / 100} / {gameScore.maxStep}
-                                    </Typography>
-                                </motion.div>
-                            </Stack>
-                        </Stack>
-                    </DialogContent>
-                    
-                    <DialogActions sx={{ justifyContent: 'center', pb: 4, gap: 2 }}>
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 1, duration: 0.5 }}
-                        >
-                            <Button 
-                                onClick={handlePlayAgain} 
-                                variant="contained" 
-                                size="large"
-                                sx={{
-                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
-                                    px: 4,
-                                    py: 1.5,
-                                    borderRadius: 3,
-                                    fontSize: '1.1rem',
-                                    fontWeight: 'bold',
-                                    '&:hover': {
-                                        background: 'linear-gradient(45deg, #5a6fd8, #6a42a0)',
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: '0 6px 20px rgba(102,126,234,0.4)'
-                                    }
-                                }}
-                            >
-                                🔄 Rejouer
-                            </Button>
-                        </motion.div>
-                        
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 1.2, duration: 0.5 }}
-                        >
-                            <Button 
-                                onClick={handleClose} 
-                                variant="outlined" 
-                                size="large"
-                                sx={{
-                                    px: 4,
-                                    py: 1.5,
-                                    borderRadius: 3,
-                                    fontSize: '1.1rem',
-                                    fontWeight: 'bold',
-                                    borderWidth: 2,
-                                    '&:hover': {
-                                        borderWidth: 2,
-                                        transform: 'translateY(-2px)'
-                                    }
-                                }}
-                            >
-                                🏠 Tableau de bord
-                            </Button>
-                        </motion.div>
-                    </DialogActions>
-                </motion.div>
-            </Dialog>
+            {/* Reusable Score Dialog */}
+            <GameScoreDialog
+                open={showScore}
+                onClose={handleClose}
+                onPlayAgain={handlePlayAgain}
+                score={gameScore.score}
+                maxScore={gameScore.maxScore}
+                correctAnswers={gameScore.score / 100}
+                totalQuestions={gameScore.maxStep}
+            />
         </Container>
         </Box>
     );

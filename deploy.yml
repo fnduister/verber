@@ -1,0 +1,207 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches: [ main, production ]  # Trigger on push to main or production branch
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    environment: production  # Require manual approval for production deploys
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: 🔧 Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: 📦 Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: 🏗️ Build Frontend
+      run: |
+        cd frontend
+        npm run build
+    
+    - name: 🏗️ Test Backend
+      run: |
+        cd backend
+        go mod tidy
+        go test ./...
+    
+    - name: ✅ Validate Configuration
+      run: |
+        # Check if required secrets are set
+        if [ -z "${{ secrets.DOCKER_USERNAME }}" ] || [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+          echo "❌ Docker credentials not configured"
+          exit 1
+        fi
+        
+        if [ -z "${{ secrets.SERVER_HOST }}" ] || [ -z "${{ secrets.SERVER_SSH_KEY }}" ]; then
+          echo "❌ Server credentials not configured"
+          exit 1
+        fi
+        
+        # Validate Docker Compose files
+        docker compose -f docker-compose.prod.yml config
+        
+        echo "✅ Configuration validation passed"
+    
+    - name: 🐳 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🐳 Build and Push Docker Images
+      run: |
+        # Build and push backend with build context
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/verber-backend:latest -t ${{ secrets.DOCKER_USERNAME }}/verber-backend:${{ github.sha }} ./backend
+        docker push ${{ secrets.DOCKER_USERNAME }}/verber-backend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/verber-backend:${{ github.sha }}
+        
+        # Build and push frontend with build context
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/verber-frontend:latest -t ${{ secrets.DOCKER_USERNAME }}/verber-frontend:${{ github.sha }} ./frontend
+        docker push ${{ secrets.DOCKER_USERNAME }}/verber-frontend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/verber-frontend:${{ github.sha }}
+    
+    - name: 🚀 Deploy to Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || '22' }}
+        script: |
+          set -e  # Exit on any error
+          
+          # Navigate to deployment directory
+          cd /opt/verber
+          
+          # Create backup directory if it doesn't exist
+          sudo mkdir -p /opt/verber-backups
+          
+          # Pull latest changes from the correct branch
+          git fetch origin
+          git reset --hard origin/${{ github.ref_name }}
+          
+          # Load environment variables
+          if [ -f .env ]; then
+            source .env
+          fi
+          
+          # Create database backup (non-interactive)
+          echo "Creating database backup..."
+          docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U ${POSTGRES_USER:-verber_user} ${POSTGRES_DB:-verber_db} > /opt/verber-backups/backup-$(date +%Y%m%d-%H%M%S).sql || echo "Backup failed, continuing..."
+          
+          # Update Docker images in compose file to use the pushed images
+          if [ -n "${{ secrets.DOCKER_USERNAME }}" ]; then
+            sed -i.bak "s|build:|image: ${{ secrets.DOCKER_USERNAME }}/verber-backend:latest\n      # build:|g" docker-compose.prod.yml
+            sed -i.bak "s|context: ./frontend|image: ${{ secrets.DOCKER_USERNAME }}/verber-frontend:latest\n      # context: ./frontend|g" docker-compose.prod.yml
+          fi
+          
+          # Pull latest Docker images
+          docker compose -f docker-compose.prod.yml pull
+          
+          # Deploy with zero downtime using rolling update
+          echo "Starting deployment..."
+          docker compose -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
+          
+          # Wait for services to be ready
+          echo "Waiting for services to start..."
+          sleep 45
+          
+          # Health check with retries
+          echo "Performing health check..."
+          for i in {1..5}; do
+            if curl -f -s http://localhost/api/health >/dev/null 2>&1; then
+              echo "✅ Health check passed on attempt $i"
+              break
+            elif [ $i -eq 5 ]; then
+              echo "❌ Health check failed after 5 attempts"
+              echo "Rolling back deployment..."
+              
+              # Restore backup if available
+              if [ -f docker-compose.prod.yml.bak ]; then
+                mv docker-compose.prod.yml.bak docker-compose.prod.yml
+                docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+              fi
+              
+              exit 1
+            else
+              echo "Health check attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
+          
+          # Clean up old images and containers
+          docker system prune -f --volumes
+          
+          # Remove backup compose file
+          rm -f docker-compose.prod.yml.bak
+          
+          echo "✅ Deployment completed successfully!"
+
+  notify:
+    name: 📢 Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    
+    steps:
+    - name: 📢 Discord Notification
+      if: always() && secrets.DISCORD_WEBHOOK != ''
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        title: "🚀 Verber Deployment"
+        description: |
+          **Repository:** ${{ github.repository }}
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** [`${{ github.event.head_commit.id }}`](${{ github.event.head_commit.url }})
+          **Author:** ${{ github.event.head_commit.author.name }}
+          **Message:** ${{ github.event.head_commit.message }}
+          **Status:** ${{ needs.deploy.result }}
+          **Workflow:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        color: ${{ needs.deploy.result == 'success' && 0x00ff00 || 0xff0000 }}
+        
+    - name: 📧 Email Notification on Failure
+      if: needs.deploy.result == 'failure' && secrets.SMTP_SERVER != ''
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{ secrets.SMTP_SERVER }}
+        server_port: ${{ secrets.SMTP_PORT || '587' }}
+        username: ${{ secrets.SMTP_USERNAME }}
+        password: ${{ secrets.SMTP_PASSWORD }}
+        subject: "❌ Verber Deployment Failed - ${{ github.ref_name }}"
+        body: |
+          Deployment of Verber application failed.
+          
+          Details:
+          - Repository: ${{ github.repository }}
+          - Branch: ${{ github.ref_name }}
+          - Commit: ${{ github.sha }}
+          - Author: ${{ github.event.head_commit.author.name }}
+          - Message: ${{ github.event.head_commit.message }}
+          - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          Please check the logs and fix the issues.
+        to: ${{ secrets.NOTIFICATION_EMAIL }}
+        from: "Verber Deploy Bot <${{ secrets.SMTP_USERNAME }}>"

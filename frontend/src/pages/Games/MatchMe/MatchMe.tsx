@@ -6,18 +6,17 @@ import {
     CardContent,
     Chip,
     Container,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle, Grid, LinearProgress, Paper, Stack,
+    Grid, LinearProgress, Paper, Stack,
     Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { FRENCH_PRONOUNS } from '../../../constants';
+import GameScoreDialog from '../../../components/GameScoreDialog';
+import { PRONOUNS } from '../../../constants';
 import { TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { randElement, shuffle } from '../../../utils/gameUtils';
@@ -61,6 +60,9 @@ const MatchMe: React.FC = () => {
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
     const allVerbs = useSelector((state: RootState) => state.verb.verbs);
     const ongoingGameInfo = useSelector((state: RootState) => state.game.ongoingGameInfo);
+
+    // Audio feedback
+    const { playSuccess, playFailure } = useAudio();
 
     const [gameData, setGameData] = useState<MatchMeStepData[]>([]);
     const [gameScore, setGameScore] = useState<MatchMeGameInfo>({
@@ -115,7 +117,7 @@ const MatchMe: React.FC = () => {
                             tense,
                             verb: selectedVerb,
                             conjugation,
-                            pronoun: FRENCH_PRONOUNS[pronounIndex],
+                            pronoun: PRONOUNS[pronounIndex],
                             pronounIndex,
                         });
 
@@ -270,6 +272,16 @@ const MatchMe: React.FC = () => {
             score: prev.score + scoreIncrease
         }));
 
+        // Play audio feedback based on performance
+        const isNextLastStep = gameScore.currentStep + 1 >= gameScore.maxStep;
+        const successThreshold = Math.ceil(totalMatches * 0.6); // 60% or more correct
+        console.log('🎮 MatchMe: Playing audio feedback', { correctCount, totalMatches, successThreshold, isSuccess: correctCount >= successThreshold, isNextLastStep });
+        if (correctCount >= successThreshold) {
+            playSuccess(isNextLastStep);
+        } else {
+            playFailure(isNextLastStep);
+        }
+
         // Move to next question after delay
         setTimeout(() => {
             setShowAnswers(false);
@@ -287,7 +299,7 @@ const MatchMe: React.FC = () => {
                 }));
             }
         }, 3000);
-    }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer]);
+    }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, playSuccess, playFailure]);
 
     const handleSubmit = () => {
         checkAnswers();
@@ -343,7 +355,7 @@ const MatchMe: React.FC = () => {
                 timerRef.current = null;
             }
         };
-    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswers, isProcessingAnswer, gameData, checkAnswers]);
+    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswers, isProcessingAnswer, gameData, checkAnswers, playSuccess, playFailure]);
 
     const handleClose = () => {
         navigate('/dashboard');
@@ -834,39 +846,16 @@ const MatchMe: React.FC = () => {
                     </motion.div>
                 )}
 
-                {/* Score Dialog */}
-                <Dialog open={showScore} onClose={handleClose} maxWidth="sm" fullWidth>
-                    <DialogTitle>
-                        <Typography variant="h4" textAlign="center">
-                            {Math.floor((gameScore.score / (gameScore.maxStep * 100)) * 100) > 70
-                                ? '🎉 Excellent !'
-                                : Math.floor((gameScore.score / (gameScore.maxStep * 100)) * 100) > 50
-                                    ? '👍 Bien joué !'
-                                    : '💪 Continuez à pratiquer !'}
-                        </Typography>
-                    </DialogTitle>
-                    <DialogContent>
-                        <Stack spacing={2} alignItems="center">
-                            <Typography variant="h2" color="primary">
-                                {gameScore.score}
-                            </Typography>
-                            <Typography variant="h6">
-                                Score: {Math.floor((gameScore.score / (gameScore.maxStep * 100)) * 100)}%
-                            </Typography>
-                            <Typography variant="body1">
-                                Score total: {gameScore.score} / {gameScore.maxStep * 100}
-                            </Typography>
-                        </Stack>
-                    </DialogContent>
-                    <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-                        <Button onClick={handlePlayAgain} variant="contained" color="primary" size="large">
-                            Rejouer
-                        </Button>
-                        <Button onClick={handleClose} variant="outlined" size="large">
-                            Retour au tableau de bord
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                {/* Reusable Score Dialog */}
+                <GameScoreDialog
+                    open={showScore}
+                    onClose={handleClose}
+                    onPlayAgain={handlePlayAgain}
+                    score={gameScore.score}
+                    maxScore={gameScore.maxStep * 100}
+                    correctAnswers={gameScore.score / 100}
+                    totalQuestions={gameScore.maxStep}
+                />
             </Container>
         </Box>
     );

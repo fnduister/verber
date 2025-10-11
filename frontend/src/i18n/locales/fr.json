@@ -1,0 +1,245 @@
+{
+  "app": {
+    "title": "Verber - Apprenez les verbes en s'amusant",
+    "welcome": "Bienvenue"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "games": "Jeux",
+    "exercises": "Exercices",
+    "leaderboard": "Classement",
+    "profile": "Profil",
+    "settings": "Paramètres"
+  },
+  "header": {
+    "appName": "🎯 Verber",
+    "myProfile": "Mon Profil",
+    "level": "Niveau {{level}}",
+    "xp": "{{xp}} XP"
+  },
+  "language": {
+    "changeLanguage": "Changer de langue"
+  },
+  "home": {
+    "title": "Bienvenue sur Verber",
+    "welcomeBack": "Bienvenue",
+    "subtitle": "Apprenez les verbes français à travers des jeux interactifs et des défis",
+    "getStarted": "Commencer",
+    "signIn": "Se connecter",
+    "features": {
+      "interactiveGames": {
+        "title": "🎮 Jeux interactifs",
+        "description": "Apprenez les verbes grâce à des jeux de glisser-déposer amusants, des exercices d'association et des défis interactifs."
+      },
+      "multiplayer": {
+        "title": "👥 Défis multijoueurs",
+        "description": "Affrontez vos amis dans des défis de verbes en temps réel et grimpez dans les classements."
+      },
+      "trackProgress": {
+        "title": "📈 Suivez vos progrès",
+        "description": "Surveillez votre parcours d'apprentissage avec des statistiques détaillées et un suivi de progrès personnalisé."
+      }
+    }
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "email": "Email",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "loginSuccess": "Connexion réussie !",
+    "loginError": "Erreur de connexion",
+    "registerSuccess": "Inscription réussie !",
+    "registerError": "Erreur d'inscription",
+    "welcomeBack": "Bon retour !",
+    "signInSubtitle": "Connectez-vous pour continuer votre parcours d'apprentissage",
+    "signingIn": "Connexion en cours...",
+    "signIn": "Se connecter",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "createOneHere": "Créez-en un ici",
+    "createAccount": "Créer un compte",
+    "joinVerber": "Rejoignez Verber et commencez à apprendre les verbes français !",
+    "creatingAccount": "Création du compte...",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "signInHere": "Connectez-vous ici",
+    "age": "Âge",
+    "grade": "Niveau scolaire",
+    "passwordHelperText": "Minimum 6 caractères",
+    "grades": {
+      "6thGrade": "6ème",
+      "7thGrade": "5ème",
+      "8thGrade": "4ème", 
+      "9thGrade": "3ème",
+      "10thGrade": "Seconde",
+      "11thGrade": "Première",
+      "12thGrade": "Terminale",
+      "university": "Université",
+      "other": "Autre"
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcomeBack": "Bon retour, {{username}} ! 👋",
+    "chooseGame": "Choisissez un jeu pour commencer à apprendre",
+    "currentLevel": "Niveau actuel",
+    "totalXP": "XP total",
+    "verbsAvailable": "Verbes disponibles",
+    "startGame": "Commencer le jeu"
+  },
+  "games": {
+    "find-error": {
+      "title": "🎯 Trouver l'erreur",
+      "description": "Identifiez et corrigez les erreurs dans les phrases. Parfait pour perfectionner vos compétences grammaticales."
+    },
+    "matching": {
+      "title": "🎴 Jeu d'association",
+      "description": "Associez les infinitifs avec leurs formes conjuguées correctes. Parfait pour les apprenants visuels.",
+      "instruction": "🎴 Associez les verbes avec leurs conjugaisons !"
+    },
+    "write-me": {
+      "title": "✍️ Compléter les phrases",
+      "description": "Complétez les phrases avec les bonnes formes verbales. Pratiquez en contexte.",
+      "instruction": "✍️ Complétez les phrases avec les bonnes formes verbales !"
+    },
+    "race": {
+      "title": "🏁 Course de conjugaison",
+      "description": "Affrontez le chronomètre pour conjuguer correctement les verbes. À quelle vitesse pouvez-vous aller ?",
+      "instruction": "🏁 Conjuguez aussi vite que possible !"
+    },
+    "speedRound": {
+      "title": "⚡ Tour de vitesse",
+      "description": "Répondez rapidement à une série de questions sur les conjugaisons."
+    },
+    "complete": {
+      "title": "📝 Mode complet",
+      "description": "Mode d'entraînement complet avec toutes les fonctionnalités."
+    },
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Moyen",
+      "hard": "Difficile"
+    },
+    "loading": "Chargement du jeu...",
+    "common": {
+      "questionCount": "Question {{current}}/{{total}}",
+      "score": "Score : {{score}}",
+      "timeRemaining": "{{time}}s restant",
+      "excellent": "🎉 Excellent ! Bonne réponse !",
+      "incorrect": "😔 Incorrect !",
+      "correctAnswerWas": "La bonne réponse était :",
+      "nextQuestion": "Question suivante",
+      "tryAgain": "Réessayer",
+      "wellDone": "Bien joué !",
+      "keepGoing": "Continuez !"
+    },
+    "findError": {
+      "instruction": "🔍 Trouvez l'erreur !"
+    }
+  },
+  "gameRoom": {
+    "predefinedGroups": "Groupes prédéfinis",
+    "addVerbGroup": "Créer un groupe de verbes",
+    "addTenseGroup": "Créer un groupe de temps",
+    "sound": "Son",
+    "title": "Salle de jeu",
+    "loading": "Chargement des verbes et temps...",
+    "verbSelection": "Sélection des Verbes",
+    "tenseSelection": "Sélection des Temps",
+    "settings": "Paramètres du jeu",
+    "chooseVerbs": "Choisir les verbes",
+    "chooseTenses": "Choisir les temps",
+    "verbsPlaceholder": "Verbes",
+    "tensesPlaceholder": "Temps",
+    "numberOfQuestions": "Nombre de questions",
+    "timePerQuestion": "Temps par question",
+    "start": "Commencer",
+    "prerequisitesFor": "Prérequis pour {{game}}",
+    "prerequisiteDescription": "Ce jeu nécessite un niveau minimum pour une expérience optimale :",
+    "verbsSelected": "verbes sélectionnés",
+    "tensesSelected": "temps sélectionnés",
+    "minimumRequired": "minimum requis",
+    "prerequisiteTip": "Ajoutez plus de verbes et de temps pour débloquer ce jeu et profiter d'une expérience d'apprentissage plus riche !",
+    "selectionRequired": "Sélection requise",
+    "selectionRequiredMessage": "Veuillez sélectionner au moins quelques verbes et temps pour commencer le jeu.",
+    "readyToPlay": "Prêt à jouer !",
+    "selectionComplete": "Vous avez sélectionné {{verbs}} verbes et {{tenses}} temps. Parfait pour {{game}} !",
+    "customGroups": "Groupes personnalisés",
+    "presetGroups": "Groupes prédéfinis",
+    "createVerbGroup": "Créer un groupe de verbes",
+    "createTenseGroup": "Créer un groupe de temps",
+    "groupName": "Nom du groupe",
+    "add": "Ajouter",
+    "questions": "questions"
+  },
+  "gameScore": {
+    "fantastic": "🎉 Fantastique !",
+    "goodEffort": "💪 Bon effort !",
+    "successRate": "{{percentage}}% de réussite",
+    "correctAnswers": "Questions correctes: {{correct}} / {{total}}",
+    "playAgain": "Rejouer",
+    "backToDashboard": "Tableau de bord"
+  },
+  "audio": {
+    "title": "🎵 Système audio de test",
+    "description": "Testez le système de retour audio du jeu. Assurez-vous que votre navigateur autorise la lecture audio.",
+    "disabled": "L'audio est actuellement désactivé. Activez-le ci-dessous pour tester les sons.",
+    "settings": "Paramètres audio",
+    "enabled": "Audio activé",
+    "disabled_label": "Audio désactivé",
+    "volume": "Volume : {{volume}}%",
+    "testSounds": "Tester les sons",
+    "successSounds": "✅ Sons de réussite",
+    "failureSounds": "❌ Sons d'échec",
+    "regularSuccess": "Réussite normale",
+    "gameCompleteSuccess": "Réussite de fin de jeu",
+    "regularFailure": "Échec normal",
+    "gameOverFailure": "Échec de fin de jeu",
+    "forcePlay": "Lecture forcée",
+    "diagnostics": "Diagnostics",
+    "diagnosticsDescription": "Utilisez ces outils pour diagnostiquer les problèmes de chargement audio. Vérifiez la console du navigateur pour une sortie détaillée.",
+    "checkStatus": "Vérifier le statut audio",
+    "testAccess": "Tester l'accès aux fichiers",
+    "lastPlayed": "Dernière lecture : {{sound}}"
+  },
+  "tenses": {
+    "present": "Présent",
+    "passe_compose": "Passé composé",
+    "imparfait": "Imparfait",
+    "plus_que_parfait": "Plus-que-parfait",
+    "passe_simple": "Passé simple",
+    "passe_anterieur": "Passé antérieur",
+    "futur_simple": "Futur simple",
+    "futur_anterieur": "Futur antérieur",
+    "conditionnel_present": "Conditionnel présent",
+    "conditionnel_passe": "Conditionnel passé",
+    "subjonctif_present": "Subjonctif présent",
+    "subjonctif_passe": "Subjonctif passé",
+    "subjonctif_imparfait": "Subjonctif imparfait",
+    "subjonctif_plus_que_parfait": "Subjonctif plus-que-parfait",
+    "present_imperatif": "Impératif présent",
+    "passe_imperatif": "Impératif passé"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "retry": "Réessayer",
+    "playAgain": "Rejouer",
+    "tenses": "Temps",
+    "verbs": "Verbes"
+  }
+}

@@ -1,0 +1,120 @@
+name: 🏗️ Build and Test
+
+on:
+  pull_request:
+    branches: [ main, production ]
+  push:
+    branches: [ develop, feature/*, fix/* ]
+
+jobs:
+  test-frontend:
+    name: 🎨 Test Frontend
+    runs-on: ubuntu-latest
+    
+    env:
+      CI: false
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Install Dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Run Linting
+      run: |
+        cd frontend
+        npm run lint
+    
+    # - name: Run Tests
+    #   run: |
+    #     cd frontend
+    #     npm test -- --coverage --watchAll=false
+    
+    - name: Build Application
+      run: |
+        cd frontend
+        npm run build
+
+  test-backend:
+    name: ⚙️ Test Backend
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install Dependencies
+      run: |
+        cd backend
+        go mod download
+    
+    - name: Run Tests
+      env:
+        DATABASE_URL: postgres://test_user:test_pass@localhost:5432/test_db?sslmode=disable
+        REDIS_URL: redis://localhost:6379
+      run: |
+        cd backend
+        go test -v ./... -race -coverprofile=coverage.out
+    
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.out
+        flags: backend
+
+  docker-build:
+    name: 🐳 Docker Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test Backend Docker Build
+      run: |
+        docker build -t verber-backend-test ./backend
+    
+    - name: Test Frontend Docker Build
+      run: |
+        docker build -t verber-frontend-test ./frontend
+    
+    - name: Test Docker Compose
+      run: |
+        docker compose -f docker-compose.yml config
