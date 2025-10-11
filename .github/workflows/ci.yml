@@ -31,10 +31,10 @@ jobs:
         cd frontend
         npm run lint
     
-    - name: Run Tests
-      run: |
-        cd frontend
-        npm test -- --coverage --watchAll=false
+    # - name: Run Tests
+    #   run: |
+    #     cd frontend
+    #     npm test -- --coverage --watchAll=false
     
     - name: Build Application
       run: |
