@@ -100,6 +100,9 @@ services:
       - REACT_APP_WS_URL=ws://localhost:8080
       - REACT_APP_ENVIRONMENT=development
       - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=true
     volumes:
       - ./frontend:/app
       - /app/node_modules

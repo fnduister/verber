@@ -1,5 +1,5 @@
 // Utility functions for working with verb tenses
-import { AVAILABLE_TENSES, FRENCH_PRONOUNS, TENSE_MAP, TENSE_NAMES_KEY } from '../constants';
+import { AVAILABLE_TENSES, PRONOUNS, TENSE_MAP, TENSE_NAMES_KEY } from '../constants';
 import { VerbConjugation } from '../types';
 
 // Helper function to normalize Unicode strings for consistent comparison
@@ -66,7 +66,7 @@ export const validateTenseMapping = () => {
 export const formatConjugationTable = (conjugations: VerbConjugation, tense: string) => {
     const tenseConjugations = getTenseConjugations(conjugations, tense);
     
-    return FRENCH_PRONOUNS.map((person, index) => ({
+    return PRONOUNS.map((person, index) => ({
         person,
         form: tenseConjugations[index] || ''
     }));
@@ -75,7 +75,7 @@ export const formatConjugationTable = (conjugations: VerbConjugation, tense: str
 // Function to get conjugation with subject pronoun
 export const getConjugationWithPronoun = (conjugations: VerbConjugation, tense: string, person: number): string => {
     const conjugation = getConjugation(conjugations, tense, person);
-    const pronoun = FRENCH_PRONOUNS[person - 1];
+    const pronoun = PRONOUNS[person - 1];
     
     return conjugation ? `${pronoun} ${conjugation}` : '';
 };
@@ -135,7 +135,7 @@ export const testConjugationMapping = (conjugations: VerbConjugation, infinitive
         console.log(`\n${getTenseDisplayName(tense)}:`);
         for (let person = 1; person <= 6; person++) {
             const conjugation = getConjugation(conjugations, tense, person);
-            const pronoun = FRENCH_PRONOUNS[person - 1];
+            const pronoun = PRONOUNS[person - 1];
             const status = conjugation ? '✓' : '✗';
             console.log(`  ${status} ${pronoun}: ${conjugation || 'MISSING'}`);
         }

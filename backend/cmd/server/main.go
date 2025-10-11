@@ -19,11 +19,18 @@ import (
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		log.Println("No .env file found:", err)
+	} else {
+		log.Println(".env file loaded successfully")
 	}
 
 	// Initialize configuration
 	cfg := config.Load()
+
+	// Debug: print the configuration values
+	log.Printf("DATABASE_URL: %s", cfg.DatabaseURL)
+	log.Printf("FRONTEND_URL: %s", cfg.FrontendURL)
+	log.Printf("Environment: %s", cfg.Environment)
 
 	// Initialize database
 	db, err := database.Initialize(cfg.DatabaseURL)
@@ -43,7 +50,17 @@ func main() {
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{cfg.FrontendURL}
+	if cfg.Environment == "development" {
+		// More permissive CORS for development
+		corsConfig.AllowOrigins = []string{
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://localhost:3002",
+			cfg.FrontendURL,
+		}
+	} else {
+		corsConfig.AllowOrigins = []string{cfg.FrontendURL}
+	}
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept", "X-Requested-With"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
@@ -63,7 +80,7 @@ func main() {
 		public.OPTIONS("/auth/login", func(c *gin.Context) {
 			c.Status(204)
 		})
-		
+
 		public.POST("/auth/register", h.Register)
 		public.POST("/auth/login", h.Login)
 		public.POST("/auth/refresh", h.RefreshToken)

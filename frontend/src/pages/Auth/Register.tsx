@@ -15,12 +15,14 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { clearError, registerUser } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
 
 const Register: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -38,15 +40,15 @@ const Register: React.FC = () => {
     const [passwordError, setPasswordError] = useState('');
 
     const grades = [
-        '6th Grade',
-        '7th Grade',
-        '8th Grade',
-        '9th Grade',
-        '10th Grade',
-        '11th Grade',
-        '12th Grade',
-        'University',
-        'Other',
+        { key: '6thGrade', value: t('auth.grades.6thGrade') },
+        { key: '7thGrade', value: t('auth.grades.7thGrade') },
+        { key: '8thGrade', value: t('auth.grades.8thGrade') },
+        { key: '9thGrade', value: t('auth.grades.9thGrade') },
+        { key: '10thGrade', value: t('auth.grades.10thGrade') },
+        { key: '11thGrade', value: t('auth.grades.11thGrade') },
+        { key: '12thGrade', value: t('auth.grades.12thGrade') },
+        { key: 'university', value: t('auth.grades.university') },
+        { key: 'other', value: t('auth.grades.other') },
     ];
 
     useEffect(() => {
@@ -105,7 +107,7 @@ const Register: React.FC = () => {
         <Container maxWidth="sm">
             <Box
                 sx={{
-                    minHeight: '100vh',
+                    minHeight: 'calc(100vh - 80px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -122,10 +124,10 @@ const Register: React.FC = () => {
                         <Box sx={{ textAlign: 'center', mb: 4 }}>
                             <PersonAdd sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                             <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-                                Create Account
+                                {t('auth.createAccount')}
                             </Typography>
                             <Typography variant="body1" color="text.secondary">
-                                Join Verber and start learning French verbs!
+                                {t('auth.joinVerber')}
                             </Typography>
                         </Box>
 
@@ -144,7 +146,7 @@ const Register: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <TextField
                                 fullWidth
-                                label="Username"
+                                label={t('auth.username')}
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
@@ -152,12 +154,11 @@ const Register: React.FC = () => {
                                 margin="normal"
                                 autoComplete="username"
                                 autoFocus
-                                helperText="Choose a unique username"
                             />
 
                             <TextField
                                 fullWidth
-                                label="Email"
+                                label={t('auth.email')}
                                 name="email"
                                 type="email"
                                 value={formData.email}
@@ -171,7 +172,7 @@ const Register: React.FC = () => {
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         fullWidth
-                                        label="Age"
+                                        label={t('auth.age')}
                                         name="age"
                                         type="number"
                                         value={formData.age}
@@ -184,15 +185,15 @@ const Register: React.FC = () => {
                                     <TextField
                                         fullWidth
                                         select
-                                        label="Grade"
+                                        label={t('auth.grade')}
                                         name="grade"
                                         value={formData.grade}
                                         onChange={handleChange}
                                         required
                                     >
                                         {grades.map((grade) => (
-                                            <MenuItem key={grade} value={grade}>
-                                                {grade}
+                                            <MenuItem key={grade.key} value={grade.value}>
+                                                {grade.value}
                                             </MenuItem>
                                         ))}
                                     </TextField>
@@ -201,7 +202,7 @@ const Register: React.FC = () => {
 
                             <TextField
                                 fullWidth
-                                label="Password"
+                                label={t('auth.password')}
                                 name="password"
                                 type={showPassword ? 'text' : 'password'}
                                 value={formData.password}
@@ -209,7 +210,7 @@ const Register: React.FC = () => {
                                 required
                                 margin="normal"
                                 autoComplete="new-password"
-                                helperText="Minimum 6 characters"
+                                helperText={t('auth.passwordHelperText')}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
@@ -226,7 +227,7 @@ const Register: React.FC = () => {
 
                             <TextField
                                 fullWidth
-                                label="Confirm Password"
+                                label={t('auth.confirmPassword')}
                                 name="confirmPassword"
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 value={formData.confirmPassword}
@@ -256,19 +257,19 @@ const Register: React.FC = () => {
                                 disabled={loading}
                                 sx={{ mt: 3, mb: 2, py: 1.5 }}
                             >
-                                {loading ? 'Creating Account...' : 'Create Account'}
+                                {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
                             </Button>
 
                             <Box sx={{ textAlign: 'center', mt: 2 }}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Already have an account?{' '}
+                                    {t('auth.alreadyHaveAccount')}{' '}
                                     <Link
                                         component="button"
                                         type="button"
                                         onClick={() => navigate('/login')}
                                         sx={{ cursor: 'pointer', textDecoration: 'none' }}
                                     >
-                                        Sign in here
+                                        {t('auth.signInHere')}
                                     </Link>
                                 </Typography>
                             </Box>

@@ -6,8 +6,23 @@ import TimerIcon from '@mui/icons-material/Timer';
 // French pronouns for conjugation
 export const PRONOUNS = ["je/j' ", 'tu ', 'il/elle ', 'nous ', 'vous ', 'ils/elles '];
 
+export const MIN_PREREQUISITE_VERBS: Record<string, number> = {
+    'find-error': 1,
+    'matching': 1,
+    'write-me': 1,
+    'speed-round': 1
+}
+
+export const MIN_PREREQUISITE_TENSES: Record<string, number> = {
+    'find-error': 2,
+    'matching': 3,
+    'write-me': 1,
+    'speed-round': 3
+}
+
 // Tense display names (French to formatted display)
 export const TENSE_DISPLAY_NAMES: Record<string, string> = {
+    // French names with spaces (for internal use and preset groups)
     'présent': 'Présent',
     'passé composé': 'Passé composé',
     'imparfait': 'Imparfait',
@@ -24,6 +39,23 @@ export const TENSE_DISPLAY_NAMES: Record<string, string> = {
     'subjonctif plus-que-parfait': 'Subjonctif plus-que-parfait',
     'impératif présent': 'Impératif présent',
     'impératif passé': 'Impératif passé',
+    
+    // Backend format names with underscores (from API)
+    'present': 'Présent',
+    'passe_compose': 'Passé composé',
+    'plus_que_parfait': 'Plus-que-parfait',
+    'passe_simple': 'Passé simple',
+    'passe_anterieur': 'Passé antérieur',
+    'futur_simple': 'Futur simple',
+    'futur_anterieur': 'Futur antérieur',
+    'conditionnel_present': 'Conditionnel présent',
+    'conditionnel_passe': 'Conditionnel passé',
+    'subjonctif_present': 'Subjonctif présent',
+    'subjonctif_passe': 'Subjonctif passé',
+    'subjonctif_imparfait': 'Subjonctif imparfait',
+    'subjonctif_plus_que_parfait': 'Subjonctif plus-que-parfait',
+    'present_imperatif': 'Impératif présent',
+    'passe_imperatif': 'Impératif passé',
 };
 
 export const TENSE_NAMES_KEY: Record<string, string> = {
@@ -97,7 +129,7 @@ export const GAME_TYPES = [
         description: 'Identify and correct errors in sentences. Perfect for honing your grammar skills.',
         difficulty: 'Medium',
         duration: '5 min',
-        players: '1-4 players',
+        players: '1-4',
         color: '#3b82f6',
         icon: <SportsEsportsIcon sx={{ fontSize: 48 }} />,
     },
@@ -107,7 +139,7 @@ export const GAME_TYPES = [
         description: 'Match infinitives with their correct conjugated forms. Perfect for visual learners.',
         difficulty: 'Easy',
         duration: '3 min',
-        players: '1-2 players',
+        players: '1-2',
         color: '#10b981',
         icon: <PeopleIcon sx={{ fontSize: 48 }} />,
     },
@@ -117,7 +149,7 @@ export const GAME_TYPES = [
         description: 'Complete sentences with the correct verb forms. Practice in context.',
         difficulty: 'Medium',
         duration: '4 min',
-        players: '1-4 players',
+        players: '1-4',
         color: '#f59e0b',
         icon: <TimerIcon sx={{ fontSize: 48 }} />,
     },
@@ -127,7 +159,7 @@ export const GAME_TYPES = [
         description: 'Compete against the clock to conjugate verbs correctly. How fast can you go?',
         difficulty: 'Hard',
         duration: '1 min',
-        players: '1-4 players',
+        players: '1-4',
         color: '#ef4444',
         icon: <EmojiEventsIcon sx={{ fontSize: 48 }} />,
     },

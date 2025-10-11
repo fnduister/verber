@@ -1,12 +1,13 @@
+import CssBaseline from '@mui/material/CssBaseline';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { store } from './store/store';
 import App from './App';
+import './i18n/i18n'; // Initialize i18n
 import './index.css';
+import { store } from './store/store';
 
 const theme = createTheme({
     palette: {

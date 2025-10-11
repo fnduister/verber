@@ -13,12 +13,14 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { clearError, loginUser } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
 
 const Login: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -54,7 +56,7 @@ const Login: React.FC = () => {
         <Container maxWidth="sm">
             <Box
                 sx={{
-                    minHeight: '100vh',
+                    minHeight: 'calc(100vh - 80px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -71,10 +73,10 @@ const Login: React.FC = () => {
                         <Box sx={{ textAlign: 'center', mb: 4 }}>
                             <LoginIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                             <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-                                Welcome Back!
+                                {t('auth.welcomeBack')}
                             </Typography>
                             <Typography variant="body1" color="text.secondary">
-                                Sign in to continue your learning journey
+                                {t('auth.signInSubtitle')}
                             </Typography>
                         </Box>
 
@@ -87,7 +89,7 @@ const Login: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <TextField
                                 fullWidth
-                                label="Username"
+                                label={t('auth.username')}
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
@@ -99,7 +101,7 @@ const Login: React.FC = () => {
 
                             <TextField
                                 fullWidth
-                                label="Password"
+                                label={t('auth.password')}
                                 name="password"
                                 type={showPassword ? 'text' : 'password'}
                                 value={formData.password}
@@ -129,19 +131,19 @@ const Login: React.FC = () => {
                                 disabled={loading}
                                 sx={{ mt: 3, mb: 2, py: 1.5 }}
                             >
-                                {loading ? 'Signing In...' : 'Sign In'}
+                                {loading ? t('auth.signingIn') : t('auth.signIn')}
                             </Button>
 
                             <Box sx={{ textAlign: 'center', mt: 2 }}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Don't have an account?{' '}
+                                    {t('auth.dontHaveAccount')}{' '}
                                     <Link
                                         component="button"
                                         type="button"
                                         onClick={() => navigate('/register')}
                                         sx={{ cursor: 'pointer', textDecoration: 'none' }}
                                     >
-                                        Create one here
+                                        {t('auth.createOneHere')}
                                     </Link>
                                 </Typography>
                             </Box>
