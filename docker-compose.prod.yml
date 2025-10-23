@@ -83,6 +83,8 @@ services:
       args:
         - REACT_APP_API_URL=${REACT_APP_API_URL:-https://verber.sicole.com/api}
         - REACT_APP_WS_URL=${REACT_APP_WS_URL:-wss://verber.sicole.com}
+        - REACT_APP_ENVIRONMENT=production
+        - NODE_ENV=production
     container_name: verber-frontend-prod
     restart: always
     # Map to port 3001 for nginx proxy

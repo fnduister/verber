@@ -27,17 +27,19 @@ WORKDIR /app
 ARG REACT_APP_API_URL=http://localhost:8080/api
 ARG REACT_APP_WS_URL=ws://localhost:8080
 ARG REACT_APP_ENVIRONMENT=development
+ARG NODE_ENV=development
 
 # Set environment variables from build args
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 ENV REACT_APP_WS_URL=$REACT_APP_WS_URL
 ENV REACT_APP_ENVIRONMENT=$REACT_APP_ENVIRONMENT
+ENV NODE_ENV=$NODE_ENV
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Install dependencies (ignore scripts like husky prepare)
+RUN npm install --legacy-peer-deps --ignore-scripts
 
 # Copy source code
 COPY . .

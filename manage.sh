@@ -91,10 +91,10 @@ restart_services() {
     echo "=============================="
     
     echo "Stopping services..."
-    docker-compose -f docker-compose.prod.yml down
+    docker compose -f docker-compose.prod.yml down
     
     echo "Starting services..."
-    docker-compose -f docker-compose.prod.yml up -d
+    docker compose -f docker-compose.prod.yml up --build -d
     
     echo "Waiting for services to start..."
     sleep 20
