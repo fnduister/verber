@@ -124,6 +124,18 @@
       "hard": "Hard"
     },
     "loading": "Loading game...",
+    "error": {
+      "title": "Unable to Load Game",
+      "noData": "No game data available. Please return to the game setup and try again.",
+      "invalidConfig": "Invalid game configuration. Please select verbs and tenses before starting.",
+      "returnToSetup": "Return to Setup",
+      "unexpected": "An unexpected error occurred while setting up the game:",
+      "retry": "Try Again",
+      "failedToGenerate": "Failed to generate game data. Please try again.",
+      "notEnougthCorrectWords": "Not enough correct words found. Please try again.",
+      "verbDataMissing": "Missing data for verb '{{verb}}'.",
+      "insufficientTenseOptions": "Insufficient tense options generated for verb '{{verb}}'."
+    },
     "common": {
       "questionCount": "Question {{current}}/{{total}}",
       "score": "Score: {{score}}",

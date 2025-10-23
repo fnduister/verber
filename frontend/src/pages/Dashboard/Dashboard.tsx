@@ -146,7 +146,7 @@ const Dashboard: React.FC = () => {
                                         956
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                        Verbs Available
+                                        {t('dashboard.verbsAvailable')}
                                     </Typography>
                                 </Card>
                             </Grid>

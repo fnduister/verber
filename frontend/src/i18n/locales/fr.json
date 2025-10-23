@@ -124,6 +124,18 @@
       "hard": "Difficile"
     },
     "loading": "Chargement du jeu...",
+    "error": {
+      "title": "Impossible de charger le jeu",
+      "noData": "Aucune donnée de jeu disponible. Veuillez retourner à la configuration du jeu et réessayer.",
+      "invalidConfig": "Configuration de jeu invalide. Veuillez sélectionner des verbes et des temps avant de commencer.",
+      "returnToSetup": "Retour à la configuration",
+      "unexpected": "Une erreur inattendue s'est produite lors de la configuration du jeu :",
+      "retry": "Réessayer",
+      "failedToGenerate": "Échec de la génération des données du jeu. Veuillez réessayer.",
+      "notEnougthCorrectWords": "Pas assez de mots corrects trouvés. Veuillez réessayer.",
+      "verbDataMissing": "Données manquantes pour le verbe '{{verb}}'.",
+      "insufficientTenseOptions": "Options de temps insuffisantes générées pour le verbe '{{verb}}'."
+    },
     "common": {
       "questionCount": "Question {{current}}/{{total}}",
       "score": "Score : {{score}}",

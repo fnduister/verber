@@ -2,10 +2,13 @@ import { EmojiEvents, PlayArrow, Timer, TrendingUp } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, Chip, Container, LinearProgress, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameScoreDialog from '../../../components/GameScoreDialog';
-import { TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
+import { GAME_METADATA, MAX_TRIES } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
@@ -35,6 +38,7 @@ const Race: React.FC = () => {
 
     // Audio feedback
     const { playSuccess, playFailure } = useAudio();
+    const { t } = useTranslation();
 
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
@@ -43,7 +47,7 @@ const Race: React.FC = () => {
 
     const [gameData, setGameData] = useState<RaceStepData[]>([]);
     const [gameScore, setGameScore] = useState<RaceGameInfo>({
-        currentStep: 1,
+        currentStep: 0,
         score: 0,
         maxTime: ongoingGameInfo.maxTime,
         maxStep: ongoingGameInfo.maxStep,
@@ -56,9 +60,13 @@ const Race: React.FC = () => {
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [animateBackground, setAnimateBackground] = useState<string>('white');
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timerRef = useRef<number | null>(null);
 
     const initializeGame = useCallback(() => {
+        
+        setHasError(false);
         const steps: RaceStepData[] = [];
         const maxSteps = ongoingGameInfo.maxStep;
 
@@ -66,31 +74,52 @@ const Race: React.FC = () => {
             // Pick a random verb for this step
             const selectedVerb = randElement(currentVerbs);
             const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
-            console.log('Race - Found verb data:', verbData ? verbData.infinitive : 'NOT FOUND');
-
-            if (verbData && verbData.conjugations) {
-                const correctTense = randElement(currentTenses);
-                const pronounIndex = Math.floor(Math.random() * 6);
-                const conjugation = getConjugation(verbData.conjugations, correctTense, pronounIndex);
-
-                if (conjugation) {
-                    // Generate 3 tense options including the correct one
-                    const wrongTenses = shuffle(currentTenses.filter(t => t !== correctTense)).slice(0, 2);
-                    const allTenseOptions = shuffle([correctTense, ...wrongTenses]);
-
-                    steps.push({
-                        pronoun: getPronoun(pronounIndex),
-                        word: conjugation,
-                        visibleTenses: allTenseOptions,
-                        stepTense: correctTense,
-                    });
-                }
+            
+            if (!verbData) {
+                setErrorMessage(t('game.error.verbDataMissing', { verb: selectedVerb }));
+                console.log('Race - Found verb data:', verbData ? verbData.infinitive : 'NOT FOUND');
             }
+            
+            let tries = 0;
+            let allTenseOptions: string[] = [];
+            if (verbData && verbData.conjugations) {
+                while (allTenseOptions.length < 3 && tries < MAX_TRIES) {
+                    const correctTense = randElement(currentTenses);
+                    const pronounIndex = Math.floor(Math.random() * 6);
+                    const conjugation = getConjugation(verbData.conjugations, correctTense, pronounIndex);
+                    if (conjugation) {
+                        // Generate 3 tense options including the correct one
+                        const wrongTenses = shuffle(currentTenses.filter(t => t !== correctTense)).slice(0, 2);
+                        allTenseOptions = shuffle([correctTense, ...wrongTenses]);
+
+                        steps.push({
+                            pronoun: getPronoun(pronounIndex),
+                            word: conjugation,
+                            visibleTenses: allTenseOptions,
+                            stepTense: correctTense,
+                        });
+                    }
+                    tries++;
+                }
+            }else{
+                setErrorMessage(t('game.error.verbDataMissing', { verb: selectedVerb }));
+                setHasError(true);
+            }
+
+            if (allTenseOptions.length < 3) {
+                setErrorMessage(t('game.error.insufficientTenseOptions', { verb: selectedVerb }));
+                setHasError(true);
+            }
+        }
+
+        if (steps.length === 0) {
+            setHasError(true);
+            return;
         }
 
         setGameData(steps);
         setGameScore({
-            currentStep: 1,
+            currentStep: 0,
             score: 0,
             maxTime: ongoingGameInfo.maxTime,
             maxStep: steps.length,
@@ -109,7 +138,7 @@ const Race: React.FC = () => {
     // Initialize game
     useEffect(() => {
         if (currentVerbs.length === 0 || currentTenses.length === 0) {
-            navigate('/games/find-error');
+            setHasError(true);
             return;
         }
         initializeGame();
@@ -242,8 +271,21 @@ const Race: React.FC = () => {
 
     const handlePlayAgain = () => {
         setShowScore(false);
+        setHasError(false);
         initializeGame();
     };
+
+    // Show error state
+    if (hasError) {
+        return (
+            <GameErrorDisplay
+                hasValidConfig={currentVerbs.length > 0 && currentTenses.length > 0}
+                onRetry={handlePlayAgain}
+                onConfigure={() => navigate('/game-room/'+ GAME_METADATA["find-error"].url)}
+                errorMessage={errorMessage}
+            />
+        );
+    }
 
     if (gameData.length === 0 || gameScore.currentStep >= gameData.length) {
         return (
@@ -510,7 +552,7 @@ const Race: React.FC = () => {
                                             })
                                         }}
                                     >
-                                        {TENSE_DISPLAY_NAMES[tense] || tense}
+                                        {TENSE_KEY_TO_DISPLAY_NAMES[tense] || tense}
                                     </Button>
                                 </motion.div>
                             );
@@ -572,7 +614,7 @@ const Race: React.FC = () => {
                                             textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                                         }}
                                     >
-                                        "{TENSE_DISPLAY_NAMES[currentQuestion.stepTense] || currentQuestion.stepTense}"
+                                        "{TENSE_KEY_TO_DISPLAY_NAMES[currentQuestion.stepTense] || currentQuestion.stepTense}"
                                     </Typography>
                                 </motion.div>
                             )}
