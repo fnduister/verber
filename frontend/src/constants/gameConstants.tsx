@@ -10,77 +10,19 @@ export const MIN_PREREQUISITE_VERBS: Record<string, number> = {
     'find-error': 1,
     'matching': 1,
     'write-me': 1,
-    'speed-round': 1
+    'race': 1
 }
 
 export const MIN_PREREQUISITE_TENSES: Record<string, number> = {
     'find-error': 2,
     'matching': 3,
     'write-me': 1,
-    'speed-round': 3
+    'race': 3
 }
-
-// Tense display names (French to formatted display)
-export const TENSE_DISPLAY_NAMES: Record<string, string> = {
-    // French names with spaces (for internal use and preset groups)
-    'présent': 'Présent',
-    'passé composé': 'Passé composé',
-    'imparfait': 'Imparfait',
-    'plus-que-parfait': 'Plus-que-parfait',
-    'passé simple': 'Passé simple',
-    'passé antérieur': 'Passé antérieur',
-    'futur simple': 'Futur simple',
-    'futur antérieur': 'Futur antérieur',
-    'conditionnel présent': 'Conditionnel présent',
-    'conditionnel passé': 'Conditionnel passé',
-    'subjonctif présent': 'Subjonctif présent',
-    'subjonctif passé': 'Subjonctif passé',
-    'subjonctif imparfait': 'Subjonctif imparfait',
-    'subjonctif plus-que-parfait': 'Subjonctif plus-que-parfait',
-    'impératif présent': 'Impératif présent',
-    'impératif passé': 'Impératif passé',
-    
-    // Backend format names with underscores (from API)
-    'present': 'Présent',
-    'passe_compose': 'Passé composé',
-    'plus_que_parfait': 'Plus-que-parfait',
-    'passe_simple': 'Passé simple',
-    'passe_anterieur': 'Passé antérieur',
-    'futur_simple': 'Futur simple',
-    'futur_anterieur': 'Futur antérieur',
-    'conditionnel_present': 'Conditionnel présent',
-    'conditionnel_passe': 'Conditionnel passé',
-    'subjonctif_present': 'Subjonctif présent',
-    'subjonctif_passe': 'Subjonctif passé',
-    'subjonctif_imparfait': 'Subjonctif imparfait',
-    'subjonctif_plus_que_parfait': 'Subjonctif plus-que-parfait',
-    'present_imperatif': 'Impératif présent',
-    'passe_imperatif': 'Impératif passé',
-};
-
-export const TENSE_NAMES_KEY: Record<string, string> = {
-    'présent': 'present',
-    'passé composé': 'passe_compose',
-    'imperatif': 'imperatif',
-    'imparfait': 'imparfait',
-    'plus-que-parfait': 'plus_que_parfait',
-    'passé simple': 'passe_simple',
-    'passé antérieur': 'passe_anterieur',
-    'futur simple': 'futur_simple',
-    'futur antérieur': 'futur_anterieur',
-    'conditionnel présent': 'conditionnel_present',
-    'conditionnel passé': 'conditionnel_passe',
-    'subjonctif présent': 'subjonctif_present',
-    'subjonctif passé': 'subjonctif_passe',
-    'subjonctif imparfait': 'subjonctif_imparfait',
-    'subjonctif plus-que-parfait': 'subjonctif_plus_que_parfait',
-    'impératif présent': 'present_imperatif',
-    'impératif passé': 'passe_imperatif',
-};
 
 // Speed options for timed games
 export const GAME_SPEEDS = [
-    { name: 'Trop lent Mael', value: 240 },
+    { name: 'Ben Trop lent', value: 240 },
     { name: 'Lent 1', value: 120 },
     { name: 'Lent', value: 60 },
     { name: 'Normal', value: 30 },
@@ -90,11 +32,10 @@ export const GAME_SPEEDS = [
 
 // Special tenses that may have different handling
 export const SPECIAL_TENSES = [
-    'passé simple',
-    'passé antérieur',
-    'subjonctif imparfait',
-    'subjonctif plus-que-parfait',
+    'imperatif', 'imperatif_passe'
 ];
+
+export const MAX_TRIES = 10;
 
 // Preset verb groups for quick selection
 export const PRESET_VERB_GROUPS = [
@@ -106,9 +47,9 @@ export const PRESET_VERB_GROUPS = [
 
 // Preset tense groups for quick selection
 export const PRESET_TENSE_GROUPS = [
-    { title: 'Temps simples', tenses: ['présent', 'imparfait', 'futur simple'] },
-    { title: 'Temps composés', tenses: ['passé composé', 'plus-que-parfait', 'futur antérieur', 'passé antérieur'] },
-    { title: 'Mode conditionnel', tenses: ['conditionnel présent', 'conditionnel passé'] },
+    { title: 'Temps simples', tenses: ['present', 'imparfait', 'futur_simple'] },
+    { title: 'Temps composés', tenses: ['passe_compose', 'plus_que_parfait', 'futur_anterieur', 'passe_anterieur'] },
+    { title: 'Mode conditionnel', tenses: ['conditionnel_present', 'conditionnel_passe'] },
 ];
 
 // Game metadata for different game modes

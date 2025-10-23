@@ -1,5 +1,5 @@
 // Utility functions for working with verb tenses
-import { AVAILABLE_TENSES, PRONOUNS, TENSE_MAP, TENSE_NAMES_KEY } from '../constants';
+import { AVAILABLE_TENSES, PRONOUNS, TENSE_MAP } from '../constants';
 import { VerbConjugation } from '../types';
 
 // Helper function to normalize Unicode strings for consistent comparison
@@ -20,7 +20,8 @@ export const findVerbByInfinitive = (verbs: any[], infinitive: string): any | un
 
 // Helper function to get conjugation for a specific tense and person
 export const getConjugation = (conjugations: VerbConjugation, tense: string, person: number): string => {
-    const key = `${TENSE_NAMES_KEY[tense]}_${person + 1}` as keyof VerbConjugation;
+    debugger;
+    const key = `${tense}_${person + 1}` as keyof VerbConjugation;
     return conjugations[key] as string || '';
 };
 

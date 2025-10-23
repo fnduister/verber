@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { AudioSettings } from '../../components/AudioSettings';
+import { TENSE_MAP } from '../../constants';
 import {
     GAME_METADATA,
     GAME_SPEEDS,
@@ -31,8 +32,7 @@ import {
     MIN_PREREQUISITE_VERBS,
     PRESET_TENSE_GROUPS,
     PRESET_VERB_GROUPS,
-    SPECIAL_TENSES,
-    TENSE_DISPLAY_NAMES
+    SPECIAL_TENSES
 } from '../../constants/gameConstants';
 import {
     addCustomTenseGroup,
@@ -123,6 +123,7 @@ const GameRoom = () => {
 
     const handleSelectVerb = (verbs: string[], isSelected: boolean) => {
         if (!isSelected) {
+            debugger;
             const newVerbs = verbs.filter((v) => !currentVerbs.includes(v));
             dispatch(setCurrentVerbs([...currentVerbs, ...newVerbs]));
         } else {
@@ -221,6 +222,10 @@ const GameRoom = () => {
                         options={verbOptions}
                         value={currentVerbs}
                         onChange={(_, newValue) => dispatch(setCurrentVerbs(newValue))}
+                        filterSelectedOptions
+                        isOptionEqualToValue={(option, value) => 
+                            option.normalize('NFD') === value.normalize('NFD')
+                        }
                         renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseVerbs')} placeholder={t('gameRoom.verbsPlaceholder')} />}
                         renderTags={(value, getTagProps) =>
                             value.map((option, index) => (
@@ -316,12 +321,16 @@ const GameRoom = () => {
                         options={getTenses()}
                         value={currentTenses}
                         onChange={(_, newValue) => dispatch(setCurrentTenses(newValue))}
+                        filterSelectedOptions
+                        isOptionEqualToValue={(option, value) => 
+                            option.normalize('NFD') === value.normalize('NFD')
+                        }
                         renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseTenses')} placeholder={t('gameRoom.tensesPlaceholder')} />}
-                        getOptionLabel={(option) => TENSE_DISPLAY_NAMES[option] || option}
+                        getOptionLabel={(option) => TENSE_MAP[option]?.displayName || option}
                         renderTags={(value, getTagProps) =>
                             value.map((option, index) => (
                                 <Chip
-                                    label={TENSE_DISPLAY_NAMES[option] || option}
+                                    label={TENSE_MAP[option]?.displayName || option}
                                     {...getTagProps({ index })}
                                     onDelete={() => handleDeleteTense(option)}
                                 />

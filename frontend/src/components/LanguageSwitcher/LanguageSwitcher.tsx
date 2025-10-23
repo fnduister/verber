@@ -1,4 +1,3 @@
-import { Language } from '@mui/icons-material';
 import { Box, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,13 +24,13 @@ export const LanguageSwitcher: React.FC = () => {
     handleClose();
   };
 
-  // const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
+  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
 
   return (
-    <Box>
+    <Box> 
       <Tooltip title={t('language.changeLanguage')}>
-        <IconButton onClick={handleClick} color="inherit">
-          <Language />
+        <IconButton onClick={handleClick} color="inherit" sx={{ fontSize: '1.5rem' }}>
+          {currentLanguage.flag}
         </IconButton>
       </Tooltip>
       <Menu
@@ -53,6 +52,7 @@ export const LanguageSwitcher: React.FC = () => {
             onClick={() => handleLanguageChange(language.code)}
             selected={language.code === i18n.language}
           >
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <span>{language.flag}</span>
               <span>{language.name}</span>

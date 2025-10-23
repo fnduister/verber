@@ -11,11 +11,13 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameScoreDialog from '../../../components/GameScoreDialog';
-import { PRONOUNS } from '../../../constants';
-import { TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { PRONOUNS, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
+import { GAME_METADATA } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
@@ -63,6 +65,7 @@ const MatchMe: React.FC = () => {
 
     // Audio feedback
     const { playSuccess, playFailure } = useAudio();
+    const { t } = useTranslation();
 
     const [gameData, setGameData] = useState<MatchMeStepData[]>([]);
     const [gameScore, setGameScore] = useState<MatchMeGameInfo>({
@@ -80,63 +83,78 @@ const MatchMe: React.FC = () => {
     const [correctnessStatus, setCorrectnessStatus] = useState<Record<string, boolean>>({});
     const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
     const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
 
     const timerRef = useRef<number | null>(null);
     const userMatchesRef = useRef<Record<string, string>>({});
+    const MAX_TRIES = 10;
 
     const initializeGame = useCallback(() => {
-
+        setHasError(false);
+        debugger;
         const steps: MatchMeStepData[] = [];
         const maxSteps = ongoingGameInfo.maxStep;
 
         for (let i = 0; i < maxSteps; i++) {
-            const items: MatchItem[] = [];
-            const matches: Record<string, string> = {};
+            
+            // Select 3 different tenses for this step
+            
+            let tries = 0;
+            let items: MatchItem[] = [];
+            let matches: Record<string, string> = {};
+            let selectedTenses: string[] = [];
+            while(items.length < 3 && tries < MAX_TRIES) {
+                selectedTenses = shuffle(currentTenses).slice(0, 3);
+                items = [];
+                matches = {};
+                selectedTenses.forEach((tense, index) => {
+                    // Pick a random verb for this tense
+                    const selectedVerb = randElement(currentVerbs);
+                    console.log(`MatchMe - Step ${i}, Tense ${index}: Looking for verb '${selectedVerb}'`);
+                    const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
+                    console.log('MatchMe - Found verb data:', verbData ? verbData.infinitive : 'NOT FOUND');
 
-            // Select 4-6 different tenses for this step
-            const selectedTenses = shuffle(currentTenses).slice(0, Math.min(6, currentTenses.length, 4));
+                    if (verbData && verbData.conjugations) {
+                        const pronounIndex = Math.floor(Math.random() * 6);
+                        const conjugation = getConjugation(verbData.conjugations, tense, pronounIndex);
+                        console.log(`MatchMe - Conjugation for ${selectedVerb} (${tense}, person ${pronounIndex}):`, conjugation);
 
-            selectedTenses.forEach((tense, index) => {
-                // Pick a random verb for this tense
-                const selectedVerb = randElement(currentVerbs);
-                console.log(`MatchMe - Step ${i}, Tense ${index}: Looking for verb '${selectedVerb}'`);
-                const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
-                console.log('MatchMe - Found verb data:', verbData ? verbData.infinitive : 'NOT FOUND');
+                        if (conjugation) {
+                            const tenseId = `tense-${i}-${index}`;
+                            const conjugationId = `conj-${i}-${index}`;
 
-                if (verbData && verbData.conjugations) {
-                    const pronounIndex = Math.floor(Math.random() * 6);
-                    const conjugation = getConjugation(verbData.conjugations, tense, pronounIndex);
-                    console.log(`MatchMe - Conjugation for ${selectedVerb} (${tense}, person ${pronounIndex}):`, conjugation);
+                            items.push({
+                                id: conjugationId,
+                                tense,
+                                verb: selectedVerb,
+                                conjugation,
+                                pronoun: PRONOUNS[pronounIndex],
+                                pronounIndex,
+                            });
 
-                    if (conjugation) {
-                        const tenseId = `tense-${i}-${index}`;
-                        const conjugationId = `conj-${i}-${index}`;
-
-                        items.push({
-                            id: conjugationId,
-                            tense,
-                            verb: selectedVerb,
-                            conjugation,
-                            pronoun: PRONOUNS[pronounIndex],
-                            pronounIndex,
-                        });
-
-                        matches[tenseId] = conjugationId;
+                            matches[tenseId] = conjugationId;
+                        }
                     }
-                }
-            });
-
-            if (items.length >= 3) { // Ensure we have at least 3 matches
-                steps.push({
-                    items: shuffle(items), // Shuffle conjugations
-                    matches,
-                    tenses: selectedTenses // Store original tense order
                 });
+                tries++;
             }
+            steps.push({
+                items: shuffle(items), // Shuffle conjugations
+                matches,
+                tenses: selectedTenses // Store original tense order
+            });
         }
 
         console.log('MatchMe - Generated steps:', steps.length);
         console.log('MatchMe - Step data:', steps);
+
+        if (steps.length === 0) {
+            console.error('MatchMe - Failed to generate game data');
+            setErrorMessage(t('game.error.errorGenerating'));
+            setHasError(true);
+            return;
+        }
 
         setGameData(steps);
         setGameScore({
@@ -363,6 +381,7 @@ const MatchMe: React.FC = () => {
 
     const handlePlayAgain = () => {
         setShowScore(false);
+        setHasError(false);
         initializeGame();
     };
 
@@ -379,6 +398,17 @@ const MatchMe: React.FC = () => {
     };
 
 
+
+    if (hasError) {
+        return (
+            <GameErrorDisplay
+                hasValidConfig={currentVerbs.length > 0 && currentTenses.length > 0}
+                onRetry={handlePlayAgain}
+                onConfigure={() => navigate('/game-room/'+ GAME_METADATA["find-error"].url)}
+                errorMessage={errorMessage}
+            />
+        );
+    }
 
     if (gameData.length === 0 || gameScore.currentStep >= gameData.length) {
         return (
@@ -689,7 +719,7 @@ const MatchMe: React.FC = () => {
                                                     textAlign: 'center'
                                                 }}
                                             >
-                                                {TENSE_DISPLAY_NAMES[tense] || tense}
+                                                {TENSE_KEY_TO_DISPLAY_NAMES[tense] || tense}
                                             </Typography>
 
                                             {/* Dropped Conjugation Area */}

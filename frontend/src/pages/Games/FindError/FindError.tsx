@@ -5,9 +5,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameHeader from '../../../components/GameHeader';
 import GameScoreDialog from '../../../components/GameScoreDialog';
-import { TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { AVAILABLE_TENSES, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
+import { GAME_METADATA,  } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
@@ -49,75 +51,102 @@ const FindError: React.FC = () => {
         maxStep: ongoingGameInfo.maxStep,
     });
     const [showScore, setShowScore] = useState(false);
+    const MAX_TRIES = 10;
 
     const [timeLeft, setTimeLeft] = useState(ongoingGameInfo.maxTime);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [animateBackground, setAnimateBackground] = useState<string>('white');
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timerRef = useRef<number | null>(null);
 
     const initializeGame = useCallback(() => {
+        setHasError(false);
+        setErrorMessage(null);
         const steps: FindErrorGameData[] = [];
         const maxSteps = ongoingGameInfo.maxStep;
 
-        if (currentTenses.length <=2){
-            for(let j=0; j<4; j++){
-                // add a random tense from the tense list different from current tenses
-                const randomTense = randElement(Object.keys(TENSE_DISPLAY_NAMES));
-                if (!currentTenses.includes(randomTense)) {
-                    currentTenses.push(randomTense);
+        try{
+            for (let i = 0; i < maxSteps; i++) {
+                const stepTense = randElement(currentTenses);
+                // Get error word (wrong tense)
+                const stepVerb = randElement(currentVerbs);
+                const stepVerbData = findVerbByInfinitive(allVerbs, stepVerb);
+                
+                if (!stepVerbData) continue;
+                
+                let tries = 0;
+                let errorConjugation = '';
+                let errorWord = '';
+                while(errorConjugation === '' && tries < MAX_TRIES){
+                    // Create ERROR: Use wrong tense for the selected verb
+                    const pronounIndex = Math.floor(Math.random() * 6);
+                    const wrongTense = randElement(AVAILABLE_TENSES.filter(t => t !== stepTense));
+                    errorConjugation = stepVerbData.conjugations ? getConjugation(stepVerbData.conjugations, wrongTense, pronounIndex) : '';
+                    errorWord = getPronoun(pronounIndex) + ' ' + errorConjugation;
+                    tries++;
                 }
-            }
-        }
 
-        for (let i = 0; i < maxSteps; i++) {
-            const stepTense = randElement(currentTenses);
-            
-            // Get error word (wrong tense)
-            const errorVerb = randElement(currentVerbs);
-            const errorVerbData = findVerbByInfinitive(allVerbs, errorVerb);
-            
-            if (!errorVerbData) continue;
+                if (errorConjugation === '') {
+                    throw new Error(t('games.error.failedToGenerate'));
+                }
 
-            const pronounIndex = Math.floor(Math.random() * 6);
-            
-            // Create ERROR: Use wrong tense for the selected verb
-            const wrongTenses = currentTenses.filter(t => t !== stepTense);
-            const wrongTense = randElement(wrongTenses);
-            
-            const errorConjugation = errorVerbData.conjugations ? getConjugation(errorVerbData.conjugations, wrongTense, pronounIndex) : '';
-            const errorWord = getPronoun(pronounIndex) + ' ' + errorConjugation;
-            
-            // Get correct words (correct tense)
-            const correctWords: string[] = [];
-            const maxAttempts = 10; // To avoid infinite loops
-            for (let j = 0; j < 3; j++) {
-                let attempts = 0;
-                let correctConjugation = '';
-                let word = '';
-                do{
+                
+                // Get correct words (correct tense)
+                const correctWords: string[] = [];
+                
+                tries = 0;
+                while(correctWords.length < 3 && tries < MAX_TRIES){
                     const correctVerb = randElement(currentVerbs);
                     const correctVerbData = findVerbByInfinitive(allVerbs, correctVerb);
-                    if (correctVerbData) {
-                        const pIndex = Math.floor(Math.random() * 6);
-                        correctConjugation = correctVerbData.conjugations ? getConjugation(correctVerbData.conjugations, stepTense, pIndex) : '';
-                        if (correctConjugation === '') continue; // Avoid infinite loop if no conjugation found
-
-                        word = getPronoun(pIndex) + ' ' + correctConjugation;
+                    if (!correctVerbData) {
+                        tries++;
+                        continue;
                     }
-                }while((correctConjugation === '' || correctWords.includes(word) || word === errorWord) && attempts++ < maxAttempts);
-                correctWords.push(word);
+
+                    const pIndex = Math.floor(Math.random() * 6);
+                    const correctConjugation = correctVerbData.conjugations ? getConjugation(correctVerbData.conjugations, stepTense, pIndex) : '';
+                    if (correctConjugation === '') {
+                        tries++;
+                        continue;
+                    }
+
+                    const word = getPronoun(pIndex) + ' ' + correctConjugation;
+                    if (correctWords.includes(word) || word === errorWord){
+                        tries++;
+                        continue;
+                    }
+
+                    correctWords.push(word);
+                }
+
+                if(correctWords.length < 3){
+                    throw new Error(t('games.error.failedToGenerate') + "\n" + t('games.error.notEnougthCorrectWords') + ` : ${stepTense})`);
+                }
+
+                if (correctWords.length === 3) {
+                    const allWords = shuffle([errorWord, ...correctWords]);
+                    steps.push({
+                        error: errorWord,
+                        visibleWords: allWords,
+                        stepTense: stepTense,
+                        correctAnswer: errorWord,
+                    });
+                }
             }
-            if (correctWords.length === 3) {
-                const allWords = shuffle([errorWord, ...correctWords]);
-                steps.push({
-                    error: errorWord,
-                    visibleWords: allWords,
-                    stepTense: stepTense,
-                    correctAnswer: errorWord,
-                });
-            }
+        }catch(err){
+            console.error("Error initializing game:", err);
+            setHasError(true);
+            setErrorMessage(t('games.error.unexpected') + "\n" + err);
+            return;
+        }
+
+        if (steps.length === 0) {
+            setHasError(true);
+            setErrorMessage(t('games.error.noData'));
+            return;
         }
 
         setGameData(steps);
@@ -140,7 +169,8 @@ const FindError: React.FC = () => {
     // Initialize game
     useEffect(() => {
         if (currentVerbs.length === 0 || currentTenses.length === 0) {
-            navigate('/games/find-error');
+            setHasError(true);
+            setErrorMessage(t('games.error.invalidConfig'));
             return;
         }
         initializeGame();
@@ -274,8 +304,21 @@ const FindError: React.FC = () => {
 
     const handlePlayAgain = () => {
         setShowScore(false);
+        setHasError(false);
         initializeGame();
     };
+
+    // Show error state
+    if (hasError) {
+        return (
+            <GameErrorDisplay
+                hasValidConfig={currentVerbs.length > 0 && currentTenses.length > 0}
+                onRetry={handlePlayAgain}
+                onConfigure={() => navigate('/game-room/'+ GAME_METADATA["find-error"].url)}
+                errorMessage={errorMessage}
+            />
+        );
+    }
 
     if (gameData.length === 0 || gameScore.currentStep >= gameData.length) {
         return (
@@ -366,7 +409,7 @@ const FindError: React.FC = () => {
                                 textAlign: 'center'
                             }}
                         >
-                            {TENSE_DISPLAY_NAMES[currentQuestion.stepTense] || currentQuestion.stepTense}
+                            {TENSE_KEY_TO_DISPLAY_NAMES[currentQuestion.stepTense] || currentQuestion.stepTense}
                         </Typography>
                     </motion.div>
                 </Container>

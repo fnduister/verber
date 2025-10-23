@@ -106,6 +106,45 @@ export const TENSE_MAP: Record<string, TenseInfo> = {
     }
 };
 
+// Tense display names (French to formatted display)
+export const TENSE_KEY_TO_DISPLAY_NAMES: Record<string, string> = {
+    'present': 'Présent',
+    'passe_compose': 'Passé composé',
+    'plus_que_parfait': 'Plus-que-parfait',
+    'passe_simple': 'Passé simple',
+    'passe_anterieur': 'Passé antérieur',
+    'futur_simple': 'Futur simple',
+    'futur_anterieur': 'Futur antérieur',
+    'conditionnel_present': 'Conditionnel présent',
+    'conditionnel_passe': 'Conditionnel passé',
+    'subjonctif_present': 'Subjonctif présent',
+    'subjonctif_passe': 'Subjonctif passé',
+    'subjonctif_imparfait': 'Subjonctif imparfait',
+    'subjonctif_plus_que_parfait': 'Subjonctif plus-que-parfait',
+    'present_imperatif': 'Impératif présent',
+    'passe_imperatif': 'Impératif passé',
+};
+
+export const TENSE_DISPLAY_NAMES_TO_KEY: Record<string, string> = {
+    'Présent': 'present',
+    'Passé composé': 'passe_compose',
+    'Imperatif': 'imperatif',
+    'Imparfait': 'imparfait',
+    'Plus-que-parfait': 'plus_que_parfait',
+    'Passé simple': 'passe_simple',
+    'Passé antérieur': 'passe_anterieur',
+    'Futur simple': 'futur_simple',
+    'Futur antérieur': 'futur_anterieur',
+    'Conditionnel présent': 'conditionnel_present',
+    'Conditionnel passé': 'conditionnel_passe',
+    'Subjonctif présent': 'subjonctif_present',
+    'Subjonctif passé': 'subjonctif_passe',
+    'Subjonctif imparfait': 'subjonctif_imparfait',
+    'Subjonctif plus-que-parfait': 'subjonctif_plus_que_parfait',
+    'Impératif présent': 'present_imperatif',
+    'Impératif passé': 'passe_imperatif',
+};
+
 // Tenses available in the database (matching API structure)
 export const AVAILABLE_TENSES = [
     'present',

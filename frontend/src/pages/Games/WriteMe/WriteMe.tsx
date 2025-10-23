@@ -11,10 +11,13 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameScoreDialog from '../../../components/GameScoreDialog';
-import { PRONOUNS, TENSE_DISPLAY_NAMES } from '../../../constants/gameConstants';
+import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
+import { GAME_METADATA, PRONOUNS } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
@@ -47,6 +50,7 @@ const WriteMe: React.FC = () => {
     
     // Audio feedback
     const { playSuccess, playFailure } = useAudio();
+    const { t } = useTranslation();
     
     const [gameData, setGameData] = useState<WriteMeStepData[]>([]);
     const [gameScore, setGameScore] = useState<WriteMeGameInfo>({
@@ -62,18 +66,26 @@ const WriteMe: React.FC = () => {
     const [showAnswers, setShowAnswers] = useState(false);
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
     const [correctnessStatus, setCorrectnessStatus] = useState<(boolean | null)[]>(Array(6).fill(null));
-    
+    const [hasError, setHasError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
     const timerRef = useRef<number | null>(null);
     const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
     const userAnswersRef = useRef<string[]>(Array(6).fill(''));
 
     const initializeGame = useCallback(() => {
+        setHasError(false);
         const steps: WriteMeStepData[] = [];
         const maxSteps = ongoingGameInfo.maxStep;
 
         for (let i = 0; i < maxSteps; i++) {
             const selectedVerb = randElement(currentVerbs);
             const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
+
+            if (!verbData) {
+                setErrorMessage(t('game.error.verbDataMissing', { verb: selectedVerb }));
+                console.log('Race - Found verb data:', verbData ? verbData.infinitive : 'NOT FOUND');
+            }
             
             if (verbData && verbData.conjugations) {
                 const selectedTense = randElement(currentTenses);
@@ -92,6 +104,12 @@ const WriteMe: React.FC = () => {
                     userAnswers: Array(6).fill('')
                 });
             }
+        }
+
+        if (steps.length === 0) {
+            console.error('WriteMe - Failed to generate game data');
+            setHasError(true);
+            return;
         }
 
         setGameData(steps);
@@ -339,8 +357,20 @@ const WriteMe: React.FC = () => {
 
     const handlePlayAgain = () => {
         setShowScore(false);
+        setHasError(false);
         initializeGame();
     };
+
+    if (hasError) {
+        return (
+            <GameErrorDisplay
+                hasValidConfig={currentVerbs.length > 0 && currentTenses.length > 0}
+                onRetry={handlePlayAgain}
+                onConfigure={() => navigate('/game-room/'+ GAME_METADATA["find-error"].url)}
+                errorMessage={errorMessage}
+            />
+        );
+    }
 
     if (gameData.length === 0 || gameScore.currentStep >= gameData.length) {
         return (
@@ -506,7 +536,7 @@ const WriteMe: React.FC = () => {
                                 color: '#1f2937'
                             }}
                         >
-                            {TENSE_DISPLAY_NAMES[currentQuestion.tense] || currentQuestion.tense}
+                            {TENSE_KEY_TO_DISPLAY_NAMES[currentQuestion.tense] || currentQuestion.tense}
                         </Typography>
                     </CardContent>
                 </Card>
