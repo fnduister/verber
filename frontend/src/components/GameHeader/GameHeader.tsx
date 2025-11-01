@@ -1,5 +1,5 @@
-import { EmojiEvents, Timer } from '@mui/icons-material';
-import { Box, Card, CardContent, Chip, LinearProgress, Stack, Typography } from '@mui/material';
+import { EmojiEvents, ExitToApp, Pause, Timer } from '@mui/icons-material';
+import { Box, Card, CardContent, Chip, IconButton, LinearProgress, Stack, Tooltip, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,8 @@ interface GameHeaderProps {
     showTimer?: boolean;
     gradientStart?: string;
     gradientEnd?: string;
+    onPause?: () => void;
+    onQuit?: () => void;
 }
 
 const GameHeader: React.FC<GameHeaderProps> = ({
@@ -23,7 +25,9 @@ const GameHeader: React.FC<GameHeaderProps> = ({
     maxTime = 0,
     showTimer = false,
     gradientStart = '#667eea',
-    gradientEnd = '#764ba2'
+    gradientEnd = '#764ba2',
+    onPause,
+    onQuit
 }) => {
     const { t } = useTranslation();
     const progressPercent = ((currentStep + 1) / maxStep) * 100;
@@ -49,24 +53,58 @@ const GameHeader: React.FC<GameHeaderProps> = ({
                                 {t('games.common.questionCount', { current: currentStep + 1, total: maxStep })}
                             </Typography>
                         </Box>
-                        <motion.div
-                            key={score}
-                            initial={{ scale: 1.2, opacity: 0.8 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Chip 
-                                label={t('games.common.score', { score })}
-                                sx={{ 
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    color: 'white',
-                                    fontSize: '1.1rem',
-                                    fontWeight: 'bold',
-                                    px: 2,
-                                    py: 1
-                                }}
-                            />
-                        </motion.div>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {onQuit && (
+                                <Tooltip title={t('games.common.quit')}>
+                                    <IconButton
+                                        onClick={onQuit}
+                                        sx={{
+                                            color: 'white',
+                                            backgroundColor: 'rgba(255,255,255,0.2)',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(255,255,255,0.3)',
+                                            },
+                                        }}
+                                    >
+                                        <ExitToApp />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {onPause && (
+                                <Tooltip title={t('games.common.pause')}>
+                                    <IconButton
+                                        onClick={onPause}
+                                        sx={{
+                                            color: 'white',
+                                            backgroundColor: 'rgba(255,255,255,0.2)',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(255,255,255,0.3)',
+                                            },
+                                        }}
+                                    >
+                                        <Pause />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            <motion.div
+                                key={score}
+                                initial={{ scale: 1.2, opacity: 0.8 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <Chip 
+                                    label={t('games.common.score', { score })}
+                                    sx={{ 
+                                        backgroundColor: 'rgba(255,255,255,0.2)',
+                                        color: 'white',
+                                        fontSize: '1.1rem',
+                                        fontWeight: 'bold',
+                                        px: 2,
+                                        py: 1
+                                    }}
+                                />
+                            </motion.div>
+                        </Box>
                     </Stack>
                     
                     <Box sx={{ position: 'relative', mb: 2 }}>

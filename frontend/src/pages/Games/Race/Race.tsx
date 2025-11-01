@@ -1,12 +1,14 @@
-import { EmojiEvents, PlayArrow, Timer, TrendingUp } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Chip, Container, LinearProgress, Stack, Typography } from '@mui/material';
+import { EmojiEvents, Pause, PlayArrow, Timer, TrendingUp } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Chip, Container, IconButton, LinearProgress, Stack, Tooltip, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
+import GameHeader from '../../../components/GameHeader';
 import GameScoreDialog from '../../../components/GameScoreDialog';
+import PauseOverlay from '../../../components/PauseOverlay';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { GAME_METADATA, MAX_TRIES } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
@@ -60,9 +62,11 @@ const Race: React.FC = () => {
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [animateBackground, setAnimateBackground] = useState<string>('white');
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timerRef = useRef<number | null>(null);
+    const pauseTimeRef = useRef<number>(0);
 
     const initializeGame = useCallback(() => {
         
@@ -206,6 +210,23 @@ const Race: React.FC = () => {
         }, 1500);
     }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer, playSuccess, playFailure]);
 
+    const handlePause = () => {
+        setIsPaused(true);
+        if (timerRef.current !== null) {
+            cancelAnimationFrame(timerRef.current);
+            timerRef.current = null;
+        }
+        pauseTimeRef.current = timeLeft;
+    };
+
+    const handleResume = () => {
+        setIsPaused(false);
+    };
+
+    const handleQuit = () => {
+        navigate('/game-room/' + GAME_METADATA['race'].url);
+    };
+
     // Timer - using more frequent updates for smoother animation
     useEffect(() => {
         // Clean up any existing timer
@@ -219,15 +240,18 @@ const Race: React.FC = () => {
             gameScore.currentStep >= gameScore.maxStep ||
             showScore ||
             selectedAnswer !== null ||
-            isProcessingAnswer) {
+            isProcessingAnswer ||
+            isPaused) {
             return;
         }
 
-        // Reset timer to full time when starting new question
-        setTimeLeft(ongoingGameInfo.maxTime);
+        // Reset timer to full time when starting new question, or use paused time if resuming
+        const initialTime = pauseTimeRef.current > 0 ? pauseTimeRef.current : ongoingGameInfo.maxTime;
+        setTimeLeft(initialTime);
+        pauseTimeRef.current = 0;
 
         const startTime = Date.now();
-        const targetDuration = ongoingGameInfo.maxTime * 1000; // Convert to milliseconds
+        const targetDuration = initialTime * 1000; // Convert to milliseconds
 
         const updateTimer = () => {
             // Check if we should stop (answer was selected or being processed)
@@ -263,7 +287,7 @@ const Race: React.FC = () => {
                 timerRef.current = null;
             }
         };
-    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, handleAnswer, selectedAnswer, isProcessingAnswer]);
+    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, handleAnswer, selectedAnswer, isProcessingAnswer, isPaused]);
 
     const handleClose = () => {
         navigate('/dashboard');
@@ -305,8 +329,6 @@ const Race: React.FC = () => {
             </Container>
         );
     }
-    const progressPercent = ((gameScore.currentStep + 1) / gameScore.maxStep) * 100;
-    const timePercent = ongoingGameInfo.maxTime > 0 ? Math.max(0, (timeLeft / ongoingGameInfo.maxTime) * 100) : 100;
 
     return (
         <Box sx={{
@@ -329,91 +351,22 @@ const Race: React.FC = () => {
             }} />
 
             <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-                {/* Header with Score and Progress */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                >
-                    <Card sx={{
-                        mb: 3,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color: 'white',
-                        borderRadius: 3,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-                    }}>
-                        <CardContent>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                >
-                                    <Chip
-                                        icon={<PlayArrow />}
-                                        label={`Question ${gameScore.currentStep + 1}/${gameScore.maxStep}`}
-                                        sx={{
-                                            backgroundColor: 'rgba(255,255,255,0.2)',
-                                            color: 'white',
-                                            fontWeight: 'bold'
-                                        }}
-                                    />
-                                </motion.div>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                                >
-                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                        <EmojiEvents sx={{ color: '#ffd700' }} />
-                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                            {gameScore.score}
-                                        </Typography>
-                                    </Stack>
-                                </motion.div>
-                            </Stack>
-                            <LinearProgress
-                                variant="determinate"
-                                value={progressPercent}
-                                sx={{
-                                    mb: 2,
-                                    height: 8,
-                                    borderRadius: 4,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    '& .MuiLinearProgress-bar': {
-                                        backgroundColor: '#ffd700',
-                                        borderRadius: 4
-                                    }
-                                }}
-                            />
-                            {ongoingGameInfo.maxTime > 0 && (
-                                <>
-                                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                                        <Timer sx={{ fontSize: '1rem' }} />
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            {timeLeft <= 0 ? 0 : Math.ceil(timeLeft)}s
-                                        </Typography>
-                                    </Stack>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={Math.max(0, timePercent)}
-                                        color={timePercent > 20 ? "secondary" : "error"}
-                                        sx={{
-                                            height: 6,
-                                            borderRadius: 3,
-                                            backgroundColor: 'rgba(255,255,255,0.2)',
-                                            transition: 'none',
-                                            '& .MuiLinearProgress-bar': {
-                                                transition: 'none',
-                                                borderRadius: 3
-                                            }
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                {/* Pause Overlay */}
+                <PauseOverlay isPaused={isPaused} onResume={handleResume} />
+
+                {/* Game Header Component */}
+                <Box style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}>
+                    <GameHeader
+                        currentStep={gameScore.currentStep}
+                        maxStep={gameScore.maxStep}
+                        score={gameScore.score}
+                        timeLeft={timeLeft}
+                        maxTime={ongoingGameInfo.maxTime}
+                        showTimer={ongoingGameInfo.maxTime > 0}
+                        onPause={handlePause}
+                        onQuit={handleQuit}
+                    />
+                </Box>
 
                 {/* Verb Display */}
                 <motion.div
@@ -421,6 +374,7 @@ const Race: React.FC = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, ease: "backOut" }}
                     key={gameScore.currentStep}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Container sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 4 }}>
                         <Box

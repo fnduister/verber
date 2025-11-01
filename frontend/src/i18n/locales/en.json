@@ -190,7 +190,12 @@
       "goodTry": "Good try! Here are the correct answers:",
       "loading": "Loading...",
       "correct": "✅ Correct!",
-      "yourAnswer": "Your answer"
+      "yourAnswer": "Your answer",
+      "pause": "Pause",
+      "quit": "Quit Game",
+      "paused": "Game Paused",
+      "pauseMessage": "Click resume to continue playing",
+      "resume": "Resume Game"
     },
     "findError": {
       "instruction": "🔍 Find the error!"

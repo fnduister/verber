@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameHeader from '../../../components/GameHeader';
 import GameScoreDialog from '../../../components/GameScoreDialog';
+import PauseOverlay from '../../../components/PauseOverlay';
 import { AVAILABLE_TENSES, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { GAME_METADATA,  } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
@@ -58,9 +59,11 @@ const FindError: React.FC = () => {
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [animateBackground, setAnimateBackground] = useState<string>('white');
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timerRef = useRef<number | null>(null);
+    const pauseTimeRef = useRef<number>(0);
 
     const initializeGame = useCallback(() => {
         setHasError(false);
@@ -238,6 +241,24 @@ const FindError: React.FC = () => {
         }, 1500);
     }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer, playSuccess, playFailure]);
 
+    const handlePause = () => {
+        setIsPaused(true);
+        if (timerRef.current !== null) {
+            cancelAnimationFrame(timerRef.current);
+            timerRef.current = null;
+        }
+        // Store the remaining time when pausing
+        pauseTimeRef.current = timeLeft;
+    };
+
+    const handleResume = () => {
+        setIsPaused(false);
+    };
+
+    const handleQuit = () => {
+        navigate('/game-room/' + GAME_METADATA['find-error'].url);
+    };
+
     // Timer - using more frequent updates for smoother animation
     useEffect(() => {
         // Clean up any existing timer
@@ -251,16 +272,19 @@ const FindError: React.FC = () => {
             gameScore.currentStep >= gameScore.maxStep || 
             showScore || 
             selectedAnswer !== null || 
-            isProcessingAnswer) 
+            isProcessingAnswer ||
+            isPaused) 
         {
             return;
         }
 
-        // Reset timer to full time when starting new question
-        setTimeLeft(ongoingGameInfo.maxTime);
+        // Reset timer to full time when starting new question, or use paused time if resuming
+        const initialTime = pauseTimeRef.current > 0 ? pauseTimeRef.current : ongoingGameInfo.maxTime;
+        setTimeLeft(initialTime);
+        pauseTimeRef.current = 0; // Clear pause ref after using it
         
         const startTime = Date.now();
-        const targetDuration = ongoingGameInfo.maxTime * 1000; // Convert to milliseconds
+        const targetDuration = initialTime * 1000; // Convert to milliseconds
         
         const updateTimer = () => {
             // Check if we should stop (answer was selected or being processed)
@@ -296,7 +320,7 @@ const FindError: React.FC = () => {
                 timerRef.current = null;
             }
         };
-    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, handleAnswer, selectedAnswer, isProcessingAnswer]);
+    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, handleAnswer, selectedAnswer, isProcessingAnswer, isPaused]);
 
     const handleClose = () => {
         navigate('/dashboard');
@@ -360,6 +384,9 @@ const FindError: React.FC = () => {
             }} />
             
         <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
+            {/* Pause Overlay */}
+            <PauseOverlay isPaused={isPaused} onResume={handleResume} />
+
             {/* Game Header Component */}
             <GameHeader
                 currentStep={gameScore.currentStep}
@@ -368,6 +395,8 @@ const FindError: React.FC = () => {
                 timeLeft={timeLeft}
                 maxTime={ongoingGameInfo.maxTime}
                 showTimer={ongoingGameInfo.maxTime > 0}
+                onPause={handlePause}
+                onQuit={handleQuit}
             />
 
             {/* Enhanced Tense Display with Animations */}
@@ -375,6 +404,7 @@ const FindError: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
+                style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
             >
                 <Container sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
                     <motion.div

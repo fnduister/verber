@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameHeader from '../../../components/GameHeader';
 import GameScoreDialog from '../../../components/GameScoreDialog';
+import PauseOverlay from '../../../components/PauseOverlay';
 import { GAME_METADATA } from '../../../constants';
 import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
@@ -64,12 +65,14 @@ const Participe: React.FC = () => {
     const [showAnswer, setShowAnswer] = useState(false);
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+    const [isPaused, setIsPaused] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     const timerRef = useRef<number | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const userAnswerRef = useRef<string>('');
+    const pauseTimeRef = useRef<number>(0);
 
     const initializeGame = useCallback(() => {
         setHasError(false);
@@ -226,8 +229,11 @@ const Participe: React.FC = () => {
             cancelAnimationFrame(timerRef.current);
         }
 
+        const initialTime = pauseTimeRef.current > 0 ? pauseTimeRef.current : ongoingGameInfo.maxTime;
+        pauseTimeRef.current = 0;
+
         const startTime = Date.now();
-        const duration = ongoingGameInfo.maxTime * 1000;
+        const duration = initialTime * 1000;
 
         const updateTimer = () => {
             const elapsed = Date.now() - startTime;
@@ -246,8 +252,25 @@ const Participe: React.FC = () => {
         timerRef.current = requestAnimationFrame(updateTimer);
     }, [ongoingGameInfo.maxTime, showAnswer, checkAnswer]);
 
+    const handlePause = () => {
+        setIsPaused(true);
+        if (timerRef.current !== null) {
+            cancelAnimationFrame(timerRef.current);
+            timerRef.current = null;
+        }
+        pauseTimeRef.current = timeLeft;
+    };
+
+    const handleResume = () => {
+        setIsPaused(false);
+    };
+
+    const handleQuit = () => {
+        navigate('/game-room/' + GAME_METADATA['participe'].url);
+    };
+
     useEffect(() => {
-        if (gameData.length > 0 && !showAnswer) {
+        if (gameData.length > 0 && !showAnswer && !isPaused) {
             startTimer();
         }
 
@@ -256,7 +279,7 @@ const Participe: React.FC = () => {
                 cancelAnimationFrame(timerRef.current);
             }
         };
-    }, [gameData.length, gameScore.currentStep, showAnswer, startTimer]);
+    }, [gameData.length, gameScore.currentStep, showAnswer, startTimer, isPaused]);
 
     useEffect(() => {
         inputRef.current?.focus();
@@ -319,6 +342,8 @@ const Participe: React.FC = () => {
                     onPlayAgain={handleRestart}
                 />
 
+                <PauseOverlay isPaused={isPaused} onResume={handleResume} />
+
                 <GameHeader
                     currentStep={gameScore.currentStep}
                     maxStep={gameScore.maxStep}
@@ -328,12 +353,15 @@ const Participe: React.FC = () => {
                     showTimer={ongoingGameInfo.maxTime > 0}
                     gradientStart="#ec4899"
                     gradientEnd="#db2777"
+                    onPause={handlePause}
+                    onQuit={handleQuit}
                 />
 
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, ease: 'backOut' }}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Card sx={{
                         mb: 4,

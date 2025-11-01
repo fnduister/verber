@@ -18,6 +18,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
 import GameScoreDialog from '../../../components/GameScoreDialog';
+import GameHeader from '../../../components/GameHeader';
+import PauseOverlay from '../../../components/PauseOverlay';
 import { GAME_METADATA, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { useAudio } from '../../../hooks/useAudio';
 import api from '../../../services/api';
@@ -75,6 +77,7 @@ const Sentence: React.FC = () => {
     });
     const [showScore, setShowScore] = useState(false);
     const [timeLeft, setTimeLeft] = useState(ongoingGameInfo.maxTime);
+    const [isPaused, setIsPaused] = useState(false);
     const [userAnswer, setUserAnswer] = useState('');
     const [showAnswer, setShowAnswer] = useState(false);
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
@@ -83,6 +86,7 @@ const Sentence: React.FC = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     const timerRef = useRef<number | null>(null);
+    const pauseTimeRef = useRef<number>(0);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const userAnswerRef = useRef<string>('');
 
@@ -300,6 +304,23 @@ const Sentence: React.FC = () => {
         }, 3000);
     }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, userAnswer, playSuccess, playFailure]);
 
+    const handlePause = () => {
+        setIsPaused(true);
+        if (timerRef.current !== null) {
+            cancelAnimationFrame(timerRef.current);
+            timerRef.current = null;
+        }
+        pauseTimeRef.current = timeLeft;
+    };
+
+    const handleResume = () => {
+        setIsPaused(false);
+    };
+
+    const handleQuit = () => {
+        navigate('/game-room/' + GAME_METADATA['sentence'].url);
+    };
+
     const handleSubmit = () => {
         checkAnswer();
     };
@@ -323,19 +344,22 @@ const Sentence: React.FC = () => {
             showScore || 
             showAnswer || 
             isProcessingAnswer ||
+            isPaused ||
             hasError ||
             gameData.length === 0) 
         {
             return;
         }
 
-        setTimeLeft(ongoingGameInfo.maxTime);
+        const initialTime = pauseTimeRef.current > 0 ? pauseTimeRef.current : ongoingGameInfo.maxTime;
+        setTimeLeft(initialTime);
+        pauseTimeRef.current = 0;
         
         const startTime = Date.now();
-        const targetDuration = ongoingGameInfo.maxTime * 1000;
+        const targetDuration = initialTime * 1000;
         
         const updateTimer = () => {
-            if (showAnswer || isProcessingAnswer) {
+            if (showAnswer || isProcessingAnswer || isPaused) {
                 timerRef.current = null;
                 return;
             }
@@ -403,7 +427,7 @@ const Sentence: React.FC = () => {
                 timerRef.current = null;
             }
         };
-    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswer, isProcessingAnswer, hasError, gameData.length, playSuccess, playFailure]);
+    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswer, isProcessingAnswer, isPaused, hasError, gameData.length, playSuccess, playFailure]);
 
     const handleClose = () => {
         navigate('/dashboard');
@@ -444,9 +468,6 @@ const Sentence: React.FC = () => {
         );
     }
 
-    const progressPercent = ((gameScore.currentStep + 1) / gameScore.maxStep) * 100;
-    const timePercent = ongoingGameInfo.maxTime > 0 ? Math.max(0, (timeLeft / ongoingGameInfo.maxTime) * 100) : 100;
-
     // Replace (verb) placeholder with infinitive + blank or correct answer
     const displaySentence = showAnswer 
         ? currentQuestion.sentenceTemplate.replace(/\(([^)]+)\)/, `**(${currentQuestion.verb})** → **${currentQuestion.correctAnswer}**`)
@@ -458,6 +479,8 @@ const Sentence: React.FC = () => {
             background: 'linear-gradient(135deg, #f0fdfa 0%, #cffafe 100%)',
             position: 'relative'
         }}>
+            <PauseOverlay isPaused={isPaused} onResume={handleResume} />
+            
             {/* Subtle Static Background Pattern */}
             <Box sx={{ 
                 position: 'absolute',
@@ -473,97 +496,26 @@ const Sentence: React.FC = () => {
             }} />
             
             <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-                {/* Header with Score and Progress */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                >
-                    <Card sx={{ 
-                        mb: 3, 
-                        background: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 100%)',
-                        color: 'white',
-                        borderRadius: 3,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-                    }}>
-                        <CardContent>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                >
-                                    <Chip 
-                                        icon={<MenuBook />} 
-                                        label={`${t('games.common.question')} ${gameScore.currentStep + 1}/${gameScore.maxStep}`}
-                                        sx={{ 
-                                            backgroundColor: 'rgba(255,255,255,0.2)', 
-                                            color: 'white',
-                                            fontWeight: 'bold'
-                                        }}
-                                    />
-                                </motion.div>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                                >
-                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                        <EmojiEvents sx={{ color: '#ffd700' }} />
-                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                            {gameScore.score}
-                                        </Typography>
-                                    </Stack>
-                                </motion.div>
-                            </Stack>
-                            <LinearProgress 
-                                variant="determinate" 
-                                value={progressPercent} 
-                                sx={{ 
-                                    mb: 2, 
-                                    height: 8, 
-                                    borderRadius: 4,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    '& .MuiLinearProgress-bar': {
-                                        backgroundColor: '#ffd700',
-                                        borderRadius: 4
-                                    }
-                                }} 
-                            />
-                            {ongoingGameInfo.maxTime > 0 && (
-                                <>
-                                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                                        <Timer sx={{ fontSize: '1rem' }} />
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            {timeLeft <= 0 ? 0 : Math.ceil(timeLeft)}s
-                                        </Typography>
-                                    </Stack>
-                                    <LinearProgress 
-                                        variant="determinate" 
-                                        value={Math.max(0, timePercent)} 
-                                        color={timePercent > 20 ? "secondary" : "error"}
-                                        sx={{
-                                            height: 6,
-                                            borderRadius: 3,
-                                            backgroundColor: 'rgba(255,255,255,0.2)',
-                                            transition: 'none',
-                                            '& .MuiLinearProgress-bar': {
-                                                transition: 'none',
-                                                borderRadius: 3
-                                            }
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                {/* GameHeader */}
+                <GameHeader
+                    currentStep={gameScore.currentStep}
+                    maxStep={gameScore.maxStep}
+                    score={gameScore.score}
+                    timeLeft={timeLeft}
+                    maxTime={ongoingGameInfo.maxTime}
+                    showTimer={ongoingGameInfo.maxTime > 0}
+                    gradientStart="#06b6d4"
+                    gradientEnd="#0284c7"
+                    onPause={handlePause}
+                    onQuit={handleQuit}
+                />
 
                 {/* Instruction */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.3 }}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Typography 
                         variant="h5" 
@@ -606,6 +558,7 @@ const Sentence: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Card sx={{
                         mb: 4,
@@ -761,6 +714,7 @@ const Sentence: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.7 }}
+                        style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                     >
                         <Box sx={{ textAlign: 'center', mb: 4 }}>
                             <Button

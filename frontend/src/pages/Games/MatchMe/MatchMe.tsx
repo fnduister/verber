@@ -17,7 +17,9 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
+import GameHeader from '../../../components/GameHeader';
 import GameScoreDialog from '../../../components/GameScoreDialog';
+import PauseOverlay from '../../../components/PauseOverlay';
 import { PRONOUNS, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { GAME_METADATA } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
@@ -271,11 +273,13 @@ const MatchMe: React.FC = () => {
     const [correctnessStatus, setCorrectnessStatus] = useState<Record<string, boolean>>({});
     const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
     const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+    const [isPaused, setIsPaused] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
 
     const timerRef = useRef<number | null>(null);
     const userMatchesRef = useRef<Record<string, string>>({});
+    const pauseTimeRef = useRef<number>(0);
     const MAX_TRIES = 10;
 
     const initializeGame = useCallback(() => {
@@ -475,6 +479,23 @@ const MatchMe: React.FC = () => {
         checkAnswers();
     };
 
+    const handlePause = () => {
+        setIsPaused(true);
+        if (timerRef.current !== null) {
+            cancelAnimationFrame(timerRef.current);
+            timerRef.current = null;
+        }
+        pauseTimeRef.current = timeLeft;
+    };
+
+    const handleResume = () => {
+        setIsPaused(false);
+    };
+
+    const handleQuit = () => {
+        navigate('/game-room/' + GAME_METADATA['match-me'].url);
+    };
+
     // Timer logic (similar to WriteMe)
     useEffect(() => {
         if (timerRef.current !== null) {
@@ -486,17 +507,20 @@ const MatchMe: React.FC = () => {
             gameScore.currentStep >= gameScore.maxStep ||
             showScore ||
             showAnswers ||
-            isProcessingAnswer) {
+            isProcessingAnswer ||
+            isPaused) {
             return;
         }
 
-        setTimeLeft(ongoingGameInfo.maxTime);
+        const initialTime = pauseTimeRef.current > 0 ? pauseTimeRef.current : ongoingGameInfo.maxTime;
+        setTimeLeft(initialTime);
+        pauseTimeRef.current = 0;
 
         const startTime = Date.now();
-        const targetDuration = ongoingGameInfo.maxTime * 1000;
+        const targetDuration = initialTime * 1000;
 
         const updateTimer = () => {
-            if (showAnswers || isProcessingAnswer) {
+            if (showAnswers || isProcessingAnswer || isPaused) {
                 timerRef.current = null;
                 return;
             }
@@ -525,7 +549,7 @@ const MatchMe: React.FC = () => {
                 timerRef.current = null;
             }
         };
-    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswers, isProcessingAnswer, gameData, checkAnswers, playSuccess, playFailure]);
+    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswers, isProcessingAnswer, isPaused, gameData, checkAnswers, playSuccess, playFailure]);
 
     const handleClose = () => {
         navigate('/dashboard');
@@ -580,9 +604,6 @@ const MatchMe: React.FC = () => {
         );
     }
 
-    const progressPercent = ((gameScore.currentStep + 1) / gameScore.maxStep) * 100;
-    const timePercent = ongoingGameInfo.maxTime > 0 ? Math.max(0, (timeLeft / ongoingGameInfo.maxTime) * 100) : 100;
-
     // Get tenses for this question (maintaining original order)
     const uniqueTenses = currentQuestion.tenses;
 
@@ -592,6 +613,8 @@ const MatchMe: React.FC = () => {
             background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
             position: 'relative'
         }}>
+            <PauseOverlay isPaused={isPaused} onResume={handleResume} />
+            
             {/* Subtle Static Background Pattern */}
             <Box sx={{
                 position: 'absolute',
@@ -607,97 +630,26 @@ const MatchMe: React.FC = () => {
             }} />
 
             <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-                {/* Header with Score and Progress */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                >
-                    <Card sx={{
-                        mb: 3,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color: 'white',
-                        borderRadius: 3,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-                    }}>
-                        <CardContent>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                >
-                                    <Chip
-                                        icon={<DragIndicator />}
-                                        label={`Question ${gameScore.currentStep + 1}/${gameScore.maxStep}`}
-                                        sx={{
-                                            backgroundColor: 'rgba(255,255,255,0.2)',
-                                            color: 'white',
-                                            fontWeight: 'bold'
-                                        }}
-                                    />
-                                </motion.div>
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                                >
-                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                        <EmojiEvents sx={{ color: '#ffd700' }} />
-                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                            {gameScore.score}
-                                        </Typography>
-                                    </Stack>
-                                </motion.div>
-                            </Stack>
-                            <LinearProgress
-                                variant="determinate"
-                                value={progressPercent}
-                                sx={{
-                                    mb: 2,
-                                    height: 8,
-                                    borderRadius: 4,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    '& .MuiLinearProgress-bar': {
-                                        backgroundColor: '#ffd700',
-                                        borderRadius: 4
-                                    }
-                                }}
-                            />
-                            {ongoingGameInfo.maxTime > 0 && (
-                                <>
-                                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                                        <Timer sx={{ fontSize: '1rem' }} />
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            {timeLeft <= 0 ? 0 : Math.ceil(timeLeft)}s
-                                        </Typography>
-                                    </Stack>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={Math.max(0, timePercent)}
-                                        color={timePercent > 20 ? "secondary" : "error"}
-                                        sx={{
-                                            height: 6,
-                                            borderRadius: 3,
-                                            backgroundColor: 'rgba(255,255,255,0.2)',
-                                            transition: 'none',
-                                            '& .MuiLinearProgress-bar': {
-                                                transition: 'none',
-                                                borderRadius: 3
-                                            }
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                {/* GameHeader */}
+                <GameHeader
+                    currentStep={gameScore.currentStep}
+                    maxStep={gameScore.maxStep}
+                    score={gameScore.score}
+                    timeLeft={timeLeft}
+                    maxTime={ongoingGameInfo.maxTime}
+                    showTimer={ongoingGameInfo.maxTime > 0}
+                    gradientStart="#667eea"
+                    gradientEnd="#764ba2"
+                    onPause={handlePause}
+                    onQuit={handleQuit}
+                />
 
                 {/* Instruction */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.3 }}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Typography
                         variant="h4"
@@ -719,6 +671,7 @@ const MatchMe: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                     key={`conjugations-${gameScore.currentStep}`}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Card sx={{
                         background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
@@ -769,6 +722,7 @@ const MatchMe: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.8 }}
                     key={`tenses-${gameScore.currentStep}`}
+                    style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                 >
                     <Grid container spacing={3}>
                         {uniqueTenses.map((tense, index) => {
@@ -862,6 +816,7 @@ const MatchMe: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 1 }}
+                        style={{ filter: isPaused ? 'blur(20px)' : 'none', pointerEvents: isPaused ? 'none' : 'auto' }}
                     >
                         <Box sx={{ textAlign: 'center', mt: 4 }}>
                             <Button

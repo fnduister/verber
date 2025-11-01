@@ -190,7 +190,12 @@
       "goodTry": "Bon essai ! Voici les bonnes réponses :",
       "loading": "Chargement...",
       "correct": "✅ Correct !",
-      "yourAnswer": "Votre réponse"
+      "yourAnswer": "Votre réponse",
+      "pause": "Pause",
+      "quit": "Quitter le jeu",
+      "paused": "Jeu en pause",
+      "pauseMessage": "Cliquez sur reprendre pour continuer à jouer",
+      "resume": "Reprendre le jeu"
     },
     "findError": {
       "instruction": "🔍 Trouvez l'erreur !"
