@@ -92,6 +92,7 @@ func main() {
 		public.POST("/auth/login", h.Login)
 		public.POST("/auth/refresh", h.RefreshToken)
 		public.GET("/verbs", h.GetVerbs)
+		public.GET("/sentences", h.GetSentences)
 		public.GET("/leaderboard", h.GetLeaderboard)
 	}
 

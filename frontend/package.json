@@ -17,7 +17,8 @@
         "i18next-browser-languagedetector": "^7.2.0",
         "i18next-http-backend": "^2.4.2",
         "react": "^18.2.0",
-        "react-beautiful-dnd": "^13.1.1",
+        "react-dnd": "^16.0.1",
+        "react-dnd-html5-backend": "^16.0.1",
         "react-dom": "^18.2.0",
         "react-hook-form": "^7.47.0",
         "react-i18next": "^13.5.0",
@@ -57,13 +58,13 @@
         ]
     },
     "devDependencies": {
-        "@types/react-beautiful-dnd": "^13.1.6",
-        "eslint": "^8.39.0",
-        "@typescript-eslint/parser": "^5.62.0",
+        "@types/react-dnd": "^3.0.2",
         "@typescript-eslint/eslint-plugin": "^5.62.0",
+        "@typescript-eslint/parser": "^5.62.0",
+        "eslint": "^8.39.0",
+        "eslint-config-react-app": "^7.0.1",
         "eslint-plugin-react": "^7.33.1",
         "eslint-plugin-react-hooks": "^4.6.2",
-        "eslint-config-react-app": "^7.0.1",
         "husky": "^8.0.3",
         "lint-staged": "^13.2.3"
     },

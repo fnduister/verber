@@ -10,15 +10,29 @@ export const MIN_PREREQUISITE_VERBS: Record<string, number> = {
     'find-error': 1,
     'matching': 1,
     'write-me': 1,
-    'race': 1
+    'race': 1,
+    'random-verb': 3,
+    'sentence': 0, // No verb selection needed, uses predefined sentences
+    'participe': 3 // Participe - select verbs only
 }
 
 export const MIN_PREREQUISITE_TENSES: Record<string, number> = {
     'find-error': 2,
     'matching': 3,
     'write-me': 1,
-    'race': 3
+    'race': 3,
+    'random-verb': 1,
+    'sentence': 1, // Player selects tenses for sentence conjugation
+    'participe': 0 // No tense selection needed - player selects participe type instead
 }
+
+// Participle types for the participe game
+export const PARTICIPE_TYPES = [
+    { id: 'past', label: 'games.participe.types.past', displayName: 'Participe Passé' },
+    { id: 'present', label: 'games.participe.types.present', displayName: 'Participe Présent' }
+] as const;
+
+export const MIN_PREREQUISITE_PARTICIPE_TYPES = 1; // At least one participe type must be selected
 
 // Speed options for timed games
 export const GAME_SPEEDS = [
@@ -60,6 +74,9 @@ export const GAME_METADATA: Record<string, { title: string; url: string }> = {
     'speed-round': { title: '⚡ Speed Round', url: 'speed-round' },
     race: { title: '🏁 Conjugation Race', url: 'race' },
     complete: { title: '📝 Complete Mode', url: 'complete' },
+    'random-verb': { title: '🎲 Random Verb', url: 'random-verb' },
+    'sentence': { title: '📖 Sentence Challenge', url: 'sentence' },
+    'participe': { title: '📝 Participe', url: 'participe' },
 };
 
 // Game types with full details for dashboard display
@@ -103,6 +120,36 @@ export const GAME_TYPES = [
         players: '1-4',
         color: '#ef4444',
         icon: <EmojiEventsIcon sx={{ fontSize: 48 }} />,
+    },
+    {
+        id: 'random-verb',
+        title: '🎲 Random Verb',
+        description: 'Test your skills with random verbs and tenses. Each question is a surprise!',
+        difficulty: 'Medium',
+        duration: '5 min',
+        players: '1',
+        color: '#8b5cf6',
+        icon: <SportsEsportsIcon sx={{ fontSize: 48 }} />,
+    },
+    {
+        id: 'sentence',
+        title: '📖 Sentence Challenge',
+        description: 'Complete sentences by conjugating verbs in context. Choose your tenses and master real-world usage!',
+        difficulty: 'Medium',
+        duration: '10 min',
+        players: '1',
+        color: '#06b6d4',
+        icon: <TimerIcon sx={{ fontSize: 48 }} />,
+    },
+    {
+        id: 'participe',
+        title: '📝 Participe',
+        description: 'Master French participles! Choose between past participle and present participle.',
+        difficulty: 'Easy',
+        duration: '5 min',
+        players: '1',
+        color: '#ec4899',
+        icon: <SportsEsportsIcon sx={{ fontSize: 48 }} />,
     },
 ];
 

@@ -110,6 +110,31 @@
       "description": "Compete against the clock to conjugate verbs correctly. How fast can you go?",
       "instruction": "🏁 Conjugate as fast as you can!"
     },
+    "random-verb": {
+      "title": "Random Verb Challenge",
+      "description": "Test your conjugation skills with random verbs and tenses!",
+      "instruction": "Conjugate each verb in the given tense",
+      "placeholder": "Conjugation..."
+    },
+    "sentence": {
+      "title": "Sentence Challenge",
+      "description": "Complete sentences by conjugating verbs in context. Choose your tenses and master real-world usage!",
+      "instruction": "Complete the sentence with the correctly conjugated verb",
+      "placeholder": "Type the conjugated verb..."
+    },
+    "participe": {
+      "title": "📝 Participle",
+      "description": "Master French participles! Choose between past participle and present participle.",
+      "selectType": "Select participle type:",
+      "pastParticiple": "Past Participle",
+      "presentParticiple": "Present Participle",
+      "question": "What is the {{type}} of:",
+      "placeholder": "Enter the participle...",
+      "types": {
+        "past": "past participle",
+        "present": "present participle"
+      }
+    },
     "speedRound": {
       "title": "⚡ Speed Round",
       "description": "Answer a series of conjugation questions as quickly as possible."
@@ -134,9 +159,22 @@
       "failedToGenerate": "Failed to generate game data. Please try again.",
       "notEnougthCorrectWords": "Not enough correct words found. Please try again.",
       "verbDataMissing": "Missing data for verb '{{verb}}'.",
-      "insufficientTenseOptions": "Insufficient tense options generated for verb '{{verb}}'."
+      "insufficientTenseOptions": "Insufficient tense options generated for verb '{{verb}}'.",
+      "noMatchingSentences": "No sentences found matching the selected tenses. Please select different tenses.",
+      "noVerbsSelected": "No verbs selected. Please select at least one verb.",
+      "noParticipeTypesSelected": "No participle types selected. Please select at least one type."
     },
+    "progress": "Progress",
+    "timeLeft": "Time left",
+    "hurryUp": "Hurry up!",
+    "checkAnswer": "Check",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "correctAnswer": "Correct answer",
+    "next": "Next",
+    "finish": "Finish",
     "common": {
+      "question": "Question",
       "questionCount": "Question {{current}}/{{total}}",
       "score": "Score: {{score}}",
       "timeRemaining": "{{time}}s remaining",
@@ -146,7 +184,13 @@
       "nextQuestion": "Next Question",
       "tryAgain": "Try Again",
       "wellDone": "Well done!",
-      "keepGoing": "Keep going!"
+      "keepGoing": "Keep going!",
+      "checkAnswers": "Check My Answers",
+      "perfect": "Perfect! All conjugations are correct!",
+      "goodTry": "Good try! Here are the correct answers:",
+      "loading": "Loading...",
+      "correct": "✅ Correct!",
+      "yourAnswer": "Your answer"
     },
     "findError": {
       "instruction": "🔍 Find the error!"
@@ -156,11 +200,20 @@
     "predefinedGroups": "Predefined Groups",
     "addVerbGroup": "Create Verb Group",
     "addTenseGroup": "Create Tense Group",
+    "randomVerbs": "🎲 Random Verbs",
+    "randomTenses": "🎲 Random Tenses",
+    "count": "Count",
+    "randomizeAgain": "Randomize Again",
     "sound": "Sound",
     "title": "Game Room",
     "loading": "Loading verbs and tenses...",
     "verbSelection": "Verb Selection",
     "tenseSelection": "Tense Selection",
+    "participeTypeSelection": "Participle Type Selection",
+    "selectParticipeTypes": "Select which participle types to practice",
+    "participeTypeHelp": "Select one or both types. The game will randomly mix your selected types.",
+    "participeTypes": "Participle Types",
+    "participeTypesSelected": "types selected",
     "settings": "Game Settings",
     "chooseVerbs": "Choose verbs",
     "chooseTenses": "Choose tenses",
@@ -177,8 +230,10 @@
     "prerequisiteTip": "Add more verbs and tenses to unlock this game and enjoy a richer learning experience!",
     "selectionRequired": "Selection required",
     "selectionRequiredMessage": "Please select at least some verbs and tenses to start the game.",
+    "selectionRequiredMessageParticipe": "Please select at least some verbs and participle types to start the game.",
     "readyToPlay": "Ready to play!",
     "selectionComplete": "You have selected {{verbs}} verbs and {{tenses}} tenses. Perfect for {{game}}!",
+    "selectionCompleteParticipe": "You have selected {{verbs}} verbs and {{types}} participle types. Perfect for {{game}}!",
     "customGroups": "Custom groups",
     "presetGroups": "Preset groups",
     "createVerbGroup": "Create verb group",
@@ -251,6 +306,7 @@
     "finish": "Finish",
     "retry": "Retry",
     "playAgain": "Play Again",
+    "start": "Start",
     "tenses": "Tenses",
     "verbs": "Verbs"
   }

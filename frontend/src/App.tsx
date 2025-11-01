@@ -10,7 +10,10 @@ import Exercises from './pages/Exercises/Exercises';
 import FindError from './pages/Games/FindError/FindError';
 import GameRoom from './pages/Games/GameRoom';
 import MatchMe from './pages/Games/MatchMe/MatchMe';
+import Participe from './pages/Games/Participe/Participe';
 import Race from './pages/Games/Race/Race';
+import RandomVerb from './pages/Games/RandomVerb/RandomVerb';
+import Sentence from './pages/Games/Sentence/Sentence';
 import WriteMe from './pages/Games/WriteMe/WriteMe';
 import Home from './pages/Home/Home';
 import Leaderboard from './pages/Leaderboard/Leaderboard';
@@ -75,6 +78,18 @@ const App: React.FC = () => {
                     <Route
                         path="/games/matching"
                         element={isAuthenticated ? <MatchMe /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games/random-verb"
+                        element={isAuthenticated ? <RandomVerb /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games/sentence"
+                        element={isAuthenticated ? <Sentence /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games/participe"
+                        element={isAuthenticated ? <Participe /> : <Navigate to="/login" />}
                     />
                     <Route
                         path="/exercises"

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"verber-backend/internal/services"
 	"verber-backend/internal/websocket"
@@ -13,24 +14,26 @@ import (
 )
 
 type Handler struct {
-	db          *gorm.DB
-	redis       *redis.Client
-	hub         *websocket.Hub
-	authService *services.AuthService
-	gameService *services.GameService
-	verbService *services.VerbService
-	userService *services.UserService
+	db              *gorm.DB
+	redis           *redis.Client
+	hub             *websocket.Hub
+	authService     *services.AuthService
+	gameService     *services.GameService
+	verbService     *services.VerbService
+	userService     *services.UserService
+	sentenceService *services.SentenceService
 }
 
 func NewHandler(db *gorm.DB, redis *redis.Client, hub *websocket.Hub) *Handler {
 	return &Handler{
-		db:          db,
-		redis:       redis,
-		hub:         hub,
-		authService: services.NewAuthService(db, redis),
-		gameService: services.NewGameService(db, hub),
-		verbService: services.NewVerbService(db),
-		userService: services.NewUserService(db),
+		db:              db,
+		redis:           redis,
+		hub:             hub,
+		authService:     services.NewAuthService(db, redis),
+		gameService:     services.NewGameService(db, hub),
+		verbService:     services.NewVerbService(db),
+		userService:     services.NewUserService(db),
+		sentenceService: services.NewSentenceService(db),
 	}
 }
 
@@ -181,7 +184,7 @@ func (h *Handler) GetVerbs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, verbs)
+	c.JSON(http.StatusOK, gin.H{"verbs": verbs})
 }
 
 // Game handlers
@@ -323,4 +326,34 @@ func (h *Handler) GetLeaderboard(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, leaderboard)
+}
+
+// Sentence handlers
+func (h *Handler) GetSentences(c *gin.Context) {
+	// Get tenses from query parameter (comma-separated)
+	tensesParam := c.Query("tenses")
+	limitParam := c.DefaultQuery("limit", "50")
+
+	limit, err := strconv.Atoi(limitParam)
+	if err != nil {
+		limit = 50
+	}
+
+	var tenses []string
+	if tensesParam != "" {
+		// Split comma-separated tenses
+		tenses = strings.Split(tensesParam, ",")
+		// Trim whitespace from each tense
+		for i := range tenses {
+			tenses[i] = strings.TrimSpace(tenses[i])
+		}
+	}
+
+	sentences, err := h.sentenceService.GetSentencesByTenses(tenses, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, sentences)
 }

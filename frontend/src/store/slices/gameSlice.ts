@@ -40,9 +40,14 @@ interface GameState {
     // Game Room State
     currentVerbs: string[];
     currentTenses: string[];
+    currentParticipeTypes: string[]; // For participe game: 'past' and/or 'present'
     currentCustomVerbGroups: VerbGroup[];
     currentCustomTenseGroups: TenseGroup[];
     ongoingGameInfo: OngoingGameInfo;
+    randomVerbsEnabled: boolean;
+    randomTensesEnabled: boolean;
+    randomVerbsCount: number;
+    randomTensesCount: number;
 }
 
 const initialState: GameState = {
@@ -55,6 +60,7 @@ const initialState: GameState = {
     // Game Room Initial State
     currentVerbs: [],
     currentTenses: [],
+    currentParticipeTypes: ['past', 'present'], // Default: both types selected
     currentCustomVerbGroups: [],
     currentCustomTenseGroups: [],
     ongoingGameInfo: {
@@ -62,6 +68,10 @@ const initialState: GameState = {
         maxTime: 10,
         isOn: false,
     },
+    randomVerbsEnabled: false,
+    randomTensesEnabled: false,
+    randomVerbsCount: 3,
+    randomTensesCount: 3,
 };
 
 const gameSlice = createSlice({
@@ -144,6 +154,29 @@ const gameSlice = createSlice({
         setOngoingGameInfo: (state, action: PayloadAction<Partial<OngoingGameInfo>>) => {
             state.ongoingGameInfo = { ...state.ongoingGameInfo, ...action.payload };
         },
+        setRandomVerbsEnabled: (state, action: PayloadAction<boolean>) => {
+            state.randomVerbsEnabled = action.payload;
+        },
+        setRandomTensesEnabled: (state, action: PayloadAction<boolean>) => {
+            state.randomTensesEnabled = action.payload;
+        },
+        setRandomVerbsCount: (state, action: PayloadAction<number>) => {
+            state.randomVerbsCount = action.payload;
+        },
+        setRandomTensesCount: (state, action: PayloadAction<number>) => {
+            state.randomTensesCount = action.payload;
+        },
+        setCurrentParticipeTypes: (state, action: PayloadAction<string[]>) => {
+            state.currentParticipeTypes = action.payload;
+        },
+        addCurrentParticipeType: (state, action: PayloadAction<string>) => {
+            if (!state.currentParticipeTypes.includes(action.payload)) {
+                state.currentParticipeTypes.push(action.payload);
+            }
+        },
+        removeCurrentParticipeType: (state, action: PayloadAction<string>) => {
+            state.currentParticipeTypes = state.currentParticipeTypes.filter(type => type !== action.payload);
+        },
     },
 });
 
@@ -168,6 +201,13 @@ export const {
     addCustomTenseGroup,
     removeCustomTenseGroup,
     setOngoingGameInfo,
+    setRandomVerbsEnabled,
+    setRandomTensesEnabled,
+    setRandomVerbsCount,
+    setRandomTensesCount,
+    setCurrentParticipeTypes,
+    addCurrentParticipeType,
+    removeCurrentParticipeType,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;
