@@ -322,7 +322,9 @@ const Sentence: React.FC = () => {
             gameScore.currentStep >= gameScore.maxStep || 
             showScore || 
             showAnswer || 
-            isProcessingAnswer) 
+            isProcessingAnswer ||
+            hasError ||
+            gameData.length === 0) 
         {
             return;
         }
@@ -401,7 +403,7 @@ const Sentence: React.FC = () => {
                 timerRef.current = null;
             }
         };
-    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswer, isProcessingAnswer]);
+    }, [gameScore.currentStep, gameScore.maxStep, showScore, ongoingGameInfo.maxTime, showAnswer, isProcessingAnswer, hasError, gameData.length, playSuccess, playFailure]);
 
     const handleClose = () => {
         navigate('/dashboard');

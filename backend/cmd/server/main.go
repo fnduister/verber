@@ -50,8 +50,8 @@ func main() {
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
-	if cfg.Environment == "development" {
-		// More permissive CORS for development
+	if cfg.Environment == "development" || cfg.Environment == "staging" {
+		// More permissive CORS for development and staging
 		corsConfig.AllowOrigins = []string{
 			"http://localhost:3000",
 			"http://localhost:3001",

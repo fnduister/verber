@@ -50,15 +50,15 @@ const RandomVerb: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
-    
+
     // Audio feedback
     const { playSuccess, playFailure } = useAudio();
-    
+
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
     const allVerbs = useSelector((state: RootState) => state.verb.verbs);
     const ongoingGameInfo = useSelector((state: RootState) => state.game.ongoingGameInfo);
-    
+
     const [gameData, setGameData] = useState<RandomVerbRow[]>([]);
     const [gameScore, setGameScore] = useState<GameScore>({
         currentStep: 0,
@@ -73,7 +73,7 @@ const RandomVerb: React.FC = () => {
     const [correctnessStatus, setCorrectnessStatus] = useState<(boolean | null)[]>(Array(6).fill(null));
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    
+
     const timerRef = useRef<number | null>(null);
     const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
     const userAnswersRef = useRef<string[]>(Array(6).fill(''));
@@ -107,11 +107,11 @@ const RandomVerb: React.FC = () => {
 
                 // Generate 6 random questions for this step
                 const questions: RandomVerbQuestion[] = [];
-                
+
                 for (let j = 0; j < 6; j++) {
                     const selectedVerb = randElement(currentVerbs);
                     const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
-                    
+
                     if (!verbData) {
                         console.error(`❌ Verb data not found for "${selectedVerb}"`, {
                             attemptedVerb: selectedVerb,
@@ -120,14 +120,14 @@ const RandomVerb: React.FC = () => {
                         });
                         throw new Error(t('games.error.verbDataMissing', { verb: selectedVerb }));
                     }
-                    
+
                     const selectedTense = randElement(currentTenses);
                     const pronounIndex = Math.floor(Math.random() * 6);
-                    
-                    const correctAnswer = verbData.conjugations 
+
+                    const correctAnswer = verbData.conjugations
                         ? getConjugation(verbData.conjugations, selectedTense, pronounIndex)
                         : '';
-                    
+
                     if (!correctAnswer) {
                         console.error(`❌ Failed to get conjugation`, {
                             verb: selectedVerb,
@@ -139,7 +139,7 @@ const RandomVerb: React.FC = () => {
                         });
                         throw new Error(t('games.error.failedToGenerate'));
                     }
-                    
+
                     questions.push({
                         verb: selectedVerb,
                         tense: selectedTense,
@@ -147,7 +147,7 @@ const RandomVerb: React.FC = () => {
                         correctAnswer
                     });
                 }
-                
+
                 // Store all 6 questions for this step
                 if (i === 0) {
                     questions.forEach(q => {
@@ -171,7 +171,7 @@ const RandomVerb: React.FC = () => {
             });
             setHasError(true);
             setErrorMessage(
-                t('games.error.unexpected') + "\n" + 
+                t('games.error.unexpected') + "\n" +
                 `Error: ${err}\n\n` +
                 `Configuration:\n` +
                 `- Verbs selected: ${currentVerbs.length} (${currentVerbs.join(', ')})\n` +
@@ -237,7 +237,7 @@ const RandomVerb: React.FC = () => {
 
     const handleAnswerChange = (index: number, value: string) => {
         if (showAnswers || isProcessingAnswer) return;
-        
+
         userAnswersRef.current[index] = value;
     };
 
@@ -253,11 +253,11 @@ const RandomVerb: React.FC = () => {
         }
 
         const currentQuestions = gameData.slice(0, 6);
-        
+
         // Check each answer
         const correctness: (boolean | null)[] = [];
         let correctCount = 0;
-        
+
         for (let i = 0; i < 6; i++) {
             const userAnswer = normalizeString(userAnswersRef.current[i].trim().toLowerCase());
             const correctAnswer = normalizeString(currentQuestions[i].question.correctAnswer.toLowerCase());
@@ -290,30 +290,30 @@ const RandomVerb: React.FC = () => {
             setIsProcessingAnswer(false);
             setCorrectnessStatus(Array(6).fill(null));
             userAnswersRef.current = Array(6).fill('');
-            
+
             // Clear all input fields
             inputRefs.current.forEach(ref => {
                 if (ref) ref.value = '';
             });
-            
+
             if (gameScore.currentStep + 1 >= gameScore.maxStep) {
                 setShowScore(true);
             } else {
                 // Generate new questions for next step
                 const newQuestions: RandomVerbRow[] = [];
-                
+
                 for (let j = 0; j < 6; j++) {
                     const selectedVerb = randElement(currentVerbs);
                     const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
-                    
+
                     if (verbData) {
                         const selectedTense = randElement(currentTenses);
                         const pronounIndex = Math.floor(Math.random() * 6);
-                        
-                        const correctAnswer = verbData.conjugations 
+
+                        const correctAnswer = verbData.conjugations
                             ? getConjugation(verbData.conjugations, selectedTense, pronounIndex)
                             : '';
-                        
+
                         newQuestions.push({
                             question: {
                                 verb: selectedVerb,
@@ -325,7 +325,7 @@ const RandomVerb: React.FC = () => {
                         });
                     }
                 }
-                
+
                 setGameData(newQuestions);
                 setGameScore(prev => ({
                     ...prev,
@@ -357,20 +357,19 @@ const RandomVerb: React.FC = () => {
             timerRef.current = null;
         }
 
-        if (ongoingGameInfo.maxTime === 0 || 
-            gameScore.currentStep >= gameScore.maxStep || 
-            showScore || 
-            showAnswers || 
-            isProcessingAnswer) 
-        {
+        if (ongoingGameInfo.maxTime === 0 ||
+            gameScore.currentStep >= gameScore.maxStep ||
+            showScore ||
+            showAnswers ||
+            isProcessingAnswer) {
             return;
         }
 
         setTimeLeft(ongoingGameInfo.maxTime);
-        
+
         const startTime = Date.now();
         const targetDuration = ongoingGameInfo.maxTime * 1000;
-        
+
         const updateTimer = () => {
             if (showAnswers || isProcessingAnswer) {
                 timerRef.current = null;
@@ -380,9 +379,9 @@ const RandomVerb: React.FC = () => {
             const elapsed = Date.now() - startTime;
             const remaining = Math.max(0, targetDuration - elapsed);
             const remainingSeconds = remaining / 1000;
-            
+
             setTimeLeft(remainingSeconds);
-            
+
             if (remaining <= 100) {
                 timerRef.current = null;
                 if (!isProcessingAnswer && !showAnswers && remainingSeconds <= 0.1) {
@@ -392,9 +391,9 @@ const RandomVerb: React.FC = () => {
             }
             timerRef.current = requestAnimationFrame(updateTimer);
         };
-        
+
         timerRef.current = requestAnimationFrame(updateTimer);
-        
+
         return () => {
             if (timerRef.current !== null) {
                 cancelAnimationFrame(timerRef.current);
@@ -438,13 +437,13 @@ const RandomVerb: React.FC = () => {
     const timePercent = ongoingGameInfo.maxTime > 0 ? Math.max(0, (timeLeft / ongoingGameInfo.maxTime) * 100) : 100;
 
     return (
-        <Box sx={{ 
+        <Box sx={{
             minHeight: '100vh',
             background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
             position: 'relative'
         }}>
             {/* Subtle Static Background Pattern */}
-            <Box sx={{ 
+            <Box sx={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
@@ -456,7 +455,7 @@ const RandomVerb: React.FC = () => {
                 `,
                 zIndex: 0
             }} />
-            
+
             <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
                 {/* Header with Score and Progress */}
                 <motion.div
@@ -464,8 +463,8 @@ const RandomVerb: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                 >
-                    <Card sx={{ 
-                        mb: 3, 
+                    <Card sx={{
+                        mb: 3,
                         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                         color: 'white',
                         borderRadius: 3,
@@ -478,11 +477,11 @@ const RandomVerb: React.FC = () => {
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                                 >
-                                    <Chip 
-                                        icon={<Edit />} 
+                                    <Chip
+                                        icon={<Edit />}
                                         label={`${t('games.common.question')} ${gameScore.currentStep + 1}/${gameScore.maxStep}`}
-                                        sx={{ 
-                                            backgroundColor: 'rgba(255,255,255,0.2)', 
+                                        sx={{
+                                            backgroundColor: 'rgba(255,255,255,0.2)',
                                             color: 'white',
                                             fontWeight: 'bold'
                                         }}
@@ -501,19 +500,19 @@ const RandomVerb: React.FC = () => {
                                     </Stack>
                                 </motion.div>
                             </Stack>
-                            <LinearProgress 
-                                variant="determinate" 
-                                value={progressPercent} 
-                                sx={{ 
-                                    mb: 2, 
-                                    height: 8, 
+                            <LinearProgress
+                                variant="determinate"
+                                value={progressPercent}
+                                sx={{
+                                    mb: 2,
+                                    height: 8,
                                     borderRadius: 4,
                                     backgroundColor: 'rgba(255,255,255,0.2)',
                                     '& .MuiLinearProgress-bar': {
                                         backgroundColor: '#ffd700',
                                         borderRadius: 4
                                     }
-                                }} 
+                                }}
                             />
                             {ongoingGameInfo.maxTime > 0 && (
                                 <>
@@ -523,9 +522,9 @@ const RandomVerb: React.FC = () => {
                                             {timeLeft <= 0 ? 0 : Math.ceil(timeLeft)}s
                                         </Typography>
                                     </Stack>
-                                    <LinearProgress 
-                                        variant="determinate" 
-                                        value={Math.max(0, timePercent)} 
+                                    <LinearProgress
+                                        variant="determinate"
+                                        value={Math.max(0, timePercent)}
                                         color={timePercent > 20 ? "secondary" : "error"}
                                         sx={{
                                             height: 6,
@@ -559,9 +558,9 @@ const RandomVerb: React.FC = () => {
                         borderColor: '#8b5cf6'
                     }}>
                         <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                            <Typography 
-                                variant="h3" 
-                                sx={{ 
+                            <Typography
+                                variant="h3"
+                                sx={{
                                     fontWeight: 'bold',
                                     background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                                     backgroundClip: 'text',
@@ -569,10 +568,10 @@ const RandomVerb: React.FC = () => {
                                     color: 'transparent'
                                 }}
                             >
-                                🎲 {t('games.randomVerb.title')}
+                                🎲 {t('games.random-verb.title')}
                             </Typography>
                             <Typography variant="h6" sx={{ color: '#64748b', mt: 1 }}>
-                                {t('games.randomVerb.instruction')}
+                                {t('games.random-verb.instruction')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -595,37 +594,37 @@ const RandomVerb: React.FC = () => {
                                 {currentQuestions.map((row, index) => {
                                     const question = row.question;
                                     const pronoun = getPronoun(question.pronounIndex);
-                                    
+
                                     return (
                                         <Grid item xs={12} key={index}>
                                             <motion.div
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
-                                                transition={{ 
-                                                    duration: 0.4, 
+                                                transition={{
+                                                    duration: 0.4,
                                                     delay: 0.5 + (index * 0.1)
                                                 }}
                                             >
-                                                <Box sx={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                     gap: 2,
                                                     p: 2,
                                                     borderRadius: 2,
-                                                    backgroundColor: showAnswers 
+                                                    backgroundColor: showAnswers
                                                         ? (correctnessStatus[index] === true ? '#e8f5e8' : '#ffeaea')
                                                         : '#f8fafc'
                                                 }}>
-                                                    <Typography 
-                                                        sx={{ 
-                                                            minWidth: 120, 
+                                                    <Typography
+                                                        sx={{
+                                                            minWidth: 120,
                                                             fontWeight: 'bold',
                                                             color: '#334155'
                                                         }}
                                                     >
                                                         {pronoun}
                                                     </Typography>
-                                                    <Chip 
+                                                    <Chip
                                                         label={question.verb}
                                                         sx={{
                                                             minWidth: 100,
@@ -634,7 +633,7 @@ const RandomVerb: React.FC = () => {
                                                             color: 'white'
                                                         }}
                                                     />
-                                                    <Chip 
+                                                    <Chip
                                                         label={TENSE_KEY_TO_DISPLAY_NAMES[question.tense] || question.tense}
                                                         sx={{
                                                             minWidth: 150,
@@ -662,7 +661,7 @@ const RandomVerb: React.FC = () => {
                                                                 }
                                                             }
                                                         }}
-                                                        placeholder={t('games.randomVerb.placeholder')}
+                                                        placeholder={t('games.random-verb.placeholder')}
                                                     />
                                                     {showAnswers && (
                                                         <motion.div
@@ -737,9 +736,9 @@ const RandomVerb: React.FC = () => {
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
                                 >
-                                    <Typography 
-                                        variant="h4" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="h4"
+                                        sx={{
                                             fontWeight: 'bold',
                                             color: '#4caf50',
                                             textShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -758,9 +757,9 @@ const RandomVerb: React.FC = () => {
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
                                 >
-                                    <Typography 
-                                        variant="h5" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="h5"
+                                        sx={{
                                             fontWeight: 'bold',
                                             color: '#f59e0b',
                                             textShadow: '0 2px 4px rgba(0,0,0,0.1)'
