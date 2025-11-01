@@ -1,14 +1,16 @@
-import { Add, Close } from '@mui/icons-material';
+import { Add, Close, Refresh } from '@mui/icons-material';
 import {
     Alert,
     Autocomplete,
     Box,
     Button,
+    Checkbox,
     Chip,
     CircularProgress,
     Container,
     Divider,
     FormControl,
+    FormControlLabel,
     IconButton,
     InputLabel,
     MenuItem,
@@ -28,8 +30,10 @@ import { TENSE_MAP } from '../../constants';
 import {
     GAME_METADATA,
     GAME_SPEEDS,
+    MIN_PREREQUISITE_PARTICIPE_TYPES,
     MIN_PREREQUISITE_TENSES,
     MIN_PREREQUISITE_VERBS,
+    PARTICIPE_TYPES,
     PRESET_TENSE_GROUPS,
     PRESET_VERB_GROUPS,
     SPECIAL_TENSES
@@ -39,9 +43,11 @@ import {
     addCustomVerbGroup,
     removeCustomTenseGroup,
     removeCustomVerbGroup,
+    setCurrentParticipeTypes,
     setCurrentTenses,
     setCurrentVerbs,
-    setOngoingGameInfo
+    setOngoingGameInfo, setRandomTensesCount, setRandomTensesEnabled,
+    setRandomVerbsCount, setRandomVerbsEnabled
 } from '../../store/slices/gameSlice';
 import { fetchTenses, fetchVerbs } from '../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../store/store';
@@ -53,9 +59,14 @@ const GameRoom = () => {
 
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
+    const currentParticipeTypes = useSelector((state: RootState) => state.game.currentParticipeTypes);
     const customVerbGroups = useSelector((state: RootState) => state.game.currentCustomVerbGroups);
     const customTenseGroups = useSelector((state: RootState) => state.game.currentCustomTenseGroups);
     const ongoingGameInfo = useSelector((state: RootState) => state.game.ongoingGameInfo);
+    const randomVerbsEnabled = useSelector((state: RootState) => state.game.randomVerbsEnabled);
+    const randomTensesEnabled = useSelector((state: RootState) => state.game.randomTensesEnabled);
+    const randomVerbsCount = useSelector((state: RootState) => state.game.randomVerbsCount);
+    const randomTensesCount = useSelector((state: RootState) => state.game.randomTensesCount);
     const allVerbs = useSelector((state: RootState) => state.verb.verbs);
     const allTenses = useSelector((state: RootState) => state.verb.tenses);
     const loading = useSelector((state: RootState) => state.verb.loading);
@@ -74,7 +85,10 @@ const GameRoom = () => {
             'matching': 'games.matching.title',
             'write-me': 'games.write-me.title',
             'race': 'games.race.title',
-            'complete': 'games.complete.title'
+            'random-verb': 'games.random-verb.title',
+            'complete': 'games.complete.title',
+            'sentence': 'games.sentence.title',
+            'participe': 'games.participe.title'
         };
         return keyMap[gameType] || 'games.findError.title';
     };
@@ -140,22 +154,80 @@ const GameRoom = () => {
         }
     };
 
+    const handleRandomVerbsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const enabled = event.target.checked;
+        dispatch(setRandomVerbsEnabled(enabled));
+        
+        if (enabled && allVerbs.length > 0) {
+            randomizeVerbs();
+        }
+    };
+
+    const handleRandomTensesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const enabled = event.target.checked;
+        dispatch(setRandomTensesEnabled(enabled));
+        
+        if (enabled && allTenses.length > 0) {
+            randomizeTenses();
+        }
+    };
+
+    const randomizeVerbs = () => {
+        if (allVerbs.length === 0) return;
+        const shuffled = [...verbOptions].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, Math.min(randomVerbsCount, verbOptions.length));
+        dispatch(setCurrentVerbs(selected));
+    };
+
+    const randomizeTenses = () => {
+        if (allTenses.length === 0) return;
+        const availableTenses = getTenses();
+        const shuffled = [...availableTenses].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, Math.min(randomTensesCount, availableTenses.length));
+        dispatch(setCurrentTenses(selected));
+    };
+
     // Check prerequisite requirements for the current game
     const checkPrerequisites = () => {
         const minVerbs = MIN_PREREQUISITE_VERBS[gameType] || 0;
         const minTenses = MIN_PREREQUISITE_TENSES[gameType] || 0;
         
+        // For participe game, check participe types instead of tenses
+        if (gameType === 'participe') {
+            const minParticipeTypes = MIN_PREREQUISITE_PARTICIPE_TYPES;
+            return {
+                verbsMet: currentVerbs.length >= minVerbs,
+                tensesMet: true, // Not applicable for participe
+                participeTypesMet: currentParticipeTypes.length >= minParticipeTypes,
+                minVerbs,
+                minTenses: 0,
+                minParticipeTypes
+            };
+        }
+        
         return {
             verbsMet: currentVerbs.length >= minVerbs,
             tensesMet: currentTenses.length >= minTenses,
+            participeTypesMet: true, // Not applicable for other games
             minVerbs,
-            minTenses
+            minTenses,
+            minParticipeTypes: 0
         };
     };
 
     const prerequisiteStatus = checkPrerequisites();
 
     const canAdvance = () => {
+        // For participe game, check verbs and participe types
+        if (gameType === 'participe') {
+            return currentVerbs.length === 0 || currentParticipeTypes.length === 0 || !prerequisiteStatus.verbsMet || !prerequisiteStatus.participeTypesMet;
+        }
+        
+        // For games that don't require verbs (minVerbs === 0), only check tenses
+        if (prerequisiteStatus.minVerbs === 0) {
+            return !prerequisiteStatus.tensesMet;
+        }
+        // For other games, check both verbs and tenses
         return currentVerbs.length === 0 || currentTenses.length === 0 || !prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet;
     };
 
@@ -211,11 +283,48 @@ const GameRoom = () => {
             </Typography>
             <Divider sx={{ mb: 3 }} />
 
-            {/* Verbs Selection */}
+            {/* Verbs Selection - Only show if game requires verbs */}
+            {prerequisiteStatus.minVerbs > 0 && (
             <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ mb: 2, ml: 3 }}>
-                    {t('gameRoom.verbSelection')}
-                </Typography>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2, ml: 3, mr: 3 }}>
+                    <Typography variant="h6">
+                        {t('gameRoom.verbSelection')}
+                    </Typography>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        {randomVerbsEnabled && (
+                            <>
+                                <TextField
+                                    type="number"
+                                    label={t('gameRoom.count')}
+                                    value={randomVerbsCount}
+                                    onChange={(e) => dispatch(setRandomVerbsCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 3))))}
+                                    size="small"
+                                    sx={{ width: 100 }}
+                                    InputProps={{ inputProps: { min: 1, max: 20 } }}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<Refresh />}
+                                    onClick={randomizeVerbs}
+                                    color="primary"
+                                >
+                                    {t('gameRoom.randomizeAgain')}
+                                </Button>
+                            </>
+                        )}
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={randomVerbsEnabled}
+                                    onChange={handleRandomVerbsChange}
+                                    color="primary"
+                                />
+                            }
+                            label={t('gameRoom.randomVerbs')}
+                        />
+                    </Stack>
+                </Stack>
                 <Stack spacing={2} sx={{ ml: 3, mr: 3 }}>
                     <Autocomplete
                         multiple
@@ -309,12 +418,96 @@ const GameRoom = () => {
                     )}
                 </Stack>
             </Box>
+            )}
 
-            {/* Tenses Selection */}
+            {/* Participle Type Selection (for participe game only) */}
+            {gameType === 'participe' && (
+                <Box sx={{ mb: 4 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2, ml: 3, mr: 3 }}>
+                        <Typography variant="h6">
+                            {t('gameRoom.participeTypeSelection')}
+                        </Typography>
+                    </Stack>
+                    <Stack spacing={2} sx={{ ml: 3, mr: 3 }}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                {t('gameRoom.selectParticipeTypes')}
+                            </Typography>
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                {PARTICIPE_TYPES.map((type) => {
+                                    const isSelected = currentParticipeTypes.includes(type.id);
+                                    return (
+                                        <Chip
+                                            key={type.id}
+                                            label={type.displayName}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    // Don't allow deselecting if it's the only one selected
+                                                    if (currentParticipeTypes.length > 1) {
+                                                        dispatch(setCurrentParticipeTypes(
+                                                            currentParticipeTypes.filter(t => t !== type.id)
+                                                        ));
+                                                    }
+                                                } else {
+                                                    dispatch(setCurrentParticipeTypes([...currentParticipeTypes, type.id]));
+                                                }
+                                            }}
+                                            color={isSelected ? 'secondary' : 'default'}
+                                            sx={{ mb: 1 }}
+                                        />
+                                    );
+                                })}
+                            </Stack>
+                            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
+                                {t('gameRoom.participeTypeHelp')}
+                            </Typography>
+                        </Box>
+                    </Stack>
+                </Box>
+            )}
+
+            {/* Tenses Selection (for other games) */}
+            {gameType !== 'participe' && (
             <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ mb: 2, ml: 3 }}>
-                    {t('gameRoom.tenseSelection')}
-                </Typography>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2, ml: 3, mr: 3 }}>
+                    <Typography variant="h6">
+                        {t('gameRoom.tenseSelection')}
+                    </Typography>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        {randomTensesEnabled && (
+                            <>
+                                <TextField
+                                    type="number"
+                                    label={t('gameRoom.count')}
+                                    value={randomTensesCount}
+                                    onChange={(e) => dispatch(setRandomTensesCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 3))))}
+                                    size="small"
+                                    sx={{ width: 100 }}
+                                    InputProps={{ inputProps: { min: 1, max: 20 } }}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<Refresh />}
+                                    onClick={randomizeTenses}
+                                    color="secondary"
+                                >
+                                    {t('gameRoom.randomizeAgain')}
+                                </Button>
+                            </>
+                        )}
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={randomTensesEnabled}
+                                    onChange={handleRandomTensesChange}
+                                    color="secondary"
+                                />
+                            }
+                            label={t('gameRoom.randomTenses')}
+                        />
+                    </Stack>
+                </Stack>
                 <Stack spacing={2} sx={{ ml: 3, mr: 3 }}>
                     <Autocomplete
                         multiple
@@ -409,7 +602,9 @@ const GameRoom = () => {
                     )}
                 </Stack>
             </Box>
+            )}
 
+            {/* Game Settings */}
             <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" sx={{ mb: 2, ml: 3 }}>
                     {t('gameRoom.settings')}
@@ -443,7 +638,7 @@ const GameRoom = () => {
             </Box>
 
             {/* Prerequisite Warning */}
-            {(!prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet) && (
+            {(!prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet || !prerequisiteStatus.participeTypesMet) && (
                 <Box sx={{ mb: 3 }}>
                     <Alert severity="warning" variant="outlined">
                         <Typography variant="h6" gutterBottom>
@@ -453,16 +648,22 @@ const GameRoom = () => {
                             {t('gameRoom.prerequisiteDescription')}
                         </Typography>
                         <Stack spacing={1}>
-                            {!prerequisiteStatus.verbsMet && (
+                            {prerequisiteStatus.minVerbs > 0 && !prerequisiteStatus.verbsMet && (
                                 <Typography variant="body2" color="warning.main">
                                     • <strong>{t('common.verbs')} :</strong> {currentVerbs.length}/{prerequisiteStatus.minVerbs} {t('gameRoom.verbsSelected')} 
                                     ({t('gameRoom.minimumRequired')} : {prerequisiteStatus.minVerbs})
                                 </Typography>
                             )}
-                            {!prerequisiteStatus.tensesMet && (
+                            {gameType !== 'participe' && !prerequisiteStatus.tensesMet && (
                                 <Typography variant="body2" color="warning.main">
                                     • <strong>{t('common.tenses')} :</strong> {currentTenses.length}/{prerequisiteStatus.minTenses} {t('gameRoom.tensesSelected')} 
                                     ({t('gameRoom.minimumRequired')} : {prerequisiteStatus.minTenses})
+                                </Typography>
+                            )}
+                            {gameType === 'participe' && !prerequisiteStatus.participeTypesMet && (
+                                <Typography variant="body2" color="warning.main">
+                                    • <strong>{t('gameRoom.participeTypes')} :</strong> {currentParticipeTypes.length}/{prerequisiteStatus.minParticipeTypes} {t('gameRoom.participeTypesSelected')} 
+                                    ({t('gameRoom.minimumRequired')} : {prerequisiteStatus.minParticipeTypes})
                                 </Typography>
                             )}
                         </Stack>
@@ -474,26 +675,42 @@ const GameRoom = () => {
             )}
 
             {/* Success Message when prerequisites are met */}
-            {prerequisiteStatus.verbsMet && prerequisiteStatus.tensesMet && currentVerbs.length > 0 && currentTenses.length > 0 && (
+            {prerequisiteStatus.verbsMet && prerequisiteStatus.tensesMet && prerequisiteStatus.participeTypesMet && (
+                (gameType === 'participe' && currentVerbs.length > 0 && currentParticipeTypes.length > 0) ||
+                (gameType !== 'participe' && currentVerbs.length > 0 && currentTenses.length > 0)
+            ) && (
                 <Box sx={{ mb: 3 }}>
                     <Alert severity="success" variant="outlined">
                         <Typography variant="body2">
-                            ✅ <strong>{t('gameRoom.readyToPlay')}</strong> {t('gameRoom.selectionComplete', { 
-                                verbs: currentVerbs.length, 
-                                tenses: currentTenses.length, 
-                                game: t(getGameTitleKey(gameType)) 
-                            })}
+                            ✅ <strong>{t('gameRoom.readyToPlay')}</strong> {gameType === 'participe' 
+                                ? t('gameRoom.selectionCompleteParticipe', { 
+                                    verbs: currentVerbs.length, 
+                                    types: currentParticipeTypes.length,
+                                    game: t(getGameTitleKey(gameType)) 
+                                })
+                                : t('gameRoom.selectionComplete', { 
+                                    verbs: currentVerbs.length, 
+                                    tenses: currentTenses.length, 
+                                    game: t(getGameTitleKey(gameType)) 
+                                })
+                            }
                         </Typography>
                     </Alert>
                 </Box>
             )}
 
-            {/* Basic requirement warning (no verbs or tenses selected) */}
-            {(currentVerbs.length === 0 || currentTenses.length === 0) && (
+            {/* Basic requirement warning (no verbs or tenses/participe types selected) */}
+            {(
+                (gameType === 'participe' && (currentVerbs.length === 0 || currentParticipeTypes.length === 0)) ||
+                (gameType !== 'participe' && (currentVerbs.length === 0 || currentTenses.length === 0))
+            ) && (
                 <Box sx={{ mb: 3 }}>
                     <Alert severity="error" variant="outlined">
                         <Typography variant="body2">
-                            ⚠️ <strong>{t('gameRoom.selectionRequired')}:</strong> {t('gameRoom.selectionRequiredMessage')}
+                            ⚠️ <strong>{t('gameRoom.selectionRequired')}:</strong> {gameType === 'participe' 
+                                ? t('gameRoom.selectionRequiredMessageParticipe')
+                                : t('gameRoom.selectionRequiredMessage')
+                            }
                         </Typography>
                     </Alert>
                 </Box>

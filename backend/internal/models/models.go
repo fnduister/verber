@@ -1,6 +1,9 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -295,4 +298,125 @@ type LeaderboardEntry struct {
 	Level    int    `json:"level"`
 	XP       int    `json:"xp"`
 	Rank     int    `json:"rank"`
+}
+
+// SentenceVerb represents a verb within a sentence
+type SentenceVerb struct {
+	Infinitive string `json:"infinitive"` // Verb infinitive form
+	Position   int    `json:"position"`   // Position index in the sentence (0, 1, 2...)
+	Subject    string `json:"subject"`    // Subject that performs the action
+}
+
+// SentenceVerbs is a custom type for JSONB array handling
+type SentenceVerbs []SentenceVerb
+
+// Scan implements the sql.Scanner interface for SentenceVerbs
+func (sv *SentenceVerbs) Scan(value interface{}) error {
+	if value == nil {
+		*sv = []SentenceVerb{}
+		return nil
+	}
+
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("failed to unmarshal JSONB value")
+	}
+
+	return json.Unmarshal(bytes, sv)
+}
+
+// Value implements the driver.Valuer interface for SentenceVerbs
+func (sv SentenceVerbs) Value() (driver.Value, error) {
+	if len(sv) == 0 {
+		return "[]", nil
+	}
+	return json.Marshal(sv)
+}
+
+// StringArray is a custom type for PostgreSQL TEXT[] array handling
+type StringArray []string
+
+// Scan implements the sql.Scanner interface for StringArray
+func (sa *StringArray) Scan(value interface{}) error {
+	if value == nil {
+		*sa = []string{}
+		return nil
+	}
+
+	str, ok := value.(string)
+	if !ok {
+		return errors.New("failed to scan string array")
+	}
+
+	// Parse PostgreSQL array format: {val1,val2,val3}
+	if len(str) < 2 || str[0] != '{' || str[len(str)-1] != '}' {
+		*sa = []string{}
+		return nil
+	}
+
+	content := str[1 : len(str)-1]
+	if content == "" {
+		*sa = []string{}
+		return nil
+	}
+
+	*sa = []string{}
+	for _, s := range splitPostgresArray(content) {
+		*sa = append(*sa, s)
+	}
+
+	return nil
+}
+
+// Value implements the driver.Valuer interface for StringArray
+func (sa StringArray) Value() (driver.Value, error) {
+	if len(sa) == 0 {
+		return "{}", nil
+	}
+
+	result := "{"
+	for i, s := range sa {
+		if i > 0 {
+			result += ","
+		}
+		result += s
+	}
+	result += "}"
+
+	return result, nil
+}
+
+// Helper function to split PostgreSQL array content
+func splitPostgresArray(s string) []string {
+	var result []string
+	var current string
+	inQuotes := false
+
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '"' {
+			inQuotes = !inQuotes
+		} else if c == ',' && !inQuotes {
+			result = append(result, current)
+			current = ""
+		} else {
+			current += string(c)
+		}
+	}
+
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
+}
+
+// Sentence represents a French sentence with verbs to conjugate
+type Sentence struct {
+	ID        uint          `json:"id" gorm:"primaryKey"`
+	Text      string        `json:"text" gorm:"type:text;not null"` // Sentence with (verb) placeholders
+	Verbs     SentenceVerbs `json:"verbs" gorm:"type:jsonb"`        // Array of verbs in the sentence
+	Tenses    StringArray   `json:"tenses" gorm:"type:text[]"`      // Appropriate tenses for this sentence
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }

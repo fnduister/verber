@@ -11,6 +11,8 @@ interface GameHeaderProps {
     timeLeft?: number;
     maxTime?: number;
     showTimer?: boolean;
+    gradientStart?: string;
+    gradientEnd?: string;
 }
 
 const GameHeader: React.FC<GameHeaderProps> = ({
@@ -19,7 +21,9 @@ const GameHeader: React.FC<GameHeaderProps> = ({
     score,
     timeLeft = 0,
     maxTime = 0,
-    showTimer = false
+    showTimer = false,
+    gradientStart = '#667eea',
+    gradientEnd = '#764ba2'
 }) => {
     const { t } = useTranslation();
     const progressPercent = ((currentStep + 1) / maxStep) * 100;
@@ -33,7 +37,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
         >
             <Card sx={{ 
                 mb: 4, 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: `linear-gradient(135deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
                 color: 'white',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
             }}>
@@ -103,7 +107,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                 <Timer sx={{ fontSize: 20 }} />
                                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                    {t('games.common.timeRemaining', { time: timeLeft <= 0 ? 0 : Math.ceil(timeLeft) })}
+                                    {t('games.common.timeRemaining', { time: timeLeft <= 0 ? 0 : timeLeft.toFixed(1) })}
                                 </Typography>
                             </Box>
                             <LinearProgress 

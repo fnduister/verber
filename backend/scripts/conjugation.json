@@ -131793,5 +131793,3997 @@
       "ayez zézayé !",
       ""
     ]
+  },
+  {
+    "Infinitif": "assembler",
+    "ParticipePasse": "assemblé",
+    "ParticipePresent": "assemblant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se assembler",
+    "Present": [
+      "assemble",
+      "assembles",
+      "assemble",
+      "assemblons",
+      "assemblez",
+      "assemblent"
+    ],
+    "Imparfait": [
+      "assemblais",
+      "assemblais",
+      "assemblait",
+      "assemblions",
+      "assembliez",
+      "assemblaient"
+    ],
+    "PasseSimple": [
+      "assemblai",
+      "assemblas",
+      "assembla",
+      "assemblâmes",
+      "assemblâtes",
+      "assemblèrent"
+    ],
+    "FuturSimple": [
+      "assemblerai",
+      "assembleras",
+      "assemblera",
+      "assemblerons",
+      "assemblerez",
+      "assembleront"
+    ],
+    "PasseCompose": [
+      "ai assemblé",
+      "as assemblé",
+      "a assemblé",
+      "avons assemblé",
+      "avez assemblé",
+      "ont assemblé"
+    ],
+    "PlusQueParfait": [
+      "avais assemblé",
+      "avais assemblé",
+      "avait assemblé",
+      "avions assemblé",
+      "aviez assemblé",
+      "avaient assemblé"
+    ],
+    "PasseAnterieur": [
+      "eus assemblé",
+      "eus assemblé",
+      "eut assemblé",
+      "eûmes assemblé",
+      "eûtes assemblé",
+      "eurent assemblé"
+    ],
+    "FuturAnterieur": [
+      "aurai assemblé",
+      "auras assemblé",
+      "aura assemblé",
+      "aurons assemblé",
+      "aurez assemblé",
+      "auront assemblé"
+    ],
+    "SubjonctifPresent": [
+      "assemble",
+      "assembles",
+      "assemble",
+      "assemblions",
+      "assembliez",
+      "assemblent"
+    ],
+    "SubjonctifImparfait": [
+      "assemblasse",
+      "assemblasses",
+      "assemblât",
+      "assemblassions",
+      "assemblassiez",
+      "assemblassent"
+    ],
+    "SubjonctifPasse": [
+      "aie assemblé",
+      "aies assemblé",
+      "ait assemblé",
+      "ayons assemblé",
+      "ayez assemblé",
+      "aient assemblé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse assemblé",
+      "eusses assemblé",
+      "eût assemblé",
+      "eussions assemblé",
+      "eussiez assemblé",
+      "eussent assemblé"
+    ],
+    "ConditionnelPresent": [
+      "assemblerais",
+      "assemblerais",
+      "assemblerait",
+      "assemblerions",
+      "assembleriez",
+      "assembleraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais assemblé",
+      "aurais assemblé",
+      "aurait assemblé",
+      "aurions assemblé",
+      "auriez assemblé",
+      "auraient assemblé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse assemblé",
+      "eusses assemblé",
+      "eût assemblé",
+      "eussions assemblé",
+      "eussiez assemblé",
+      "eussent assemblé"
+    ],
+    "Imperatif": [
+      "",
+      "assemble !",
+      "",
+      "assemblons !",
+      "assemblez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie assemblé !",
+      "",
+      "ayons assemblé !",
+      "ayez assemblé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "calculer",
+    "ParticipePasse": "calculé",
+    "ParticipePresent": "calculant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se calculer",
+    "Present": [
+      "calcule",
+      "calcules",
+      "calcule",
+      "calculons",
+      "calculez",
+      "calculent"
+    ],
+    "Imparfait": [
+      "calculais",
+      "calculais",
+      "calculait",
+      "calculions",
+      "calculiez",
+      "calculaient"
+    ],
+    "PasseSimple": [
+      "calculai",
+      "calculas",
+      "calcula",
+      "calculâmes",
+      "calculâtes",
+      "calculèrent"
+    ],
+    "FuturSimple": [
+      "calculerai",
+      "calculeras",
+      "calculera",
+      "calculerons",
+      "calculerez",
+      "calculeront"
+    ],
+    "PasseCompose": [
+      "ai calculé",
+      "as calculé",
+      "a calculé",
+      "avons calculé",
+      "avez calculé",
+      "ont calculé"
+    ],
+    "PlusQueParfait": [
+      "avais calculé",
+      "avais calculé",
+      "avait calculé",
+      "avions calculé",
+      "aviez calculé",
+      "avaient calculé"
+    ],
+    "PasseAnterieur": [
+      "eus calculé",
+      "eus calculé",
+      "eut calculé",
+      "eûmes calculé",
+      "eûtes calculé",
+      "eurent calculé"
+    ],
+    "FuturAnterieur": [
+      "aurai calculé",
+      "auras calculé",
+      "aura calculé",
+      "aurons calculé",
+      "aurez calculé",
+      "auront calculé"
+    ],
+    "SubjonctifPresent": [
+      "calcule",
+      "calcules",
+      "calcule",
+      "calculions",
+      "calculiez",
+      "calculent"
+    ],
+    "SubjonctifImparfait": [
+      "calculasse",
+      "calculasses",
+      "calculât",
+      "calculassions",
+      "calculassiez",
+      "calculassent"
+    ],
+    "SubjonctifPasse": [
+      "aie calculé",
+      "aies calculé",
+      "ait calculé",
+      "ayons calculé",
+      "ayez calculé",
+      "aient calculé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse calculé",
+      "eusses calculé",
+      "eût calculé",
+      "eussions calculé",
+      "eussiez calculé",
+      "eussent calculé"
+    ],
+    "ConditionnelPresent": [
+      "calculerais",
+      "calculerais",
+      "calculerait",
+      "calculerions",
+      "calculeriez",
+      "calculeraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais calculé",
+      "aurais calculé",
+      "aurait calculé",
+      "aurions calculé",
+      "auriez calculé",
+      "auraient calculé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse calculé",
+      "eusses calculé",
+      "eût calculé",
+      "eussions calculé",
+      "eussiez calculé",
+      "eussent calculé"
+    ],
+    "Imperatif": [
+      "",
+      "calcule !",
+      "",
+      "calculons !",
+      "calculez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie calculé !",
+      "",
+      "ayons calculé !",
+      "ayez calculé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "cuisiner",
+    "ParticipePasse": "cuisiné",
+    "ParticipePresent": "cuisinant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se cuisiner",
+    "Present": [
+      "cuisine",
+      "cuisines",
+      "cuisine",
+      "cuisinons",
+      "cuisinez",
+      "cuisinent"
+    ],
+    "Imparfait": [
+      "cuisinais",
+      "cuisinais",
+      "cuisinait",
+      "cuisinions",
+      "cuisiniez",
+      "cuisinaient"
+    ],
+    "PasseSimple": [
+      "cuisinai",
+      "cuisinas",
+      "cuisina",
+      "cuisinâmes",
+      "cuisinâtes",
+      "cuisinèrent"
+    ],
+    "FuturSimple": [
+      "cuisinerai",
+      "cuisineras",
+      "cuisinera",
+      "cuisinerons",
+      "cuisinerez",
+      "cuisineront"
+    ],
+    "PasseCompose": [
+      "ai cuisiné",
+      "as cuisiné",
+      "a cuisiné",
+      "avons cuisiné",
+      "avez cuisiné",
+      "ont cuisiné"
+    ],
+    "PlusQueParfait": [
+      "avais cuisiné",
+      "avais cuisiné",
+      "avait cuisiné",
+      "avions cuisiné",
+      "aviez cuisiné",
+      "avaient cuisiné"
+    ],
+    "PasseAnterieur": [
+      "eus cuisiné",
+      "eus cuisiné",
+      "eut cuisiné",
+      "eûmes cuisiné",
+      "eûtes cuisiné",
+      "eurent cuisiné"
+    ],
+    "FuturAnterieur": [
+      "aurai cuisiné",
+      "auras cuisiné",
+      "aura cuisiné",
+      "aurons cuisiné",
+      "aurez cuisiné",
+      "auront cuisiné"
+    ],
+    "SubjonctifPresent": [
+      "cuisine",
+      "cuisines",
+      "cuisine",
+      "cuisinions",
+      "cuisiniez",
+      "cuisinent"
+    ],
+    "SubjonctifImparfait": [
+      "cuisinasse",
+      "cuisinasses",
+      "cuisinât",
+      "cuisinassions",
+      "cuisinassiez",
+      "cuisinassent"
+    ],
+    "SubjonctifPasse": [
+      "aie cuisiné",
+      "aies cuisiné",
+      "ait cuisiné",
+      "ayons cuisiné",
+      "ayez cuisiné",
+      "aient cuisiné"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse cuisiné",
+      "eusses cuisiné",
+      "eût cuisiné",
+      "eussions cuisiné",
+      "eussiez cuisiné",
+      "eussent cuisiné"
+    ],
+    "ConditionnelPresent": [
+      "cuisinerais",
+      "cuisinerais",
+      "cuisinerait",
+      "cuisinerions",
+      "cuisineriez",
+      "cuisineraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais cuisiné",
+      "aurais cuisiné",
+      "aurait cuisiné",
+      "aurions cuisiné",
+      "auriez cuisiné",
+      "auraient cuisiné"
+    ],
+    "ConditionnelPasseII": [
+      "eusse cuisiné",
+      "eusses cuisiné",
+      "eût cuisiné",
+      "eussions cuisiné",
+      "eussiez cuisiné",
+      "eussent cuisiné"
+    ],
+    "Imperatif": [
+      "",
+      "cuisine !",
+      "",
+      "cuisinons !",
+      "cuisinez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie cuisiné !",
+      "",
+      "ayons cuisiné !",
+      "ayez cuisiné !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "cultiver",
+    "ParticipePasse": "cultivé",
+    "ParticipePresent": "cultivant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se cultiver",
+    "Present": [
+      "cultive",
+      "cultives",
+      "cultive",
+      "cultivons",
+      "cultivez",
+      "cultivent"
+    ],
+    "Imparfait": [
+      "cultivais",
+      "cultivais",
+      "cultivait",
+      "cultivions",
+      "cultiviez",
+      "cultivaient"
+    ],
+    "PasseSimple": [
+      "cultivai",
+      "cultivas",
+      "cultiva",
+      "cultivâmes",
+      "cultivâtes",
+      "cultivèrent"
+    ],
+    "FuturSimple": [
+      "cultiverai",
+      "cultiveras",
+      "cultivera",
+      "cultiverons",
+      "cultiverez",
+      "cultiveront"
+    ],
+    "PasseCompose": [
+      "ai cultivé",
+      "as cultivé",
+      "a cultivé",
+      "avons cultivé",
+      "avez cultivé",
+      "ont cultivé"
+    ],
+    "PlusQueParfait": [
+      "avais cultivé",
+      "avais cultivé",
+      "avait cultivé",
+      "avions cultivé",
+      "aviez cultivé",
+      "avaient cultivé"
+    ],
+    "PasseAnterieur": [
+      "eus cultivé",
+      "eus cultivé",
+      "eut cultivé",
+      "eûmes cultivé",
+      "eûtes cultivé",
+      "eurent cultivé"
+    ],
+    "FuturAnterieur": [
+      "aurai cultivé",
+      "auras cultivé",
+      "aura cultivé",
+      "aurons cultivé",
+      "aurez cultivé",
+      "auront cultivé"
+    ],
+    "SubjonctifPresent": [
+      "cultive",
+      "cultives",
+      "cultive",
+      "cultivions",
+      "cultiviez",
+      "cultivent"
+    ],
+    "SubjonctifImparfait": [
+      "cultivasse",
+      "cultivasses",
+      "cultivât",
+      "cultivassions",
+      "cultivassiez",
+      "cultivassent"
+    ],
+    "SubjonctifPasse": [
+      "aie cultivé",
+      "aies cultivé",
+      "ait cultivé",
+      "ayons cultivé",
+      "ayez cultivé",
+      "aient cultivé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse cultivé",
+      "eusses cultivé",
+      "eût cultivé",
+      "eussions cultivé",
+      "eussiez cultivé",
+      "eussent cultivé"
+    ],
+    "ConditionnelPresent": [
+      "cultiverais",
+      "cultiverais",
+      "cultiverait",
+      "cultiverions",
+      "cultiveriez",
+      "cultiveraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais cultivé",
+      "aurais cultivé",
+      "aurait cultivé",
+      "aurions cultivé",
+      "auriez cultivé",
+      "auraient cultivé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse cultivé",
+      "eusses cultivé",
+      "eût cultivé",
+      "eussions cultivé",
+      "eussiez cultivé",
+      "eussent cultivé"
+    ],
+    "Imperatif": [
+      "",
+      "cultive !",
+      "",
+      "cultivons !",
+      "cultivez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie cultivé !",
+      "",
+      "ayons cultivé !",
+      "ayez cultivé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "décoller",
+    "ParticipePasse": "décollé",
+    "ParticipePresent": "décollant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se décoller",
+    "Present": [
+      "décolle",
+      "décolles",
+      "décolle",
+      "décollons",
+      "décollez",
+      "décollent"
+    ],
+    "Imparfait": [
+      "décollais",
+      "décollais",
+      "décollait",
+      "décollions",
+      "décolliez",
+      "décollaient"
+    ],
+    "PasseSimple": [
+      "décollai",
+      "décollas",
+      "décolla",
+      "décollâmes",
+      "décollâtes",
+      "décollèrent"
+    ],
+    "FuturSimple": [
+      "décollerai",
+      "décolleras",
+      "décollera",
+      "décollerons",
+      "décollerez",
+      "décolleront"
+    ],
+    "PasseCompose": [
+      "ai décollé",
+      "as décollé",
+      "a décollé",
+      "avons décollé",
+      "avez décollé",
+      "ont décollé"
+    ],
+    "PlusQueParfait": [
+      "avais décollé",
+      "avais décollé",
+      "avait décollé",
+      "avions décollé",
+      "aviez décollé",
+      "avaient décollé"
+    ],
+    "PasseAnterieur": [
+      "eus décollé",
+      "eus décollé",
+      "eut décollé",
+      "eûmes décollé",
+      "eûtes décollé",
+      "eurent décollé"
+    ],
+    "FuturAnterieur": [
+      "aurai décollé",
+      "auras décollé",
+      "aura décollé",
+      "aurons décollé",
+      "aurez décollé",
+      "auront décollé"
+    ],
+    "SubjonctifPresent": [
+      "décolle",
+      "décolles",
+      "décolle",
+      "décollions",
+      "décolliez",
+      "décollent"
+    ],
+    "SubjonctifImparfait": [
+      "décollasse",
+      "décollasses",
+      "décollât",
+      "décollassions",
+      "décollassiez",
+      "décollassent"
+    ],
+    "SubjonctifPasse": [
+      "aie décollé",
+      "aies décollé",
+      "ait décollé",
+      "ayons décollé",
+      "ayez décollé",
+      "aient décollé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse décollé",
+      "eusses décollé",
+      "eût décollé",
+      "eussions décollé",
+      "eussiez décollé",
+      "eussent décollé"
+    ],
+    "ConditionnelPresent": [
+      "décollerais",
+      "décollerais",
+      "décollerait",
+      "décollerions",
+      "décolleriez",
+      "décolleraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais décollé",
+      "aurais décollé",
+      "aurait décollé",
+      "aurions décollé",
+      "auriez décollé",
+      "auraient décollé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse décollé",
+      "eusses décollé",
+      "eût décollé",
+      "eussions décollé",
+      "eussiez décollé",
+      "eussent décollé"
+    ],
+    "Imperatif": [
+      "",
+      "décolle !",
+      "",
+      "décollons !",
+      "décollez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie décollé !",
+      "",
+      "ayons décollé !",
+      "ayez décollé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "déguster",
+    "ParticipePasse": "dégusté",
+    "ParticipePresent": "dégustant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se déguster",
+    "Present": [
+      "déguste",
+      "dégustes",
+      "déguste",
+      "dégustons",
+      "dégustez",
+      "dégustent"
+    ],
+    "Imparfait": [
+      "dégustais",
+      "dégustais",
+      "dégustait",
+      "dégustions",
+      "dégustiez",
+      "dégustaient"
+    ],
+    "PasseSimple": [
+      "dégustai",
+      "dégustas",
+      "dégusta",
+      "dégustâmes",
+      "dégustâtes",
+      "dégustèrent"
+    ],
+    "FuturSimple": [
+      "dégusterai",
+      "dégusteras",
+      "dégustera",
+      "dégusterons",
+      "dégusterez",
+      "dégusteront"
+    ],
+    "PasseCompose": [
+      "ai dégusté",
+      "as dégusté",
+      "a dégusté",
+      "avons dégusté",
+      "avez dégusté",
+      "ont dégusté"
+    ],
+    "PlusQueParfait": [
+      "avais dégusté",
+      "avais dégusté",
+      "avait dégusté",
+      "avions dégusté",
+      "aviez dégusté",
+      "avaient dégusté"
+    ],
+    "PasseAnterieur": [
+      "eus dégusté",
+      "eus dégusté",
+      "eut dégusté",
+      "eûmes dégusté",
+      "eûtes dégusté",
+      "eurent dégusté"
+    ],
+    "FuturAnterieur": [
+      "aurai dégusté",
+      "auras dégusté",
+      "aura dégusté",
+      "aurons dégusté",
+      "aurez dégusté",
+      "auront dégusté"
+    ],
+    "SubjonctifPresent": [
+      "déguste",
+      "dégustes",
+      "déguste",
+      "dégustions",
+      "dégustiez",
+      "dégustent"
+    ],
+    "SubjonctifImparfait": [
+      "dégustasse",
+      "dégustasses",
+      "dégustât",
+      "dégustassions",
+      "dégustassiez",
+      "dégustassent"
+    ],
+    "SubjonctifPasse": [
+      "aie dégusté",
+      "aies dégusté",
+      "ait dégusté",
+      "ayons dégusté",
+      "ayez dégusté",
+      "aient dégusté"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse dégusté",
+      "eusses dégusté",
+      "eût dégusté",
+      "eussions dégusté",
+      "eussiez dégusté",
+      "eussent dégusté"
+    ],
+    "ConditionnelPresent": [
+      "dégusterais",
+      "dégusterais",
+      "dégusterait",
+      "dégusterions",
+      "dégusteriez",
+      "dégusteraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais dégusté",
+      "aurais dégusté",
+      "aurait dégusté",
+      "aurions dégusté",
+      "auriez dégusté",
+      "auraient dégusté"
+    ],
+    "ConditionnelPasseII": [
+      "eusse dégusté",
+      "eusses dégusté",
+      "eût dégusté",
+      "eussions dégusté",
+      "eussiez dégusté",
+      "eussent dégusté"
+    ],
+    "Imperatif": [
+      "",
+      "déguste !",
+      "",
+      "dégustons !",
+      "dégustez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie dégusté !",
+      "",
+      "ayons dégusté !",
+      "ayez dégusté !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "développer",
+    "ParticipePasse": "développé",
+    "ParticipePresent": "développant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se développer",
+    "Present": [
+      "développe",
+      "développes",
+      "développe",
+      "développons",
+      "développez",
+      "développent"
+    ],
+    "Imparfait": [
+      "développais",
+      "développais",
+      "développait",
+      "développions",
+      "développiez",
+      "développaient"
+    ],
+    "PasseSimple": [
+      "développai",
+      "développas",
+      "développa",
+      "développâmes",
+      "développâtes",
+      "développèrent"
+    ],
+    "FuturSimple": [
+      "développerai",
+      "développeras",
+      "développera",
+      "développerons",
+      "développerez",
+      "développeront"
+    ],
+    "PasseCompose": [
+      "ai développé",
+      "as développé",
+      "a développé",
+      "avons développé",
+      "avez développé",
+      "ont développé"
+    ],
+    "PlusQueParfait": [
+      "avais développé",
+      "avais développé",
+      "avait développé",
+      "avions développé",
+      "aviez développé",
+      "avaient développé"
+    ],
+    "PasseAnterieur": [
+      "eus développé",
+      "eus développé",
+      "eut développé",
+      "eûmes développé",
+      "eûtes développé",
+      "eurent développé"
+    ],
+    "FuturAnterieur": [
+      "aurai développé",
+      "auras développé",
+      "aura développé",
+      "aurons développé",
+      "aurez développé",
+      "auront développé"
+    ],
+    "SubjonctifPresent": [
+      "développe",
+      "développes",
+      "développe",
+      "développions",
+      "développiez",
+      "développent"
+    ],
+    "SubjonctifImparfait": [
+      "développasse",
+      "développasses",
+      "développât",
+      "développassions",
+      "développassiez",
+      "développassent"
+    ],
+    "SubjonctifPasse": [
+      "aie développé",
+      "aies développé",
+      "ait développé",
+      "ayons développé",
+      "ayez développé",
+      "aient développé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse développé",
+      "eusses développé",
+      "eût développé",
+      "eussions développé",
+      "eussiez développé",
+      "eussent développé"
+    ],
+    "ConditionnelPresent": [
+      "développerais",
+      "développerais",
+      "développerait",
+      "développerions",
+      "développeriez",
+      "développeraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais développé",
+      "aurais développé",
+      "aurait développé",
+      "aurions développé",
+      "auriez développé",
+      "auraient développé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse développé",
+      "eusses développé",
+      "eût développé",
+      "eussions développé",
+      "eussiez développé",
+      "eussent développé"
+    ],
+    "Imperatif": [
+      "",
+      "développe !",
+      "",
+      "développons !",
+      "développez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie développé !",
+      "",
+      "ayons développé !",
+      "ayez développé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "interpréter",
+    "ParticipePasse": "interprété",
+    "ParticipePresent": "interprétant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se interpréter",
+    "Present": [
+      "interpréte",
+      "interprétes",
+      "interpréte",
+      "interprétons",
+      "interprétez",
+      "interprétent"
+    ],
+    "Imparfait": [
+      "interprétais",
+      "interprétais",
+      "interprétait",
+      "interprétions",
+      "interprétiez",
+      "interprétaient"
+    ],
+    "PasseSimple": [
+      "interprétai",
+      "interprétas",
+      "interpréta",
+      "interprétâmes",
+      "interprétâtes",
+      "interprétèrent"
+    ],
+    "FuturSimple": [
+      "interpréterai",
+      "interpréteras",
+      "interprétera",
+      "interpréterons",
+      "interpréterez",
+      "interpréteront"
+    ],
+    "PasseCompose": [
+      "ai interprété",
+      "as interprété",
+      "a interprété",
+      "avons interprété",
+      "avez interprété",
+      "ont interprété"
+    ],
+    "PlusQueParfait": [
+      "avais interprété",
+      "avais interprété",
+      "avait interprété",
+      "avions interprété",
+      "aviez interprété",
+      "avaient interprété"
+    ],
+    "PasseAnterieur": [
+      "eus interprété",
+      "eus interprété",
+      "eut interprété",
+      "eûmes interprété",
+      "eûtes interprété",
+      "eurent interprété"
+    ],
+    "FuturAnterieur": [
+      "aurai interprété",
+      "auras interprété",
+      "aura interprété",
+      "aurons interprété",
+      "aurez interprété",
+      "auront interprété"
+    ],
+    "SubjonctifPresent": [
+      "interpréte",
+      "interprétes",
+      "interpréte",
+      "interprétions",
+      "interprétiez",
+      "interprétent"
+    ],
+    "SubjonctifImparfait": [
+      "interprétasse",
+      "interprétasses",
+      "interprétât",
+      "interprétassions",
+      "interprétassiez",
+      "interprétassent"
+    ],
+    "SubjonctifPasse": [
+      "aie interprété",
+      "aies interprété",
+      "ait interprété",
+      "ayons interprété",
+      "ayez interprété",
+      "aient interprété"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse interprété",
+      "eusses interprété",
+      "eût interprété",
+      "eussions interprété",
+      "eussiez interprété",
+      "eussent interprété"
+    ],
+    "ConditionnelPresent": [
+      "interpréterais",
+      "interpréterais",
+      "interpréterait",
+      "interpréterions",
+      "interpréteriez",
+      "interpréteraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais interprété",
+      "aurais interprété",
+      "aurait interprété",
+      "aurions interprété",
+      "auriez interprété",
+      "auraient interprété"
+    ],
+    "ConditionnelPasseII": [
+      "eusse interprété",
+      "eusses interprété",
+      "eût interprété",
+      "eussions interprété",
+      "eussiez interprété",
+      "eussent interprété"
+    ],
+    "Imperatif": [
+      "",
+      "interpréte !",
+      "",
+      "interprétons !",
+      "interprétez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie interprété !",
+      "",
+      "ayons interprété !",
+      "ayez interprété !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "mémoriser",
+    "ParticipePasse": "mémorisé",
+    "ParticipePresent": "mémorisant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se mémoriser",
+    "Present": [
+      "mémorise",
+      "mémorises",
+      "mémorise",
+      "mémorisons",
+      "mémorisez",
+      "mémorisent"
+    ],
+    "Imparfait": [
+      "mémorisais",
+      "mémorisais",
+      "mémorisait",
+      "mémorisions",
+      "mémorisiez",
+      "mémorisaient"
+    ],
+    "PasseSimple": [
+      "mémorisai",
+      "mémorisas",
+      "mémorisa",
+      "mémorisâmes",
+      "mémorisâtes",
+      "mémorisèrent"
+    ],
+    "FuturSimple": [
+      "mémoriserai",
+      "mémoriseras",
+      "mémorisera",
+      "mémoriserons",
+      "mémoriserez",
+      "mémoriseront"
+    ],
+    "PasseCompose": [
+      "ai mémorisé",
+      "as mémorisé",
+      "a mémorisé",
+      "avons mémorisé",
+      "avez mémorisé",
+      "ont mémorisé"
+    ],
+    "PlusQueParfait": [
+      "avais mémorisé",
+      "avais mémorisé",
+      "avait mémorisé",
+      "avions mémorisé",
+      "aviez mémorisé",
+      "avaient mémorisé"
+    ],
+    "PasseAnterieur": [
+      "eus mémorisé",
+      "eus mémorisé",
+      "eut mémorisé",
+      "eûmes mémorisé",
+      "eûtes mémorisé",
+      "eurent mémorisé"
+    ],
+    "FuturAnterieur": [
+      "aurai mémorisé",
+      "auras mémorisé",
+      "aura mémorisé",
+      "aurons mémorisé",
+      "aurez mémorisé",
+      "auront mémorisé"
+    ],
+    "SubjonctifPresent": [
+      "mémorise",
+      "mémorises",
+      "mémorise",
+      "mémorisions",
+      "mémorisiez",
+      "mémorisent"
+    ],
+    "SubjonctifImparfait": [
+      "mémorisasse",
+      "mémorisasses",
+      "mémorisât",
+      "mémorisassions",
+      "mémorisassiez",
+      "mémorisassent"
+    ],
+    "SubjonctifPasse": [
+      "aie mémorisé",
+      "aies mémorisé",
+      "ait mémorisé",
+      "ayons mémorisé",
+      "ayez mémorisé",
+      "aient mémorisé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse mémorisé",
+      "eusses mémorisé",
+      "eût mémorisé",
+      "eussions mémorisé",
+      "eussiez mémorisé",
+      "eussent mémorisé"
+    ],
+    "ConditionnelPresent": [
+      "mémoriserais",
+      "mémoriserais",
+      "mémoriserait",
+      "mémoriserions",
+      "mémoriseriez",
+      "mémoriseraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais mémorisé",
+      "aurais mémorisé",
+      "aurait mémorisé",
+      "aurions mémorisé",
+      "auriez mémorisé",
+      "auraient mémorisé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse mémorisé",
+      "eusses mémorisé",
+      "eût mémorisé",
+      "eussions mémorisé",
+      "eussiez mémorisé",
+      "eussent mémorisé"
+    ],
+    "Imperatif": [
+      "",
+      "mémorise !",
+      "",
+      "mémorisons !",
+      "mémorisez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie mémorisé !",
+      "",
+      "ayons mémorisé !",
+      "ayez mémorisé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "négliger",
+    "ParticipePasse": "négligé",
+    "ParticipePresent": "négligant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se négliger",
+    "Present": [
+      "néglige",
+      "négliges",
+      "néglige",
+      "négligons",
+      "négligez",
+      "négligent"
+    ],
+    "Imparfait": [
+      "négligais",
+      "négligais",
+      "négligait",
+      "négligions",
+      "négligiez",
+      "négligaient"
+    ],
+    "PasseSimple": [
+      "négligai",
+      "négligas",
+      "négliga",
+      "négligâmes",
+      "négligâtes",
+      "négligèrent"
+    ],
+    "FuturSimple": [
+      "négligerai",
+      "négligeras",
+      "négligera",
+      "négligerons",
+      "négligerez",
+      "négligeront"
+    ],
+    "PasseCompose": [
+      "ai négligé",
+      "as négligé",
+      "a négligé",
+      "avons négligé",
+      "avez négligé",
+      "ont négligé"
+    ],
+    "PlusQueParfait": [
+      "avais négligé",
+      "avais négligé",
+      "avait négligé",
+      "avions négligé",
+      "aviez négligé",
+      "avaient négligé"
+    ],
+    "PasseAnterieur": [
+      "eus négligé",
+      "eus négligé",
+      "eut négligé",
+      "eûmes négligé",
+      "eûtes négligé",
+      "eurent négligé"
+    ],
+    "FuturAnterieur": [
+      "aurai négligé",
+      "auras négligé",
+      "aura négligé",
+      "aurons négligé",
+      "aurez négligé",
+      "auront négligé"
+    ],
+    "SubjonctifPresent": [
+      "néglige",
+      "négliges",
+      "néglige",
+      "négligions",
+      "négligiez",
+      "négligent"
+    ],
+    "SubjonctifImparfait": [
+      "négligasse",
+      "négligasses",
+      "négligât",
+      "négligassions",
+      "négligassiez",
+      "négligassent"
+    ],
+    "SubjonctifPasse": [
+      "aie négligé",
+      "aies négligé",
+      "ait négligé",
+      "ayons négligé",
+      "ayez négligé",
+      "aient négligé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse négligé",
+      "eusses négligé",
+      "eût négligé",
+      "eussions négligé",
+      "eussiez négligé",
+      "eussent négligé"
+    ],
+    "ConditionnelPresent": [
+      "négligerais",
+      "négligerais",
+      "négligerait",
+      "négligerions",
+      "négligeriez",
+      "négligeraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais négligé",
+      "aurais négligé",
+      "aurait négligé",
+      "aurions négligé",
+      "auriez négligé",
+      "auraient négligé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse négligé",
+      "eusses négligé",
+      "eût négligé",
+      "eussions négligé",
+      "eussiez négligé",
+      "eussent négligé"
+    ],
+    "Imperatif": [
+      "",
+      "néglige !",
+      "",
+      "négligons !",
+      "négligez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie négligé !",
+      "",
+      "ayons négligé !",
+      "ayez négligé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "ordonner",
+    "ParticipePasse": "ordonné",
+    "ParticipePresent": "ordonnant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se ordonner",
+    "Present": [
+      "ordonne",
+      "ordonnes",
+      "ordonne",
+      "ordonnons",
+      "ordonnez",
+      "ordonnent"
+    ],
+    "Imparfait": [
+      "ordonnais",
+      "ordonnais",
+      "ordonnait",
+      "ordonnions",
+      "ordonniez",
+      "ordonnaient"
+    ],
+    "PasseSimple": [
+      "ordonnai",
+      "ordonnas",
+      "ordonna",
+      "ordonnâmes",
+      "ordonnâtes",
+      "ordonnèrent"
+    ],
+    "FuturSimple": [
+      "ordonnerai",
+      "ordonneras",
+      "ordonnera",
+      "ordonnerons",
+      "ordonnerez",
+      "ordonneront"
+    ],
+    "PasseCompose": [
+      "ai ordonné",
+      "as ordonné",
+      "a ordonné",
+      "avons ordonné",
+      "avez ordonné",
+      "ont ordonné"
+    ],
+    "PlusQueParfait": [
+      "avais ordonné",
+      "avais ordonné",
+      "avait ordonné",
+      "avions ordonné",
+      "aviez ordonné",
+      "avaient ordonné"
+    ],
+    "PasseAnterieur": [
+      "eus ordonné",
+      "eus ordonné",
+      "eut ordonné",
+      "eûmes ordonné",
+      "eûtes ordonné",
+      "eurent ordonné"
+    ],
+    "FuturAnterieur": [
+      "aurai ordonné",
+      "auras ordonné",
+      "aura ordonné",
+      "aurons ordonné",
+      "aurez ordonné",
+      "auront ordonné"
+    ],
+    "SubjonctifPresent": [
+      "ordonne",
+      "ordonnes",
+      "ordonne",
+      "ordonnions",
+      "ordonniez",
+      "ordonnent"
+    ],
+    "SubjonctifImparfait": [
+      "ordonnasse",
+      "ordonnasses",
+      "ordonnât",
+      "ordonnassions",
+      "ordonnassiez",
+      "ordonnassent"
+    ],
+    "SubjonctifPasse": [
+      "aie ordonné",
+      "aies ordonné",
+      "ait ordonné",
+      "ayons ordonné",
+      "ayez ordonné",
+      "aient ordonné"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse ordonné",
+      "eusses ordonné",
+      "eût ordonné",
+      "eussions ordonné",
+      "eussiez ordonné",
+      "eussent ordonné"
+    ],
+    "ConditionnelPresent": [
+      "ordonnerais",
+      "ordonnerais",
+      "ordonnerait",
+      "ordonnerions",
+      "ordonneriez",
+      "ordonneraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais ordonné",
+      "aurais ordonné",
+      "aurait ordonné",
+      "aurions ordonné",
+      "auriez ordonné",
+      "auraient ordonné"
+    ],
+    "ConditionnelPasseII": [
+      "eusse ordonné",
+      "eusses ordonné",
+      "eût ordonné",
+      "eussions ordonné",
+      "eussiez ordonné",
+      "eussent ordonné"
+    ],
+    "Imperatif": [
+      "",
+      "ordonne !",
+      "",
+      "ordonnons !",
+      "ordonnez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie ordonné !",
+      "",
+      "ayons ordonné !",
+      "ayez ordonné !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "participer",
+    "ParticipePasse": "participé",
+    "ParticipePresent": "participant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se participer",
+    "Present": [
+      "participe",
+      "participes",
+      "participe",
+      "participons",
+      "participez",
+      "participent"
+    ],
+    "Imparfait": [
+      "participais",
+      "participais",
+      "participait",
+      "participions",
+      "participiez",
+      "participaient"
+    ],
+    "PasseSimple": [
+      "participai",
+      "participas",
+      "participa",
+      "participâmes",
+      "participâtes",
+      "participèrent"
+    ],
+    "FuturSimple": [
+      "participerai",
+      "participeras",
+      "participera",
+      "participerons",
+      "participerez",
+      "participeront"
+    ],
+    "PasseCompose": [
+      "ai participé",
+      "as participé",
+      "a participé",
+      "avons participé",
+      "avez participé",
+      "ont participé"
+    ],
+    "PlusQueParfait": [
+      "avais participé",
+      "avais participé",
+      "avait participé",
+      "avions participé",
+      "aviez participé",
+      "avaient participé"
+    ],
+    "PasseAnterieur": [
+      "eus participé",
+      "eus participé",
+      "eut participé",
+      "eûmes participé",
+      "eûtes participé",
+      "eurent participé"
+    ],
+    "FuturAnterieur": [
+      "aurai participé",
+      "auras participé",
+      "aura participé",
+      "aurons participé",
+      "aurez participé",
+      "auront participé"
+    ],
+    "SubjonctifPresent": [
+      "participe",
+      "participes",
+      "participe",
+      "participions",
+      "participiez",
+      "participent"
+    ],
+    "SubjonctifImparfait": [
+      "participasse",
+      "participasses",
+      "participât",
+      "participassions",
+      "participassiez",
+      "participassent"
+    ],
+    "SubjonctifPasse": [
+      "aie participé",
+      "aies participé",
+      "ait participé",
+      "ayons participé",
+      "ayez participé",
+      "aient participé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse participé",
+      "eusses participé",
+      "eût participé",
+      "eussions participé",
+      "eussiez participé",
+      "eussent participé"
+    ],
+    "ConditionnelPresent": [
+      "participerais",
+      "participerais",
+      "participerait",
+      "participerions",
+      "participeriez",
+      "participeraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais participé",
+      "aurais participé",
+      "aurait participé",
+      "aurions participé",
+      "auriez participé",
+      "auraient participé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse participé",
+      "eusses participé",
+      "eût participé",
+      "eussions participé",
+      "eussiez participé",
+      "eussent participé"
+    ],
+    "Imperatif": [
+      "",
+      "participe !",
+      "",
+      "participons !",
+      "participez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie participé !",
+      "",
+      "ayons participé !",
+      "ayez participé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "publier",
+    "ParticipePasse": "publié",
+    "ParticipePresent": "publiant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se publier",
+    "Present": [
+      "publie",
+      "publies",
+      "publie",
+      "publions",
+      "publiez",
+      "publient"
+    ],
+    "Imparfait": [
+      "publiais",
+      "publiais",
+      "publiait",
+      "publiions",
+      "publiiez",
+      "publiaient"
+    ],
+    "PasseSimple": [
+      "publiai",
+      "publias",
+      "publia",
+      "publiâmes",
+      "publiâtes",
+      "publièrent"
+    ],
+    "FuturSimple": [
+      "publierai",
+      "publieras",
+      "publiera",
+      "publierons",
+      "publierez",
+      "publieront"
+    ],
+    "PasseCompose": [
+      "ai publié",
+      "as publié",
+      "a publié",
+      "avons publié",
+      "avez publié",
+      "ont publié"
+    ],
+    "PlusQueParfait": [
+      "avais publié",
+      "avais publié",
+      "avait publié",
+      "avions publié",
+      "aviez publié",
+      "avaient publié"
+    ],
+    "PasseAnterieur": [
+      "eus publié",
+      "eus publié",
+      "eut publié",
+      "eûmes publié",
+      "eûtes publié",
+      "eurent publié"
+    ],
+    "FuturAnterieur": [
+      "aurai publié",
+      "auras publié",
+      "aura publié",
+      "aurons publié",
+      "aurez publié",
+      "auront publié"
+    ],
+    "SubjonctifPresent": [
+      "publie",
+      "publies",
+      "publie",
+      "publiions",
+      "publiiez",
+      "publient"
+    ],
+    "SubjonctifImparfait": [
+      "publiasse",
+      "publiasses",
+      "publiât",
+      "publiassions",
+      "publiassiez",
+      "publiassent"
+    ],
+    "SubjonctifPasse": [
+      "aie publié",
+      "aies publié",
+      "ait publié",
+      "ayons publié",
+      "ayez publié",
+      "aient publié"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse publié",
+      "eusses publié",
+      "eût publié",
+      "eussions publié",
+      "eussiez publié",
+      "eussent publié"
+    ],
+    "ConditionnelPresent": [
+      "publierais",
+      "publierais",
+      "publierait",
+      "publierions",
+      "publieriez",
+      "publieraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais publié",
+      "aurais publié",
+      "aurait publié",
+      "aurions publié",
+      "auriez publié",
+      "auraient publié"
+    ],
+    "ConditionnelPasseII": [
+      "eusse publié",
+      "eusses publié",
+      "eût publié",
+      "eussions publié",
+      "eussiez publié",
+      "eussent publié"
+    ],
+    "Imperatif": [
+      "",
+      "publie !",
+      "",
+      "publions !",
+      "publiez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie publié !",
+      "",
+      "ayons publié !",
+      "ayez publié !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "ranger",
+    "ParticipePasse": "rangé",
+    "ParticipePresent": "rangant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se ranger",
+    "Present": [
+      "range",
+      "ranges",
+      "range",
+      "rangons",
+      "rangez",
+      "rangent"
+    ],
+    "Imparfait": [
+      "rangais",
+      "rangais",
+      "rangait",
+      "rangions",
+      "rangiez",
+      "rangaient"
+    ],
+    "PasseSimple": [
+      "rangai",
+      "rangas",
+      "ranga",
+      "rangâmes",
+      "rangâtes",
+      "rangèrent"
+    ],
+    "FuturSimple": [
+      "rangerai",
+      "rangeras",
+      "rangera",
+      "rangerons",
+      "rangerez",
+      "rangeront"
+    ],
+    "PasseCompose": [
+      "ai rangé",
+      "as rangé",
+      "a rangé",
+      "avons rangé",
+      "avez rangé",
+      "ont rangé"
+    ],
+    "PlusQueParfait": [
+      "avais rangé",
+      "avais rangé",
+      "avait rangé",
+      "avions rangé",
+      "aviez rangé",
+      "avaient rangé"
+    ],
+    "PasseAnterieur": [
+      "eus rangé",
+      "eus rangé",
+      "eut rangé",
+      "eûmes rangé",
+      "eûtes rangé",
+      "eurent rangé"
+    ],
+    "FuturAnterieur": [
+      "aurai rangé",
+      "auras rangé",
+      "aura rangé",
+      "aurons rangé",
+      "aurez rangé",
+      "auront rangé"
+    ],
+    "SubjonctifPresent": [
+      "range",
+      "ranges",
+      "range",
+      "rangions",
+      "rangiez",
+      "rangent"
+    ],
+    "SubjonctifImparfait": [
+      "rangasse",
+      "rangasses",
+      "rangât",
+      "rangassions",
+      "rangassiez",
+      "rangassent"
+    ],
+    "SubjonctifPasse": [
+      "aie rangé",
+      "aies rangé",
+      "ait rangé",
+      "ayons rangé",
+      "ayez rangé",
+      "aient rangé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse rangé",
+      "eusses rangé",
+      "eût rangé",
+      "eussions rangé",
+      "eussiez rangé",
+      "eussent rangé"
+    ],
+    "ConditionnelPresent": [
+      "rangerais",
+      "rangerais",
+      "rangerait",
+      "rangerions",
+      "rangeriez",
+      "rangeraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais rangé",
+      "aurais rangé",
+      "aurait rangé",
+      "aurions rangé",
+      "auriez rangé",
+      "auraient rangé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse rangé",
+      "eusses rangé",
+      "eût rangé",
+      "eussions rangé",
+      "eussiez rangé",
+      "eussent rangé"
+    ],
+    "Imperatif": [
+      "",
+      "range !",
+      "",
+      "rangons !",
+      "rangez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie rangé !",
+      "",
+      "ayons rangé !",
+      "ayez rangé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "régner",
+    "ParticipePasse": "régné",
+    "ParticipePresent": "régnant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se régner",
+    "Present": [
+      "régne",
+      "régnes",
+      "régne",
+      "régnons",
+      "régnez",
+      "régnent"
+    ],
+    "Imparfait": [
+      "régnais",
+      "régnais",
+      "régnait",
+      "régnions",
+      "régniez",
+      "régnaient"
+    ],
+    "PasseSimple": [
+      "régnai",
+      "régnas",
+      "régna",
+      "régnâmes",
+      "régnâtes",
+      "régnèrent"
+    ],
+    "FuturSimple": [
+      "régnerai",
+      "régneras",
+      "régnera",
+      "régnerons",
+      "régnerez",
+      "régneront"
+    ],
+    "PasseCompose": [
+      "ai régné",
+      "as régné",
+      "a régné",
+      "avons régné",
+      "avez régné",
+      "ont régné"
+    ],
+    "PlusQueParfait": [
+      "avais régné",
+      "avais régné",
+      "avait régné",
+      "avions régné",
+      "aviez régné",
+      "avaient régné"
+    ],
+    "PasseAnterieur": [
+      "eus régné",
+      "eus régné",
+      "eut régné",
+      "eûmes régné",
+      "eûtes régné",
+      "eurent régné"
+    ],
+    "FuturAnterieur": [
+      "aurai régné",
+      "auras régné",
+      "aura régné",
+      "aurons régné",
+      "aurez régné",
+      "auront régné"
+    ],
+    "SubjonctifPresent": [
+      "régne",
+      "régnes",
+      "régne",
+      "régnions",
+      "régniez",
+      "régnent"
+    ],
+    "SubjonctifImparfait": [
+      "régnasse",
+      "régnasses",
+      "régnât",
+      "régnassions",
+      "régnassiez",
+      "régnassent"
+    ],
+    "SubjonctifPasse": [
+      "aie régné",
+      "aies régné",
+      "ait régné",
+      "ayons régné",
+      "ayez régné",
+      "aient régné"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse régné",
+      "eusses régné",
+      "eût régné",
+      "eussions régné",
+      "eussiez régné",
+      "eussent régné"
+    ],
+    "ConditionnelPresent": [
+      "régnerais",
+      "régnerais",
+      "régnerait",
+      "régnerions",
+      "régneriez",
+      "régneraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais régné",
+      "aurais régné",
+      "aurait régné",
+      "aurions régné",
+      "auriez régné",
+      "auraient régné"
+    ],
+    "ConditionnelPasseII": [
+      "eusse régné",
+      "eusses régné",
+      "eût régné",
+      "eussions régné",
+      "eussiez régné",
+      "eussent régné"
+    ],
+    "Imperatif": [
+      "",
+      "régne !",
+      "",
+      "régnons !",
+      "régnez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie régné !",
+      "",
+      "ayons régné !",
+      "ayez régné !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "réviser",
+    "ParticipePasse": "révisé",
+    "ParticipePresent": "révisant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se réviser",
+    "Present": [
+      "révise",
+      "révises",
+      "révise",
+      "révisons",
+      "révisez",
+      "révisent"
+    ],
+    "Imparfait": [
+      "révisais",
+      "révisais",
+      "révisait",
+      "révisions",
+      "révisiez",
+      "révisaient"
+    ],
+    "PasseSimple": [
+      "révisai",
+      "révisas",
+      "révisa",
+      "révisâmes",
+      "révisâtes",
+      "révisèrent"
+    ],
+    "FuturSimple": [
+      "réviserai",
+      "réviseras",
+      "révisera",
+      "réviserons",
+      "réviserez",
+      "réviseront"
+    ],
+    "PasseCompose": [
+      "ai révisé",
+      "as révisé",
+      "a révisé",
+      "avons révisé",
+      "avez révisé",
+      "ont révisé"
+    ],
+    "PlusQueParfait": [
+      "avais révisé",
+      "avais révisé",
+      "avait révisé",
+      "avions révisé",
+      "aviez révisé",
+      "avaient révisé"
+    ],
+    "PasseAnterieur": [
+      "eus révisé",
+      "eus révisé",
+      "eut révisé",
+      "eûmes révisé",
+      "eûtes révisé",
+      "eurent révisé"
+    ],
+    "FuturAnterieur": [
+      "aurai révisé",
+      "auras révisé",
+      "aura révisé",
+      "aurons révisé",
+      "aurez révisé",
+      "auront révisé"
+    ],
+    "SubjonctifPresent": [
+      "révise",
+      "révises",
+      "révise",
+      "révisions",
+      "révisiez",
+      "révisent"
+    ],
+    "SubjonctifImparfait": [
+      "révisasse",
+      "révisasses",
+      "révisât",
+      "révisassions",
+      "révisassiez",
+      "révisassent"
+    ],
+    "SubjonctifPasse": [
+      "aie révisé",
+      "aies révisé",
+      "ait révisé",
+      "ayons révisé",
+      "ayez révisé",
+      "aient révisé"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse révisé",
+      "eusses révisé",
+      "eût révisé",
+      "eussions révisé",
+      "eussiez révisé",
+      "eussent révisé"
+    ],
+    "ConditionnelPresent": [
+      "réviserais",
+      "réviserais",
+      "réviserait",
+      "réviserions",
+      "réviseriez",
+      "réviseraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais révisé",
+      "aurais révisé",
+      "aurait révisé",
+      "aurions révisé",
+      "auriez révisé",
+      "auraient révisé"
+    ],
+    "ConditionnelPasseII": [
+      "eusse révisé",
+      "eusses révisé",
+      "eût révisé",
+      "eussions révisé",
+      "eussiez révisé",
+      "eussent révisé"
+    ],
+    "Imperatif": [
+      "",
+      "révise !",
+      "",
+      "révisons !",
+      "révisez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie révisé !",
+      "",
+      "ayons révisé !",
+      "ayez révisé !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "soigner",
+    "ParticipePasse": "soigné",
+    "ParticipePresent": "soignant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se soigner",
+    "Present": [
+      "soigne",
+      "soignes",
+      "soigne",
+      "soignons",
+      "soignez",
+      "soignent"
+    ],
+    "Imparfait": [
+      "soignais",
+      "soignais",
+      "soignait",
+      "soignions",
+      "soigniez",
+      "soignaient"
+    ],
+    "PasseSimple": [
+      "soignai",
+      "soignas",
+      "soigna",
+      "soignâmes",
+      "soignâtes",
+      "soignèrent"
+    ],
+    "FuturSimple": [
+      "soignerai",
+      "soigneras",
+      "soignera",
+      "soignerons",
+      "soignerez",
+      "soigneront"
+    ],
+    "PasseCompose": [
+      "ai soigné",
+      "as soigné",
+      "a soigné",
+      "avons soigné",
+      "avez soigné",
+      "ont soigné"
+    ],
+    "PlusQueParfait": [
+      "avais soigné",
+      "avais soigné",
+      "avait soigné",
+      "avions soigné",
+      "aviez soigné",
+      "avaient soigné"
+    ],
+    "PasseAnterieur": [
+      "eus soigné",
+      "eus soigné",
+      "eut soigné",
+      "eûmes soigné",
+      "eûtes soigné",
+      "eurent soigné"
+    ],
+    "FuturAnterieur": [
+      "aurai soigné",
+      "auras soigné",
+      "aura soigné",
+      "aurons soigné",
+      "aurez soigné",
+      "auront soigné"
+    ],
+    "SubjonctifPresent": [
+      "soigne",
+      "soignes",
+      "soigne",
+      "soignions",
+      "soigniez",
+      "soignent"
+    ],
+    "SubjonctifImparfait": [
+      "soignasse",
+      "soignasses",
+      "soignât",
+      "soignassions",
+      "soignassiez",
+      "soignassent"
+    ],
+    "SubjonctifPasse": [
+      "aie soigné",
+      "aies soigné",
+      "ait soigné",
+      "ayons soigné",
+      "ayez soigné",
+      "aient soigné"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse soigné",
+      "eusses soigné",
+      "eût soigné",
+      "eussions soigné",
+      "eussiez soigné",
+      "eussent soigné"
+    ],
+    "ConditionnelPresent": [
+      "soignerais",
+      "soignerais",
+      "soignerait",
+      "soignerions",
+      "soigneriez",
+      "soigneraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais soigné",
+      "aurais soigné",
+      "aurait soigné",
+      "aurions soigné",
+      "auriez soigné",
+      "auraient soigné"
+    ],
+    "ConditionnelPasseII": [
+      "eusse soigné",
+      "eusses soigné",
+      "eût soigné",
+      "eussions soigné",
+      "eussiez soigné",
+      "eussent soigné"
+    ],
+    "Imperatif": [
+      "",
+      "soigne !",
+      "",
+      "soignons !",
+      "soignez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie soigné !",
+      "",
+      "ayons soigné !",
+      "ayez soigné !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "visiter",
+    "ParticipePasse": "visité",
+    "ParticipePresent": "visitant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se visiter",
+    "Present": [
+      "visite",
+      "visites",
+      "visite",
+      "visitons",
+      "visitez",
+      "visitent"
+    ],
+    "Imparfait": [
+      "visitais",
+      "visitais",
+      "visitait",
+      "visitions",
+      "visitiez",
+      "visitaient"
+    ],
+    "PasseSimple": [
+      "visitai",
+      "visitas",
+      "visita",
+      "visitâmes",
+      "visitâtes",
+      "visitèrent"
+    ],
+    "FuturSimple": [
+      "visiterai",
+      "visiteras",
+      "visitera",
+      "visiterons",
+      "visiterez",
+      "visiteront"
+    ],
+    "PasseCompose": [
+      "ai visité",
+      "as visité",
+      "a visité",
+      "avons visité",
+      "avez visité",
+      "ont visité"
+    ],
+    "PlusQueParfait": [
+      "avais visité",
+      "avais visité",
+      "avait visité",
+      "avions visité",
+      "aviez visité",
+      "avaient visité"
+    ],
+    "PasseAnterieur": [
+      "eus visité",
+      "eus visité",
+      "eut visité",
+      "eûmes visité",
+      "eûtes visité",
+      "eurent visité"
+    ],
+    "FuturAnterieur": [
+      "aurai visité",
+      "auras visité",
+      "aura visité",
+      "aurons visité",
+      "aurez visité",
+      "auront visité"
+    ],
+    "SubjonctifPresent": [
+      "visite",
+      "visites",
+      "visite",
+      "visitions",
+      "visitiez",
+      "visitent"
+    ],
+    "SubjonctifImparfait": [
+      "visitasse",
+      "visitasses",
+      "visitât",
+      "visitassions",
+      "visitassiez",
+      "visitassent"
+    ],
+    "SubjonctifPasse": [
+      "aie visité",
+      "aies visité",
+      "ait visité",
+      "ayons visité",
+      "ayez visité",
+      "aient visité"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse visité",
+      "eusses visité",
+      "eût visité",
+      "eussions visité",
+      "eussiez visité",
+      "eussent visité"
+    ],
+    "ConditionnelPresent": [
+      "visiterais",
+      "visiterais",
+      "visiterait",
+      "visiterions",
+      "visiteriez",
+      "visiteraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais visité",
+      "aurais visité",
+      "aurait visité",
+      "aurions visité",
+      "auriez visité",
+      "auraient visité"
+    ],
+    "ConditionnelPasseII": [
+      "eusse visité",
+      "eusses visité",
+      "eût visité",
+      "eussions visité",
+      "eussiez visité",
+      "eussent visité"
+    ],
+    "Imperatif": [
+      "",
+      "visite !",
+      "",
+      "visitons !",
+      "visitez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie visité !",
+      "",
+      "ayons visité !",
+      "ayez visité !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "fleurir",
+    "ParticipePasse": "fleuri",
+    "ParticipePresent": "fleurissant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se fleurir",
+    "Present": [
+      "fleuris",
+      "fleuris",
+      "fleurit",
+      "fleurissons",
+      "fleurissez",
+      "fleurissent"
+    ],
+    "Imparfait": [
+      "fleurissais",
+      "fleurissais",
+      "fleurissait",
+      "fleurissions",
+      "fleurissiez",
+      "fleurissaient"
+    ],
+    "PasseSimple": [
+      "fleuris",
+      "fleuris",
+      "fleurit",
+      "fleurîmes",
+      "fleurîtes",
+      "fleurirent"
+    ],
+    "FuturSimple": [
+      "fleurirai",
+      "fleuriras",
+      "fleurira",
+      "fleurirons",
+      "fleurirez",
+      "fleuriront"
+    ],
+    "PasseCompose": [
+      "ai fleuri",
+      "as fleuri",
+      "a fleuri",
+      "avons fleuri",
+      "avez fleuri",
+      "ont fleuri"
+    ],
+    "PlusQueParfait": [
+      "avais fleuri",
+      "avais fleuri",
+      "avait fleuri",
+      "avions fleuri",
+      "aviez fleuri",
+      "avaient fleuri"
+    ],
+    "PasseAnterieur": [
+      "eus fleuri",
+      "eus fleuri",
+      "eut fleuri",
+      "eûmes fleuri",
+      "eûtes fleuri",
+      "eurent fleuri"
+    ],
+    "FuturAnterieur": [
+      "aurai fleuri",
+      "auras fleuri",
+      "aura fleuri",
+      "aurons fleuri",
+      "aurez fleuri",
+      "auront fleuri"
+    ],
+    "SubjonctifPresent": [
+      "fleurisse",
+      "fleurisses",
+      "fleurisse",
+      "fleurissions",
+      "fleurissiez",
+      "fleurissent"
+    ],
+    "SubjonctifImparfait": [
+      "fleurisse",
+      "fleurisses",
+      "fleurît",
+      "fleurissions",
+      "fleurissiez",
+      "fleurissent"
+    ],
+    "SubjonctifPasse": [
+      "aie fleuri",
+      "aies fleuri",
+      "ait fleuri",
+      "ayons fleuri",
+      "ayez fleuri",
+      "aient fleuri"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse fleuri",
+      "eusses fleuri",
+      "eût fleuri",
+      "eussions fleuri",
+      "eussiez fleuri",
+      "eussent fleuri"
+    ],
+    "ConditionnelPresent": [
+      "fleurirais",
+      "fleurirais",
+      "fleurirait",
+      "fleuririons",
+      "fleuririez",
+      "fleuriraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais fleuri",
+      "aurais fleuri",
+      "aurait fleuri",
+      "aurions fleuri",
+      "auriez fleuri",
+      "auraient fleuri"
+    ],
+    "ConditionnelPasseII": [
+      "eusse fleuri",
+      "eusses fleuri",
+      "eût fleuri",
+      "eussions fleuri",
+      "eussiez fleuri",
+      "eussent fleuri"
+    ],
+    "Imperatif": [
+      "",
+      "fleuris !",
+      "",
+      "fleurissons !",
+      "fleurissez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie fleuri !",
+      "",
+      "ayons fleuri !",
+      "ayez fleuri !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "mûrir",
+    "ParticipePasse": "mûri",
+    "ParticipePresent": "mûrissant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se mûrir",
+    "Present": [
+      "mûris",
+      "mûris",
+      "mûrit",
+      "mûrissons",
+      "mûrissez",
+      "mûrissent"
+    ],
+    "Imparfait": [
+      "mûrissais",
+      "mûrissais",
+      "mûrissait",
+      "mûrissions",
+      "mûrissiez",
+      "mûrissaient"
+    ],
+    "PasseSimple": [
+      "mûris",
+      "mûris",
+      "mûrit",
+      "mûrîmes",
+      "mûrîtes",
+      "mûrirent"
+    ],
+    "FuturSimple": [
+      "mûrirai",
+      "mûriras",
+      "mûrira",
+      "mûrirons",
+      "mûrirez",
+      "mûriront"
+    ],
+    "PasseCompose": [
+      "ai mûri",
+      "as mûri",
+      "a mûri",
+      "avons mûri",
+      "avez mûri",
+      "ont mûri"
+    ],
+    "PlusQueParfait": [
+      "avais mûri",
+      "avais mûri",
+      "avait mûri",
+      "avions mûri",
+      "aviez mûri",
+      "avaient mûri"
+    ],
+    "PasseAnterieur": [
+      "eus mûri",
+      "eus mûri",
+      "eut mûri",
+      "eûmes mûri",
+      "eûtes mûri",
+      "eurent mûri"
+    ],
+    "FuturAnterieur": [
+      "aurai mûri",
+      "auras mûri",
+      "aura mûri",
+      "aurons mûri",
+      "aurez mûri",
+      "auront mûri"
+    ],
+    "SubjonctifPresent": [
+      "mûrisse",
+      "mûrisses",
+      "mûrisse",
+      "mûrissions",
+      "mûrissiez",
+      "mûrissent"
+    ],
+    "SubjonctifImparfait": [
+      "mûrisse",
+      "mûrisses",
+      "mûrît",
+      "mûrissions",
+      "mûrissiez",
+      "mûrissent"
+    ],
+    "SubjonctifPasse": [
+      "aie mûri",
+      "aies mûri",
+      "ait mûri",
+      "ayons mûri",
+      "ayez mûri",
+      "aient mûri"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse mûri",
+      "eusses mûri",
+      "eût mûri",
+      "eussions mûri",
+      "eussiez mûri",
+      "eussent mûri"
+    ],
+    "ConditionnelPresent": [
+      "mûrirais",
+      "mûrirais",
+      "mûrirait",
+      "mûririons",
+      "mûririez",
+      "mûriraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais mûri",
+      "aurais mûri",
+      "aurait mûri",
+      "aurions mûri",
+      "auriez mûri",
+      "auraient mûri"
+    ],
+    "ConditionnelPasseII": [
+      "eusse mûri",
+      "eusses mûri",
+      "eût mûri",
+      "eussions mûri",
+      "eussiez mûri",
+      "eussent mûri"
+    ],
+    "Imperatif": [
+      "",
+      "mûris !",
+      "",
+      "mûrissons !",
+      "mûrissez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie mûri !",
+      "",
+      "ayons mûri !",
+      "ayez mûri !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "vieillir",
+    "ParticipePasse": "vieilli",
+    "ParticipePresent": "vieillissant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se vieillir",
+    "Present": [
+      "vieillis",
+      "vieillis",
+      "vieillit",
+      "vieillissons",
+      "vieillissez",
+      "vieillissent"
+    ],
+    "Imparfait": [
+      "vieillissais",
+      "vieillissais",
+      "vieillissait",
+      "vieillissions",
+      "vieillissiez",
+      "vieillissaient"
+    ],
+    "PasseSimple": [
+      "vieillis",
+      "vieillis",
+      "vieillit",
+      "vieillîmes",
+      "vieillîtes",
+      "vieillirent"
+    ],
+    "FuturSimple": [
+      "vieillirai",
+      "vieilliras",
+      "vieillira",
+      "vieillirons",
+      "vieillirez",
+      "vieilliront"
+    ],
+    "PasseCompose": [
+      "ai vieilli",
+      "as vieilli",
+      "a vieilli",
+      "avons vieilli",
+      "avez vieilli",
+      "ont vieilli"
+    ],
+    "PlusQueParfait": [
+      "avais vieilli",
+      "avais vieilli",
+      "avait vieilli",
+      "avions vieilli",
+      "aviez vieilli",
+      "avaient vieilli"
+    ],
+    "PasseAnterieur": [
+      "eus vieilli",
+      "eus vieilli",
+      "eut vieilli",
+      "eûmes vieilli",
+      "eûtes vieilli",
+      "eurent vieilli"
+    ],
+    "FuturAnterieur": [
+      "aurai vieilli",
+      "auras vieilli",
+      "aura vieilli",
+      "aurons vieilli",
+      "aurez vieilli",
+      "auront vieilli"
+    ],
+    "SubjonctifPresent": [
+      "vieillisse",
+      "vieillisses",
+      "vieillisse",
+      "vieillissions",
+      "vieillissiez",
+      "vieillissent"
+    ],
+    "SubjonctifImparfait": [
+      "vieillisse",
+      "vieillisses",
+      "vieillît",
+      "vieillissions",
+      "vieillissiez",
+      "vieillissent"
+    ],
+    "SubjonctifPasse": [
+      "aie vieilli",
+      "aies vieilli",
+      "ait vieilli",
+      "ayons vieilli",
+      "ayez vieilli",
+      "aient vieilli"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse vieilli",
+      "eusses vieilli",
+      "eût vieilli",
+      "eussions vieilli",
+      "eussiez vieilli",
+      "eussent vieilli"
+    ],
+    "ConditionnelPresent": [
+      "vieillirais",
+      "vieillirais",
+      "vieillirait",
+      "vieillirions",
+      "vieilliriez",
+      "vieilliraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais vieilli",
+      "aurais vieilli",
+      "aurait vieilli",
+      "aurions vieilli",
+      "auriez vieilli",
+      "auraient vieilli"
+    ],
+    "ConditionnelPasseII": [
+      "eusse vieilli",
+      "eusses vieilli",
+      "eût vieilli",
+      "eussions vieilli",
+      "eussiez vieilli",
+      "eussent vieilli"
+    ],
+    "Imperatif": [
+      "",
+      "vieillis !",
+      "",
+      "vieillissons !",
+      "vieillissez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie vieilli !",
+      "",
+      "ayons vieilli !",
+      "ayez vieilli !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "combattre",
+    "ParticipePasse": "combattu",
+    "ParticipePresent": "combattant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se combattre",
+    "Present": [
+      "combatts",
+      "combatts",
+      "combatt",
+      "combattons",
+      "combattez",
+      "combattent"
+    ],
+    "Imparfait": [
+      "combattais",
+      "combattais",
+      "combattait",
+      "combattions",
+      "combattiez",
+      "combattaient"
+    ],
+    "PasseSimple": [
+      "combattis",
+      "combattis",
+      "combattit",
+      "combattîmes",
+      "combattîtes",
+      "combattirent"
+    ],
+    "FuturSimple": [
+      "combattrai",
+      "combattras",
+      "combattra",
+      "combattrons",
+      "combattrez",
+      "combattront"
+    ],
+    "PasseCompose": [
+      "ai combattu",
+      "as combattu",
+      "a combattu",
+      "avons combattu",
+      "avez combattu",
+      "ont combattu"
+    ],
+    "PlusQueParfait": [
+      "avais combattu",
+      "avais combattu",
+      "avait combattu",
+      "avions combattu",
+      "aviez combattu",
+      "avaient combattu"
+    ],
+    "PasseAnterieur": [
+      "eus combattu",
+      "eus combattu",
+      "eut combattu",
+      "eûmes combattu",
+      "eûtes combattu",
+      "eurent combattu"
+    ],
+    "FuturAnterieur": [
+      "aurai combattu",
+      "auras combattu",
+      "aura combattu",
+      "aurons combattu",
+      "aurez combattu",
+      "auront combattu"
+    ],
+    "SubjonctifPresent": [
+      "combatte",
+      "combattes",
+      "combatte",
+      "combattions",
+      "combattiez",
+      "combattent"
+    ],
+    "SubjonctifImparfait": [
+      "combattisse",
+      "combattisses",
+      "combattît",
+      "combattissions",
+      "combattissiez",
+      "combattissent"
+    ],
+    "SubjonctifPasse": [
+      "aie combattu",
+      "aies combattu",
+      "ait combattu",
+      "ayons combattu",
+      "ayez combattu",
+      "aient combattu"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse combattu",
+      "eusses combattu",
+      "eût combattu",
+      "eussions combattu",
+      "eussiez combattu",
+      "eussent combattu"
+    ],
+    "ConditionnelPresent": [
+      "combattrais",
+      "combattrais",
+      "combattrait",
+      "combattrions",
+      "combattriez",
+      "combattraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais combattu",
+      "aurais combattu",
+      "aurait combattu",
+      "aurions combattu",
+      "auriez combattu",
+      "auraient combattu"
+    ],
+    "ConditionnelPasseII": [
+      "eusse combattu",
+      "eusses combattu",
+      "eût combattu",
+      "eussions combattu",
+      "eussiez combattu",
+      "eussent combattu"
+    ],
+    "Imperatif": [
+      "",
+      "combatts !",
+      "",
+      "combattons !",
+      "combattez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie combattu !",
+      "",
+      "ayons combattu !",
+      "ayez combattu !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "instruire",
+    "ParticipePasse": "instruiu",
+    "ParticipePresent": "instruiant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se instruire",
+    "Present": [
+      "instruis",
+      "instruis",
+      "instrui",
+      "instruions",
+      "instruiez",
+      "instruient"
+    ],
+    "Imparfait": [
+      "instruiais",
+      "instruiais",
+      "instruiait",
+      "instruiions",
+      "instruiiez",
+      "instruiaient"
+    ],
+    "PasseSimple": [
+      "instruiis",
+      "instruiis",
+      "instruiit",
+      "instruiîmes",
+      "instruiîtes",
+      "instruiirent"
+    ],
+    "FuturSimple": [
+      "instruirai",
+      "instruiras",
+      "instruira",
+      "instruirons",
+      "instruirez",
+      "instruiront"
+    ],
+    "PasseCompose": [
+      "ai instruiu",
+      "as instruiu",
+      "a instruiu",
+      "avons instruiu",
+      "avez instruiu",
+      "ont instruiu"
+    ],
+    "PlusQueParfait": [
+      "avais instruiu",
+      "avais instruiu",
+      "avait instruiu",
+      "avions instruiu",
+      "aviez instruiu",
+      "avaient instruiu"
+    ],
+    "PasseAnterieur": [
+      "eus instruiu",
+      "eus instruiu",
+      "eut instruiu",
+      "eûmes instruiu",
+      "eûtes instruiu",
+      "eurent instruiu"
+    ],
+    "FuturAnterieur": [
+      "aurai instruiu",
+      "auras instruiu",
+      "aura instruiu",
+      "aurons instruiu",
+      "aurez instruiu",
+      "auront instruiu"
+    ],
+    "SubjonctifPresent": [
+      "instruie",
+      "instruies",
+      "instruie",
+      "instruiions",
+      "instruiiez",
+      "instruient"
+    ],
+    "SubjonctifImparfait": [
+      "instruiisse",
+      "instruiisses",
+      "instruiît",
+      "instruiissions",
+      "instruiissiez",
+      "instruiissent"
+    ],
+    "SubjonctifPasse": [
+      "aie instruiu",
+      "aies instruiu",
+      "ait instruiu",
+      "ayons instruiu",
+      "ayez instruiu",
+      "aient instruiu"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse instruiu",
+      "eusses instruiu",
+      "eût instruiu",
+      "eussions instruiu",
+      "eussiez instruiu",
+      "eussent instruiu"
+    ],
+    "ConditionnelPresent": [
+      "instruirais",
+      "instruirais",
+      "instruirait",
+      "instruirions",
+      "instruiriez",
+      "instruiraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais instruiu",
+      "aurais instruiu",
+      "aurait instruiu",
+      "aurions instruiu",
+      "auriez instruiu",
+      "auraient instruiu"
+    ],
+    "ConditionnelPasseII": [
+      "eusse instruiu",
+      "eusses instruiu",
+      "eût instruiu",
+      "eussions instruiu",
+      "eussiez instruiu",
+      "eussent instruiu"
+    ],
+    "Imperatif": [
+      "",
+      "instruis !",
+      "",
+      "instruions !",
+      "instruiez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie instruiu !",
+      "",
+      "ayons instruiu !",
+      "ayez instruiu !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "introduire",
+    "ParticipePasse": "introduiu",
+    "ParticipePresent": "introduiant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se introduire",
+    "Present": [
+      "introduis",
+      "introduis",
+      "introdui",
+      "introduions",
+      "introduiez",
+      "introduient"
+    ],
+    "Imparfait": [
+      "introduiais",
+      "introduiais",
+      "introduiait",
+      "introduiions",
+      "introduiiez",
+      "introduiaient"
+    ],
+    "PasseSimple": [
+      "introduiis",
+      "introduiis",
+      "introduiit",
+      "introduiîmes",
+      "introduiîtes",
+      "introduiirent"
+    ],
+    "FuturSimple": [
+      "introduirai",
+      "introduiras",
+      "introduira",
+      "introduirons",
+      "introduirez",
+      "introduiront"
+    ],
+    "PasseCompose": [
+      "ai introduiu",
+      "as introduiu",
+      "a introduiu",
+      "avons introduiu",
+      "avez introduiu",
+      "ont introduiu"
+    ],
+    "PlusQueParfait": [
+      "avais introduiu",
+      "avais introduiu",
+      "avait introduiu",
+      "avions introduiu",
+      "aviez introduiu",
+      "avaient introduiu"
+    ],
+    "PasseAnterieur": [
+      "eus introduiu",
+      "eus introduiu",
+      "eut introduiu",
+      "eûmes introduiu",
+      "eûtes introduiu",
+      "eurent introduiu"
+    ],
+    "FuturAnterieur": [
+      "aurai introduiu",
+      "auras introduiu",
+      "aura introduiu",
+      "aurons introduiu",
+      "aurez introduiu",
+      "auront introduiu"
+    ],
+    "SubjonctifPresent": [
+      "introduie",
+      "introduies",
+      "introduie",
+      "introduiions",
+      "introduiiez",
+      "introduient"
+    ],
+    "SubjonctifImparfait": [
+      "introduiisse",
+      "introduiisses",
+      "introduiît",
+      "introduiissions",
+      "introduiissiez",
+      "introduiissent"
+    ],
+    "SubjonctifPasse": [
+      "aie introduiu",
+      "aies introduiu",
+      "ait introduiu",
+      "ayons introduiu",
+      "ayez introduiu",
+      "aient introduiu"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse introduiu",
+      "eusses introduiu",
+      "eût introduiu",
+      "eussions introduiu",
+      "eussiez introduiu",
+      "eussent introduiu"
+    ],
+    "ConditionnelPresent": [
+      "introduirais",
+      "introduirais",
+      "introduirait",
+      "introduirions",
+      "introduiriez",
+      "introduiraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais introduiu",
+      "aurais introduiu",
+      "aurait introduiu",
+      "aurions introduiu",
+      "auriez introduiu",
+      "auraient introduiu"
+    ],
+    "ConditionnelPasseII": [
+      "eusse introduiu",
+      "eusses introduiu",
+      "eût introduiu",
+      "eussions introduiu",
+      "eussiez introduiu",
+      "eussent introduiu"
+    ],
+    "Imperatif": [
+      "",
+      "introduis !",
+      "",
+      "introduions !",
+      "introduiez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie introduiu !",
+      "",
+      "ayons introduiu !",
+      "ayez introduiu !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "reproduire",
+    "ParticipePasse": "reproduiu",
+    "ParticipePresent": "reproduiant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se reproduire",
+    "Present": [
+      "reproduis",
+      "reproduis",
+      "reprodui",
+      "reproduions",
+      "reproduiez",
+      "reproduient"
+    ],
+    "Imparfait": [
+      "reproduiais",
+      "reproduiais",
+      "reproduiait",
+      "reproduiions",
+      "reproduiiez",
+      "reproduiaient"
+    ],
+    "PasseSimple": [
+      "reproduiis",
+      "reproduiis",
+      "reproduiit",
+      "reproduiîmes",
+      "reproduiîtes",
+      "reproduiirent"
+    ],
+    "FuturSimple": [
+      "reproduirai",
+      "reproduiras",
+      "reproduira",
+      "reproduirons",
+      "reproduirez",
+      "reproduiront"
+    ],
+    "PasseCompose": [
+      "ai reproduiu",
+      "as reproduiu",
+      "a reproduiu",
+      "avons reproduiu",
+      "avez reproduiu",
+      "ont reproduiu"
+    ],
+    "PlusQueParfait": [
+      "avais reproduiu",
+      "avais reproduiu",
+      "avait reproduiu",
+      "avions reproduiu",
+      "aviez reproduiu",
+      "avaient reproduiu"
+    ],
+    "PasseAnterieur": [
+      "eus reproduiu",
+      "eus reproduiu",
+      "eut reproduiu",
+      "eûmes reproduiu",
+      "eûtes reproduiu",
+      "eurent reproduiu"
+    ],
+    "FuturAnterieur": [
+      "aurai reproduiu",
+      "auras reproduiu",
+      "aura reproduiu",
+      "aurons reproduiu",
+      "aurez reproduiu",
+      "auront reproduiu"
+    ],
+    "SubjonctifPresent": [
+      "reproduie",
+      "reproduies",
+      "reproduie",
+      "reproduiions",
+      "reproduiiez",
+      "reproduient"
+    ],
+    "SubjonctifImparfait": [
+      "reproduiisse",
+      "reproduiisses",
+      "reproduiît",
+      "reproduiissions",
+      "reproduiissiez",
+      "reproduiissent"
+    ],
+    "SubjonctifPasse": [
+      "aie reproduiu",
+      "aies reproduiu",
+      "ait reproduiu",
+      "ayons reproduiu",
+      "ayez reproduiu",
+      "aient reproduiu"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse reproduiu",
+      "eusses reproduiu",
+      "eût reproduiu",
+      "eussions reproduiu",
+      "eussiez reproduiu",
+      "eussent reproduiu"
+    ],
+    "ConditionnelPresent": [
+      "reproduirais",
+      "reproduirais",
+      "reproduirait",
+      "reproduirions",
+      "reproduiriez",
+      "reproduiraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais reproduiu",
+      "aurais reproduiu",
+      "aurait reproduiu",
+      "aurions reproduiu",
+      "auriez reproduiu",
+      "auraient reproduiu"
+    ],
+    "ConditionnelPasseII": [
+      "eusse reproduiu",
+      "eusses reproduiu",
+      "eût reproduiu",
+      "eussions reproduiu",
+      "eussiez reproduiu",
+      "eussent reproduiu"
+    ],
+    "Imperatif": [
+      "",
+      "reproduis !",
+      "",
+      "reproduions !",
+      "reproduiez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie reproduiu !",
+      "",
+      "ayons reproduiu !",
+      "ayez reproduiu !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "séduire",
+    "ParticipePasse": "séduiu",
+    "ParticipePresent": "séduiant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "se séduire",
+    "Present": [
+      "séduis",
+      "séduis",
+      "sédui",
+      "séduions",
+      "séduiez",
+      "séduient"
+    ],
+    "Imparfait": [
+      "séduiais",
+      "séduiais",
+      "séduiait",
+      "séduiions",
+      "séduiiez",
+      "séduiaient"
+    ],
+    "PasseSimple": [
+      "séduiis",
+      "séduiis",
+      "séduiit",
+      "séduiîmes",
+      "séduiîtes",
+      "séduiirent"
+    ],
+    "FuturSimple": [
+      "séduirai",
+      "séduiras",
+      "séduira",
+      "séduirons",
+      "séduirez",
+      "séduiront"
+    ],
+    "PasseCompose": [
+      "ai séduiu",
+      "as séduiu",
+      "a séduiu",
+      "avons séduiu",
+      "avez séduiu",
+      "ont séduiu"
+    ],
+    "PlusQueParfait": [
+      "avais séduiu",
+      "avais séduiu",
+      "avait séduiu",
+      "avions séduiu",
+      "aviez séduiu",
+      "avaient séduiu"
+    ],
+    "PasseAnterieur": [
+      "eus séduiu",
+      "eus séduiu",
+      "eut séduiu",
+      "eûmes séduiu",
+      "eûtes séduiu",
+      "eurent séduiu"
+    ],
+    "FuturAnterieur": [
+      "aurai séduiu",
+      "auras séduiu",
+      "aura séduiu",
+      "aurons séduiu",
+      "aurez séduiu",
+      "auront séduiu"
+    ],
+    "SubjonctifPresent": [
+      "séduie",
+      "séduies",
+      "séduie",
+      "séduiions",
+      "séduiiez",
+      "séduient"
+    ],
+    "SubjonctifImparfait": [
+      "séduiisse",
+      "séduiisses",
+      "séduiît",
+      "séduiissions",
+      "séduiissiez",
+      "séduiissent"
+    ],
+    "SubjonctifPasse": [
+      "aie séduiu",
+      "aies séduiu",
+      "ait séduiu",
+      "ayons séduiu",
+      "ayez séduiu",
+      "aient séduiu"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse séduiu",
+      "eusses séduiu",
+      "eût séduiu",
+      "eussions séduiu",
+      "eussiez séduiu",
+      "eussent séduiu"
+    ],
+    "ConditionnelPresent": [
+      "séduirais",
+      "séduirais",
+      "séduirait",
+      "séduirions",
+      "séduiriez",
+      "séduiraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais séduiu",
+      "aurais séduiu",
+      "aurait séduiu",
+      "aurions séduiu",
+      "auriez séduiu",
+      "auraient séduiu"
+    ],
+    "ConditionnelPasseII": [
+      "eusse séduiu",
+      "eusses séduiu",
+      "eût séduiu",
+      "eussions séduiu",
+      "eussiez séduiu",
+      "eussent séduiu"
+    ],
+    "Imperatif": [
+      "",
+      "séduis !",
+      "",
+      "séduions !",
+      "séduiez !",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "aie séduiu !",
+      "",
+      "ayons séduiu !",
+      "ayez séduiu !",
+      ""
+    ]
+  },
+  {
+    "Infinitif": "être",
+    "ParticipePasse": "été",
+    "ParticipePresent": "étant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "",
+    "Present": [
+      "suis",
+      "es",
+      "est",
+      "sommes",
+      "êtes",
+      "sont"
+    ],
+    "Imparfait": [
+      "étais",
+      "étais",
+      "était",
+      "étions",
+      "étiez",
+      "étaient"
+    ],
+    "PasseSimple": [
+      "fus",
+      "fus",
+      "fut",
+      "fûmes",
+      "fûtes",
+      "furent"
+    ],
+    "FuturSimple": [
+      "serai",
+      "seras",
+      "sera",
+      "serons",
+      "serez",
+      "seront"
+    ],
+    "PasseCompose": [
+      "ai été",
+      "as été",
+      "a été",
+      "avons été",
+      "avez été",
+      "ont été"
+    ],
+    "PlusQueParfait": [
+      "avais été",
+      "avais été",
+      "avait été",
+      "avions été",
+      "aviez été",
+      "avaient été"
+    ],
+    "PasseAnterieur": [
+      "eus été",
+      "eus été",
+      "eut été",
+      "eûmes été",
+      "eûtes été",
+      "eurent été"
+    ],
+    "FuturAnterieur": [
+      "aurai été",
+      "auras été",
+      "aura été",
+      "aurons été",
+      "aurez été",
+      "auront été"
+    ],
+    "SubjonctifPresent": [
+      "sois",
+      "sois",
+      "soit",
+      "soyons",
+      "soyez",
+      "soient"
+    ],
+    "SubjonctifImparfait": [
+      "fusse",
+      "fusses",
+      "fût",
+      "fussions",
+      "fussiez",
+      "fussent"
+    ],
+    "SubjonctifPasse": [
+      "aie été",
+      "aies été",
+      "ait été",
+      "ayons été",
+      "ayez été",
+      "aient été"
+    ],
+    "SubjonctifPlusQueParfait": [
+      "eusse été",
+      "eusses été",
+      "eût été",
+      "eussions été",
+      "eussiez été",
+      "eussent été"
+    ],
+    "ConditionnelPresent": [
+      "serais",
+      "serais",
+      "serait",
+      "serions",
+      "seriez",
+      "seraient"
+    ],
+    "ConditionnelPasse": [
+      "aurais été",
+      "aurais été",
+      "aurait été",
+      "aurions été",
+      "auriez été",
+      "auraient été"
+    ],
+    "ConditionnelPasseDeuxiemeForme": [
+      "eusse été",
+      "eusses été",
+      "eût été",
+      "eussions été",
+      "eussiez été",
+      "eussent été"
+    ],
+    "Imperatif": [
+      "sois",
+      "soyons",
+      "soyez"
+    ],
+    "ImperatifPasse": [
+      "aie été",
+      "ayons été",
+      "ayez été"
+    ]
+  },
+  {
+    "Infinitif": "neiger",
+    "ParticipePasse": "neigé",
+    "ParticipePresent": "neigeant",
+    "Auxiliaire": "avoir",
+    "FormePronominale": "",
+    "Present": [
+      "",
+      "",
+      "neige",
+      "",
+      "",
+      ""
+    ],
+    "Imparfait": [
+      "",
+      "",
+      "neigeait",
+      "",
+      "",
+      ""
+    ],
+    "PasseSimple": [
+      "",
+      "",
+      "neigea",
+      "",
+      "",
+      ""
+    ],
+    "FuturSimple": [
+      "",
+      "",
+      "neigera",
+      "",
+      "",
+      ""
+    ],
+    "PasseCompose": [
+      "",
+      "",
+      "a neigé",
+      "",
+      "",
+      ""
+    ],
+    "PlusQueParfait": [
+      "",
+      "",
+      "avait neigé",
+      "",
+      "",
+      ""
+    ],
+    "PasseAnterieur": [
+      "",
+      "",
+      "eut neigé",
+      "",
+      "",
+      ""
+    ],
+    "FuturAnterieur": [
+      "",
+      "",
+      "aura neigé",
+      "",
+      "",
+      ""
+    ],
+    "SubjonctifPresent": [
+      "",
+      "",
+      "neige",
+      "",
+      "",
+      ""
+    ],
+    "SubjonctifImparfait": [
+      "",
+      "",
+      "neigeât",
+      "",
+      "",
+      ""
+    ],
+    "SubjonctifPasse": [
+      "",
+      "",
+      "ait neigé",
+      "",
+      "",
+      ""
+    ],
+    "SubjonctifPlusQueParfait": [
+      "",
+      "",
+      "eût neigé",
+      "",
+      "",
+      ""
+    ],
+    "ConditionnelPresent": [
+      "",
+      "",
+      "neigerait",
+      "",
+      "",
+      ""
+    ],
+    "ConditionnelPasse": [
+      "",
+      "",
+      "aurait neigé",
+      "",
+      "",
+      ""
+    ],
+    "ConditionnelPasseDeuxiemeForme": [
+      "",
+      "",
+      "eût neigé",
+      "",
+      "",
+      ""
+    ],
+    "Imperatif": [
+      "",
+      "",
+      ""
+    ],
+    "ImperatifPasse": [
+      "",
+      "",
+      ""
+    ]
   }
 ]

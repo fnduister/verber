@@ -6,11 +6,13 @@ import {
     CardContent,
     Chip,
     Container,
-    Grid, LinearProgress, Paper, Stack,
+    Grid, LinearProgress, Stack,
     Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +25,10 @@ import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { randElement, shuffle } from '../../../utils/gameUtils';
 import { findVerbByInfinitive, getConjugation } from '../../../utils/tenseUtils';
+
+const ItemTypes = {
+    CONJUGATION: 'conjugation'
+};
 
 interface MatchItem {
     id: string;
@@ -53,6 +59,188 @@ interface DraggedItem {
     conjugation: string;
     originalTense: string;
 }
+
+// Draggable Conjugation Chip Component
+interface DraggableConjugationProps {
+    item: MatchItem;
+    isUsed: boolean;
+    isDragging: boolean;
+    showAnswers: boolean;
+    isProcessingAnswer: boolean;
+    onDelete?: () => void;
+    isMatched?: boolean;
+    isCorrect?: boolean;
+    index?: number;
+}
+
+const DraggableConjugation: React.FC<DraggableConjugationProps> = ({
+    item,
+    isUsed,
+    isDragging: externalIsDragging,
+    showAnswers,
+    isProcessingAnswer,
+    onDelete,
+    isMatched = false,
+    isCorrect = false,
+    index = 0
+}) => {
+    const [{ isDragging }, drag] = useDrag(() => ({
+        type: ItemTypes.CONJUGATION,
+        item: { id: item.id, conjugation: item.conjugation, originalTense: item.tense },
+        canDrag: !showAnswers && !isProcessingAnswer,
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+        }),
+    }), [item, showAnswers, isProcessingAnswer]);
+
+    const actualIsDragging = isDragging || externalIsDragging;
+
+    return (
+        <motion.div
+            ref={drag}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{
+                opacity: actualIsDragging ? 0.3 : 1,
+                scale: actualIsDragging ? 0.9 : 1,
+                y: actualIsDragging ? -5 : 0
+            }}
+            transition={{ delay: 0.7 + (index * 0.1) }}
+            style={{ display: 'inline-block' }}
+        >
+            <Chip
+                label={`${item.pronoun} ${item.conjugation}`}
+                onDelete={onDelete}
+                color={showAnswers && isMatched ? (isCorrect ? 'success' : 'error') : isMatched ? 'primary' : 'default'}
+                sx={{
+                    p: 2,
+                    height: 'auto',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: (!showAnswers && !isProcessingAnswer) ? 'grab' : 'default',
+                    opacity: actualIsDragging ? 0.3 : (isUsed ? 0.4 : 1),
+                    backgroundColor: actualIsDragging ? '#ff9800' : (isUsed ? '#f5f5f5' : (isMatched ? undefined : '#667eea')),
+                    color: actualIsDragging ? 'white' : (isUsed ? '#888' : (isMatched ? undefined : 'white')),
+                    border: '2px solid',
+                    borderColor: actualIsDragging ? '#ff9800' : (isUsed ? '#e0e0e0' : (isMatched ? undefined : '#667eea')),
+                    transition: 'all 0.2s ease',
+                    transform: actualIsDragging ? 'rotate(-5deg) scale(1.05)' : 'none',
+                    boxShadow: actualIsDragging ? '0 8px 24px rgba(255,152,0,0.4)' : undefined,
+                    '& .MuiChip-label': {
+                        padding: '8px 16px'
+                    },
+                    '&:hover': {
+                        backgroundColor: (!isUsed && !showAnswers && !actualIsDragging && !isMatched) ? '#5a67d8' : undefined,
+                        transform: (!showAnswers && !isProcessingAnswer && !actualIsDragging) ? 'translateY(-2px)' : (actualIsDragging ? 'rotate(-5deg) scale(1.05)' : 'none'),
+                        boxShadow: (!showAnswers && !isProcessingAnswer && !actualIsDragging) ? '0 4px 20px rgba(0,0,0,0.15)' : (actualIsDragging ? '0 8px 24px rgba(255,152,0,0.4)' : undefined)
+                    },
+                    '&:active': {
+                        cursor: (!showAnswers && !isProcessingAnswer) ? 'grabbing' : 'default'
+                    }
+                }}
+            />
+        </motion.div>
+    );
+};
+
+// Drop Target for Tense Areas
+interface TenseDropTargetProps {
+    tense: string;
+    matchedItem: MatchItem | null;
+    isCorrect: boolean;
+    showAnswers: boolean;
+    isProcessingAnswer: boolean;
+    onDrop: (item: DraggedItem) => void;
+    children: React.ReactNode;
+}
+
+const TenseDropTarget: React.FC<TenseDropTargetProps> = ({ tense, matchedItem, isCorrect, showAnswers, isProcessingAnswer, onDrop, children }) => {
+    const [{ isOver, canDrop }, drop] = useDrop(() => ({
+        accept: ItemTypes.CONJUGATION,
+        drop: (item: DraggedItem) => {
+            if (!showAnswers && !isProcessingAnswer) {
+                onDrop(item);
+            }
+        },
+        canDrop: () => !showAnswers && !isProcessingAnswer,
+        collect: (monitor) => ({
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop(),
+        }),
+    }), [showAnswers, isProcessingAnswer, onDrop]);
+
+    const isActive = isOver && canDrop;
+
+    return (
+        <Card
+            ref={drop}
+            sx={{
+                minHeight: 180,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 2,
+                border: '2px solid',
+                borderColor: isActive ? '#667eea' : (showAnswers ? (isCorrect ? '#4caf50' : '#f44336') : '#e2e8f0'),
+                backgroundColor: isActive ? 'rgba(102, 126, 234, 0.1)' : (showAnswers ? (isCorrect ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)') : 'white'),
+                boxShadow: isActive ? '0 8px 24px rgba(102, 126, 234, 0.3)' : undefined,
+                transition: 'all 0.3s ease',
+                transform: isActive ? 'scale(1.02)' : 'none',
+            }}
+        >
+            {children}
+        </Card>
+    );
+};
+
+// Pool Drop Target
+interface PoolDropTargetProps {
+    onDrop: () => void;
+    showAnswers: boolean;
+    isProcessingAnswer: boolean;
+    children: React.ReactNode;
+}
+
+const PoolDropTarget: React.FC<PoolDropTargetProps> = ({ onDrop, showAnswers, isProcessingAnswer, children }) => {
+    const [{ isOver, canDrop }, drop] = useDrop(() => ({
+        accept: ItemTypes.CONJUGATION,
+        drop: () => {
+            if (!showAnswers && !isProcessingAnswer) {
+                onDrop();
+            }
+        },
+        canDrop: () => !showAnswers && !isProcessingAnswer,
+        collect: (monitor) => ({
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop(),
+        }),
+    }), [showAnswers, isProcessingAnswer, onDrop]);
+
+    const isActive = isOver && canDrop;
+
+    return (
+        <Box
+            ref={drop}
+            sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                padding: 2,
+                border: '2px dashed #e2e8f0',
+                borderRadius: 2,
+                backgroundColor: isActive ? 'rgba(102, 126, 234, 0.1)' : '#fafafa',
+                borderColor: isActive ? '#667eea' : '#e2e8f0',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    borderColor: '#667eea',
+                    backgroundColor: '#f8faff'
+                }
+            }}
+        >
+            {children}
+        </Box>
+    );
+};
 
 const MatchMe: React.FC = () => {
     const navigate = useNavigate();
@@ -187,29 +375,9 @@ const MatchMe: React.FC = () => {
         initializeGame();
     }, [currentVerbs.length, currentTenses.length, initializeGame, navigate]);
 
-    const handleDragStart = (e: React.DragEvent, item: MatchItem) => {
-        setDraggedItem({
-            id: item.id,
-            conjugation: item.conjugation,
-            originalTense: item.tense
-        });
-        setDraggedItemId(item.id);
-        e.dataTransfer.effectAllowed = 'move';
-    };
-
-    const handleDragEnd = () => {
-        setDraggedItemId(null);
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    };
-
-    const handleDrop = (e: React.DragEvent, targetTense: string) => {
-        e.preventDefault();
-
-        if (!draggedItem || showAnswers || isProcessingAnswer) return;
+    // Drag and drop handlers for react-dnd
+    const handleDropToTense = useCallback((item: DraggedItem, targetTense: string) => {
+        if (showAnswers || isProcessingAnswer) return;
 
         const currentQuestion = getCurrentQuestion();
         const tenseIndex = currentQuestion?.tenses.findIndex(tense => tense === targetTense) ?? -1;
@@ -218,37 +386,21 @@ const MatchMe: React.FC = () => {
         // Remove previous match for this tense
         const newMatches = { ...userMatches };
         Object.keys(newMatches).forEach(key => {
-            if (newMatches[key] === draggedItem.id) {
+            if (newMatches[key] === item.id) {
                 delete newMatches[key];
             }
         });
 
         // Add new match
-        newMatches[tenseId] = draggedItem.id;
+        newMatches[tenseId] = item.id;
         setUserMatches(newMatches);
         userMatchesRef.current = newMatches;
-        setDraggedItem(null);
-        setDraggedItemId(null);
-    };
+    }, [showAnswers, isProcessingAnswer, userMatches, gameScore.currentStep]);
 
-    const handleDropToPool = (e: React.DragEvent) => {
-        e.preventDefault();
-
-        if (!draggedItem || showAnswers || isProcessingAnswer) return;
-
-        // Remove the item from any tense matches (return to pool)
-        const newMatches = { ...userMatches };
-        Object.keys(newMatches).forEach(key => {
-            if (newMatches[key] === draggedItem.id) {
-                delete newMatches[key];
-            }
-        });
-
-        setUserMatches(newMatches);
-        userMatchesRef.current = newMatches;
-        setDraggedItem(null);
-        setDraggedItemId(null);
-    };
+    const handleDropToPool = useCallback(() => {
+        // Remove the item from any tense matches (return to pool) - handled by react-dnd
+        // The item will automatically return to the pool when dropped there
+    }, []);
 
     const checkAnswers = useCallback(() => {
         if (isProcessingAnswer || gameData.length === 0) return;
@@ -587,77 +739,26 @@ const MatchMe: React.FC = () => {
                             >
                                 📦 Conjugaisons disponibles
                             </Typography>
-                            <Box
-                                onDragOver={handleDragOver}
+                            <PoolDropTarget
                                 onDrop={handleDropToPool}
-                                sx={{
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: 2,
-                                    justifyContent: 'center',
-                                    minHeight: 120,
-                                    alignItems: 'flex-start',
-                                    padding: 2,
-                                    border: '2px dashed #e2e8f0',
-                                    borderRadius: 2,
-                                    backgroundColor: '#fafafa',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        borderColor: '#667eea',
-                                        backgroundColor: '#f8faff'
-                                    }
-                                }}>
+                                showAnswers={showAnswers}
+                                isProcessingAnswer={isProcessingAnswer}
+                            >
                                 {currentQuestion.items.map((item, index) => {
                                     const isUsed = isConjugationUsed(item.id);
-                                    const isDragging = draggedItemId === item.id;
-
                                     return (
-                                        <motion.div
+                                        <DraggableConjugation
                                             key={item.id}
-                                            initial={{ opacity: 0, scale: 0.8 }}
-                                            animate={{
-                                                opacity: isDragging ? 0.3 : 1,
-                                                scale: isDragging ? 0.9 : 1,
-                                                y: isDragging ? -5 : 0
-                                            }}
-                                            transition={{ delay: 0.7 + (index * 0.1) }}
-                                        >
-                                            <Chip
-                                                label={`${item.pronoun} ${item.conjugation}`}
-                                                draggable={!showAnswers && !isProcessingAnswer}
-                                                onDragStart={(e) => handleDragStart(e, item)}
-                                                onDragEnd={handleDragEnd}
-                                                sx={{
-                                                    p: 2,
-                                                    height: 'auto',
-                                                    fontSize: '1rem',
-                                                    fontWeight: 'bold',
-                                                    cursor: (!showAnswers && !isProcessingAnswer) ? 'grab' : 'default',
-                                                    opacity: isDragging ? 0.3 : (isUsed ? 0.4 : 1),
-                                                    backgroundColor: isDragging ? '#ff9800' : (isUsed ? '#f5f5f5' : '#667eea'),
-                                                    color: isDragging ? 'white' : (isUsed ? '#888' : 'white'),
-                                                    border: '2px solid',
-                                                    borderColor: isDragging ? '#ff9800' : (isUsed ? '#e0e0e0' : '#667eea'),
-                                                    transition: 'all 0.2s ease',
-                                                    transform: isDragging ? 'rotate(-5deg) scale(1.05)' : 'none',
-                                                    boxShadow: isDragging ? '0 8px 24px rgba(255,152,0,0.4)' : undefined,
-                                                    '& .MuiChip-label': {
-                                                        padding: '8px 16px'
-                                                    },
-                                                    '&:hover': {
-                                                        backgroundColor: (!isUsed && !showAnswers && !isDragging) ? '#5a67d8' : undefined,
-                                                        transform: (!showAnswers && !isProcessingAnswer && !isDragging) ? 'translateY(-2px)' : (isDragging ? 'rotate(-5deg) scale(1.05)' : 'none'),
-                                                        boxShadow: (!showAnswers && !isProcessingAnswer && !isDragging) ? '0 4px 20px rgba(0,0,0,0.15)' : (isDragging ? '0 8px 24px rgba(255,152,0,0.4)' : undefined)
-                                                    },
-                                                    '&:active': {
-                                                        cursor: (!showAnswers && !isProcessingAnswer) ? 'grabbing' : 'default'
-                                                    }
-                                                }}
-                                            />
-                                        </motion.div>
+                                            item={item}
+                                            isUsed={isUsed}
+                                            isDragging={false}
+                                            showAnswers={showAnswers}
+                                            isProcessingAnswer={isProcessingAnswer}
+                                            index={index}
+                                        />
                                     );
                                 })}
-                            </Box>
+                            </PoolDropTarget>
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -682,33 +783,13 @@ const MatchMe: React.FC = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.9 + (index * 0.1) }}
                                     >
-                                        <Paper
-                                            onDragOver={handleDragOver}
-                                            onDrop={(e) => handleDrop(e, tense)}
-                                            sx={{
-                                                p: 3,
-                                                minHeight: 180,
-                                                height: 180, // Fixed height for consistent sizing
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                border: '3px dashed',
-                                                borderColor: matchedConjugation ? '#667eea' : '#e2e8f0',
-                                                backgroundColor: showAnswers
-                                                    ? (isCorrect ? '#e8f5e8' : '#ffeaea')
-                                                    : (matchedConjugation ? '#f0f4ff' : '#fafafa'),
-                                                cursor: 'default',
-                                                transition: 'all 0.3s ease',
-                                                borderRadius: 3,
-                                                boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                                                '&:hover': {
-                                                    borderColor: '#667eea',
-                                                    backgroundColor: matchedConjugation ? '#e6ecff' : '#f8faff',
-                                                    transform: 'translateY(-2px)',
-                                                    boxShadow: '0 6px 20px rgba(0,0,0,0.15)'
-                                                }
-                                            }}
+                                        <TenseDropTarget
+                                            tense={tense}
+                                            matchedItem={matchedConjugation ?? null}
+                                            isCorrect={isCorrect ?? false}
+                                            showAnswers={showAnswers}
+                                            isProcessingAnswer={isProcessingAnswer}
+                                            onDrop={(item) => handleDropToTense(item, tense)}
                                         >
                                             <Typography
                                                 variant="h5"
@@ -732,32 +813,15 @@ const MatchMe: React.FC = () => {
                                                 flexDirection: 'column'
                                             }}>
                                                 {matchedConjugation ? (
-                                                    <>
-                                                        <Chip
-                                                            label={`${matchedConjugation.pronoun} ${matchedConjugation.conjugation}`}
-                                                            draggable={!showAnswers && !isProcessingAnswer}
-                                                            onDragStart={(e) => handleDragStart(e, matchedConjugation)}
-                                                            color={showAnswers ? (isCorrect ? 'success' : 'error') : 'primary'}
-                                                            sx={{
-                                                                fontWeight: 'bold',
-                                                                fontSize: '1rem',
-                                                                height: 'auto',
-                                                                cursor: (!showAnswers && !isProcessingAnswer) ? 'grab' : 'default',
-                                                                '& .MuiChip-label': {
-                                                                    padding: '8px 16px'
-                                                                },
-                                                                animation: showAnswers ? 'none' : 'pulse 2s infinite',
-                                                                '&:hover': {
-                                                                    transform: (!showAnswers && !isProcessingAnswer) ? 'translateY(-1px)' : 'none',
-                                                                    boxShadow: (!showAnswers && !isProcessingAnswer) ? '0 2px 8px rgba(0,0,0,0.15)' : undefined
-                                                                },
-                                                                '&:active': {
-                                                                    cursor: (!showAnswers && !isProcessingAnswer) ? 'grabbing' : 'default'
-                                                                }
-                                                            }}
-                                                        />
-
-                                                    </>
+                                                    <DraggableConjugation
+                                                        item={matchedConjugation}
+                                                        isUsed={false}
+                                                        isDragging={false}
+                                                        showAnswers={showAnswers}
+                                                        isProcessingAnswer={isProcessingAnswer}
+                                                        isMatched={true}
+                                                        isCorrect={isCorrect ?? false}
+                                                    />
                                                 ) : (
                                                     <Typography
                                                         variant="body2"
@@ -784,7 +848,7 @@ const MatchMe: React.FC = () => {
                                                     {isCorrect ? '✅' : '❌'}
                                                 </Typography>
                                             )}
-                                        </Paper>
+                                        </TenseDropTarget>
                                     </motion.div>
                                 </Grid>
                             );
@@ -891,4 +955,8 @@ const MatchMe: React.FC = () => {
     );
 };
 
-export default MatchMe;
+export default () => (
+    <DndProvider backend={HTML5Backend}>
+        <MatchMe />
+    </DndProvider>
+);

@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "text": "Le guépard (courir) à une vitesse impressionnante dans la savane africaine.",
+    "verbs": [{"infinitive": "courir", "position": 0, "subject": "Le guépard"}],
+    "tenses": ["present", "imparfait", "passe_compose"]
+  },
+  {
+    "id": 2,
+    "text": "Marie et Sophie (aller) au marché tous les samedis matin.",
+    "verbs": [{"infinitive": "aller", "position": 0, "subject": "Marie et Sophie"}],
+    "tenses": ["present", "imparfait", "futur_simple"]
+  },
+  {
+    "id": 3,
+    "text": "Cet animal (posséder) un pelage très reconnaissable, jaune tacheté de noir.",
+    "verbs": [{"infinitive": "posséder", "position": 0, "subject": "Cet animal"}],
+    "tenses": ["present", "imparfait"]
+  },
+  {
+    "id": 4,
+    "text": "Quand j'(avoir) 1 an, mon père (proposer) que nous partions en voyage en famille.",
+    "verbs": [{"infinitive": "avoir", "position": 0, "subject": "j'"}, {"infinitive": "proposer", "position": 1, "subject": "mon père"}],
+    "tenses": ["imparfait", "passe_compose"]
+  },
+  {
+    "id": 5,
+    "text": "La Tour Eiffel (dominer) l'horizon parisien depuis plus d'un siècle.",
+    "verbs": [{"infinitive": "dominer", "position": 0, "subject": "La Tour Eiffel"}],
+    "tenses": ["present", "imparfait"]
+  },
+  {
+    "id": 6,
+    "text": "Les enfants du quartier (jouer) au football pendant que leurs parents (discuter) sur un banc.",
+    "verbs": [{"infinitive": "jouer", "position": 0, "subject": "Les enfants du quartier"}, {"infinitive": "discuter", "position": 1, "subject": "leurs parents"}],
+    "tenses": ["imparfait", "passe_compose"]
+  },
+  {
+    "id": 7,
+    "text": "Mon grand-père maternel (raconter) souvent des histoires fascinantes de son enfance à la campagne.",
+    "verbs": [{"infinitive": "raconter", "position": 0, "subject": "Mon grand-père maternel"}],
+    "tenses": ["imparfait", "present"]
+  },
+  {
+    "id": 8,
+    "text": "La bibliothèque municipale (fermer) ses portes à 19 heures tous les soirs de la semaine.",
+    "verbs": [{"infinitive": "fermer", "position": 0, "subject": "La bibliothèque municipale"}],
+    "tenses": ["present", "futur_simple", "imparfait"]
+  },
+  {
+    "id": 9,
+    "text": "Ces magnifiques roses rouges (pousser) dans le jardin de ma voisine chaque printemps.",
+    "verbs": [{"infinitive": "pousser", "position": 0, "subject": "Ces magnifiques roses rouges"}],
+    "tenses": ["present", "imparfait", "futur_simple"]
+  },
+  {
+    "id": 10,
+    "text": "Le boulanger du village (préparer) le pain frais avant l'aube depuis vingt ans.",
+    "verbs": [{"infinitive": "préparer", "position": 0, "subject": "Le boulanger du village"}],
+    "tenses": ["present", "imparfait", "futur_simple"]
+  },
+  {
+    "id": 11,
+    "text": "Les montagnes enneigées (se dresser) majestueusement à l'horizon.",
+    "verbs": [{"infinitive": "se dresser", "position": 0, "subject": "Les montagnes enneigées"}],
+    "tenses": ["present", "imparfait"]
+  },
+  {
+    "id": 12,
+    "text": "Le professeur de mathématiques (expliquer) la géométrie quand l'alarme incendie (sonner).",
+    "verbs": [{"infinitive": "expliquer", "position": 0, "subject": "Le professeur de mathématiques"}, {"infinitive": "sonner", "position": 1, "subject": "l'alarme incendie"}],
+    "tenses": ["imparfait", "passe_compose"]
+  },
+  {
+    "id": 13,
+    "text": "Mon ami Thomas (vivre) à Paris depuis son enfance.",
+    "verbs": [{"infinitive": "vivre", "position": 0, "subject": "Mon ami Thomas"}],
+    "tenses": ["present", "imparfait"]
+  },
+  {
+    "id": 14,
+    "text": "La rivière (traverser) la ville d'est en ouest.",
+    "verbs": [{"infinitive": "traverser", "position": 0, "subject": "La rivière"}],
+    "tenses": ["present", "imparfait"]
+  },
+  {
+    "id": 15,
+    "text": "Les scientifiques (découvrir) une nouvelle espèce d'insecte dans la forêt amazonienne.",
+    "verbs": [{"infinitive": "découvrir", "position": 0, "subject": "Les scientifiques"}],
+    "tenses": ["passe_compose", "present", "futur_simple"]
+  },
+  {
+    "id": 16,
+    "text": "Ce vieux château médiéval (appartenir) à une famille noble depuis le 15ème siècle.",
+    "verbs": [{"infinitive": "appartenir", "position": 0, "subject": "Ce vieux château médiéval"}],
+    "tenses": ["present", "imparfait"]
+  },
+  {
+    "id": 17,
+    "text": "Les oiseaux migrateurs (partir) vers le sud dès que l'automne (arriver).",
+    "verbs": [{"infinitive": "partir", "position": 0, "subject": "Les oiseaux migrateurs"}, {"infinitive": "arriver", "position": 1, "subject": "l'automne"}],
+    "tenses": ["present", "imparfait", "futur_simple"]
+  },
+  {
+    "id": 18,
+    "text": "Ma tante Isabelle (travailler) comme infirmière à l'hôpital central.",
+    "verbs": [{"infinitive": "travailler", "position": 0, "subject": "Ma tante Isabelle"}],
+    "tenses": ["present", "imparfait", "passe_compose"]
+  },
+  {
+    "id": 19,
+    "text": "Le musée du Louvre (accueillir) des millions de visiteurs chaque année.",
+    "verbs": [{"infinitive": "accueillir", "position": 0, "subject": "Le musée du Louvre"}],
+    "tenses": ["present", "imparfait", "futur_simple"]
+  },
+  {
+    "id": 20,
+    "text": "Ces petits poissons colorés (nager) gracieusement dans l'aquarium.",
+    "verbs": [{"infinitive": "nager", "position": 0, "subject": "Ces petits poissons colorés"}],
+    "tenses": ["present", "imparfait"]
+  }
+]

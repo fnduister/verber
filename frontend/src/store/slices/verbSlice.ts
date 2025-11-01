@@ -53,14 +53,15 @@ export const fetchVerbs = createAsyncThunk(
                 console.log('📊 Verbs API response:', {
                     status: response.status,
                     dataType: typeof response.data,
-                    dataLength: response.data?.length,
-                    firstVerb: response.data?.[0],
+                    hasVerbs: !!response.data?.verbs,
+                    verbsLength: response.data?.verbs?.length,
+                    firstVerb: response.data?.verbs?.[0],
                     attempt,
                     isIOS,
                     isSafari
                 });
 
-                return response.data;
+                return response.data.verbs;
 
             } catch (error: any) {
                 lastError = error;

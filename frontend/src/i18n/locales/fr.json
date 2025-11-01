@@ -110,6 +110,31 @@
       "description": "Affrontez le chronomètre pour conjuguer correctement les verbes. À quelle vitesse pouvez-vous aller ?",
       "instruction": "🏁 Conjuguez aussi vite que possible !"
     },
+    "random-verb": {
+      "title": "Défi Verbe Aléatoire",
+      "description": "Testez vos compétences de conjugaison avec des verbes et temps aléatoires !",
+      "instruction": "Conjuguez chaque verbe au temps donné",
+      "placeholder": "Conjugaison..."
+    },
+    "sentence": {
+      "title": "Défi de Phrase",
+      "description": "Complétez des phrases en conjuguant des verbes en contexte. Choisissez vos temps et maîtrisez l'usage réel !",
+      "instruction": "Complétez la phrase avec le verbe correctement conjugué",
+      "placeholder": "Tapez le verbe conjugué..."
+    },
+    "participe": {
+      "title": "📝 Participe",
+      "description": "Maîtrisez les participes français ! Choisissez entre participe passé et participe présent.",
+      "selectType": "Sélectionnez le type de participe :",
+      "pastParticiple": "Participe Passé",
+      "presentParticiple": "Participe Présent",
+      "question": "Quel est le {{type}} de :",
+      "placeholder": "Entrez le participe...",
+      "types": {
+        "past": "participe passé",
+        "present": "participe présent"
+      }
+    },
     "speedRound": {
       "title": "⚡ Tour de vitesse",
       "description": "Répondez rapidement à une série de questions sur les conjugaisons."
@@ -134,9 +159,22 @@
       "failedToGenerate": "Échec de la génération des données du jeu. Veuillez réessayer.",
       "notEnougthCorrectWords": "Pas assez de mots corrects trouvés. Veuillez réessayer.",
       "verbDataMissing": "Données manquantes pour le verbe '{{verb}}'.",
-      "insufficientTenseOptions": "Options de temps insuffisantes générées pour le verbe '{{verb}}'."
+      "insufficientTenseOptions": "Options de temps insuffisantes générées pour le verbe '{{verb}}'.",
+      "noMatchingSentences": "Aucune phrase trouvée correspondant aux temps sélectionnés. Veuillez sélectionner des temps différents.",
+      "noVerbsSelected": "Aucun verbe sélectionné. Veuillez sélectionner au moins un verbe.",
+      "noParticipeTypesSelected": "Aucun type de participe sélectionné. Veuillez sélectionner au moins un type."
     },
+    "progress": "Progression",
+    "timeLeft": "Temps restant",
+    "hurryUp": "Dépêchez-vous !",
+    "checkAnswer": "Vérifier",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "correctAnswer": "Bonne réponse",
+    "next": "Suivant",
+    "finish": "Terminer",
     "common": {
+      "question": "Question",
       "questionCount": "Question {{current}}/{{total}}",
       "score": "Score : {{score}}",
       "timeRemaining": "{{time}}s restant",
@@ -146,7 +184,13 @@
       "nextQuestion": "Question suivante",
       "tryAgain": "Réessayer",
       "wellDone": "Bien joué !",
-      "keepGoing": "Continuez !"
+      "keepGoing": "Continuez !",
+      "checkAnswers": "Vérifier mes réponses",
+      "perfect": "Parfait ! Toutes les conjugaisons sont correctes !",
+      "goodTry": "Bon essai ! Voici les bonnes réponses :",
+      "loading": "Chargement...",
+      "correct": "✅ Correct !",
+      "yourAnswer": "Votre réponse"
     },
     "findError": {
       "instruction": "🔍 Trouvez l'erreur !"
@@ -156,11 +200,20 @@
     "predefinedGroups": "Groupes prédéfinis",
     "addVerbGroup": "Créer un groupe de verbes",
     "addTenseGroup": "Créer un groupe de temps",
+    "randomVerbs": "🎲 Verbes Aléatoires",
+    "randomTenses": "🎲 Temps Aléatoires",
+    "count": "Nombre",
+    "randomizeAgain": "Randomiser à nouveau",
     "sound": "Son",
     "title": "Salle de jeu",
     "loading": "Chargement des verbes et temps...",
     "verbSelection": "Sélection des Verbes",
     "tenseSelection": "Sélection des Temps",
+    "participeTypeSelection": "Sélection du Type de Participe",
+    "selectParticipeTypes": "Sélectionnez les types de participe à pratiquer",
+    "participeTypeHelp": "Sélectionnez un ou les deux types. Le jeu mélangera aléatoirement vos types sélectionnés.",
+    "participeTypes": "Types de Participe",
+    "participeTypesSelected": "types sélectionnés",
     "settings": "Paramètres du jeu",
     "chooseVerbs": "Choisir les verbes",
     "chooseTenses": "Choisir les temps",
@@ -177,8 +230,10 @@
     "prerequisiteTip": "Ajoutez plus de verbes et de temps pour débloquer ce jeu et profiter d'une expérience d'apprentissage plus riche !",
     "selectionRequired": "Sélection requise",
     "selectionRequiredMessage": "Veuillez sélectionner au moins quelques verbes et temps pour commencer le jeu.",
+    "selectionRequiredMessageParticipe": "Veuillez sélectionner au moins quelques verbes et types de participe pour commencer le jeu.",
     "readyToPlay": "Prêt à jouer !",
     "selectionComplete": "Vous avez sélectionné {{verbs}} verbes et {{tenses}} temps. Parfait pour {{game}} !",
+    "selectionCompleteParticipe": "Vous avez sélectionné {{verbs}} verbes et {{types}} types de participe. Parfait pour {{game}} !",
     "customGroups": "Groupes personnalisés",
     "presetGroups": "Groupes prédéfinis",
     "createVerbGroup": "Créer un groupe de verbes",
@@ -251,6 +306,7 @@
     "finish": "Terminer",
     "retry": "Réessayer",
     "playAgain": "Rejouer",
+    "start": "Commencer",
     "tenses": "Temps",
     "verbs": "Verbes"
   }
