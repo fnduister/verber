@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://verber.ca/sitemap.xml
+Sitemap: https://verber.sicole.com/sitemap.xml

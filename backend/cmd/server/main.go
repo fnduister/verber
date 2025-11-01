@@ -56,10 +56,17 @@ func main() {
 			"http://localhost:3000",
 			"http://localhost:3001",
 			"http://localhost:3002",
+			"https://verber.ca",
 			cfg.FrontendURL,
 		}
 	} else {
-		corsConfig.AllowOrigins = []string{cfg.FrontendURL}
+		// Production: Allow all configured domains
+		corsConfig.AllowOrigins = []string{
+			"https://verber.sicole.com",
+			"https://sicole.com",
+			"https://verber.ca",
+			cfg.FrontendURL,
+		}
 	}
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept", "X-Requested-With", "Cache-Control", "Pragma"}
