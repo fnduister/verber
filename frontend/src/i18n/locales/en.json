@@ -85,12 +85,38 @@
     "title": "Dashboard",
     "welcomeBack": "Welcome back, {{username}}! 👋",
     "chooseGame": "Choose a game to start learning",
+    "chooseActivity": "What would you like to do today?",
     "currentLevel": "Current Level",
     "totalXP": "Total XP",
     "verbsAvailable": "Verbs Available",
-    "startGame": "Start Game"
+    "startGame": "Start Game",
+    "study": {
+      "title": "📚 Study",
+      "description": "Learn verb conjugations and practice at your own pace"
+    },
+    "play": {
+      "title": "🎮 Play",
+      "description": "Test your skills with interactive games and challenges"
+    }
+  },
+  "study": {
+    "title": "Study Mode",
+    "subtitle": "Choose your learning method",
+    "conjugation": {
+      "title": "Conjugation Tables",
+      "description": "View complete conjugation tables for any verb",
+      "selectVerb": "Select a verb to view its conjugations",
+      "selectVerbDescription": "Choose a verb from the dropdown above to display its full conjugation table"
+    },
+    "practice": {
+      "title": "Verb Practice",
+      "description": "Practice specific verbs at your own pace"
+    }
   },
   "games": {
+    "title": "Games",
+    "subtitle": "Choose a game to test your skills",
+    "startGame": "Start Game",
     "find-error": {
       "title": "🎯 Find Error",
       "description": "Identify and correct errors in sentences. Perfect for honing your grammar skills."
@@ -184,6 +210,11 @@
       "nextQuestion": "Next Question",
       "tryAgain": "Try Again",
       "wellDone": "Well done!",
+      "pronoun": "Pronoun",
+      "conjugation": "Conjugation",
+      "verbs": "Verbs",
+      "tenses": "Tenses",
+      "add": "Add",
       "keepGoing": "Keep going!",
       "checkAnswers": "Check My Answers",
       "perfect": "Perfect! All conjugations are correct!",

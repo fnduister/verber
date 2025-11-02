@@ -1,13 +1,11 @@
-import { CheckCircle, EmojiEvents, MenuBook, Timer } from '@mui/icons-material';
+import { CheckCircle } from '@mui/icons-material';
 import {
     Box,
     Button,
     Card,
     CardContent,
     Chip,
-    Container,
-    LinearProgress,
-    Stack,
+    Container, Stack,
     TextField,
     Typography
 } from '@mui/material';
@@ -17,8 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
-import GameScoreDialog from '../../../components/GameScoreDialog';
 import GameHeader from '../../../components/GameHeader';
+import GameScoreDialog from '../../../components/GameScoreDialog';
 import PauseOverlay from '../../../components/PauseOverlay';
 import { GAME_METADATA, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { useAudio } from '../../../hooks/useAudio';

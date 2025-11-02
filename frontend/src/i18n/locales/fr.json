@@ -85,12 +85,38 @@
     "title": "Tableau de bord",
     "welcomeBack": "Bon retour, {{username}} ! 👋",
     "chooseGame": "Choisissez un jeu pour commencer à apprendre",
+    "chooseActivity": "Que souhaitez-vous faire aujourd'hui ?",
     "currentLevel": "Niveau actuel",
     "totalXP": "XP total",
     "verbsAvailable": "Verbes disponibles",
-    "startGame": "Commencer le jeu"
+    "startGame": "Commencer le jeu",
+    "study": {
+      "title": "📚 Étudier",
+      "description": "Apprenez les conjugaisons et pratiquez à votre rythme"
+    },
+    "play": {
+      "title": "🎮 Jouer",
+      "description": "Testez vos compétences avec des jeux et défis interactifs"
+    }
+  },
+  "study": {
+    "title": "Mode Étude",
+    "subtitle": "Choisissez votre méthode d'apprentissage",
+    "conjugation": {
+      "title": "Tables de conjugaison",
+      "description": "Consultez les tables de conjugaison complètes pour n'importe quel verbe",
+      "selectVerb": "Sélectionnez un verbe pour voir ses conjugaisons",
+      "selectVerbDescription": "Choisissez un verbe dans la liste déroulante ci-dessus pour afficher sa table de conjugaison complète"
+    },
+    "practice": {
+      "title": "Pratique des Verbes",
+      "description": "Pratiquez des verbes spécifiques à votre rythme"
+    }
   },
   "games": {
+    "title": "Jeux",
+    "subtitle": "Choisissez un jeu pour tester vos compétences",
+    "startGame": "Commencer le Jeu",
     "find-error": {
       "title": "🎯 Trouver l'erreur",
       "description": "Identifiez et corrigez les erreurs dans les phrases. Parfait pour perfectionner vos compétences grammaticales."
@@ -184,6 +210,11 @@
       "nextQuestion": "Question suivante",
       "tryAgain": "Réessayer",
       "wellDone": "Bien joué !",
+      "pronoun": "Pronom",
+      "conjugation": "Conjugaison",
+      "verbs": "Verbes",
+      "tenses": "Temps",
+      "add": "Ajouter",
       "keepGoing": "Continuez !",
       "checkAnswers": "Vérifier mes réponses",
       "perfect": "Parfait ! Toutes les conjugaisons sont correctes !",

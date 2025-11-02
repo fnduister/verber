@@ -10,7 +10,7 @@ import GameHeader from '../../../components/GameHeader';
 import GameScoreDialog from '../../../components/GameScoreDialog';
 import PauseOverlay from '../../../components/PauseOverlay';
 import { AVAILABLE_TENSES, TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
-import { GAME_METADATA,  } from '../../../constants/gameConstants';
+import { GAME_METADATA } from '../../../constants/gameConstants';
 import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';

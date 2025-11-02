@@ -1,13 +1,10 @@
-import { Edit, EmojiEvents, Timer, TrendingUp } from '@mui/icons-material';
+import { TrendingUp } from '@mui/icons-material';
 import {
     Box,
     Button,
     Card,
-    CardContent,
-    Chip,
-    Container,
-    Grid, LinearProgress,
-    Stack, TextField, Typography
+    CardContent, Container,
+    Grid, TextField, Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,8 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import GameErrorDisplay from '../../../components/GameErrorDisplay';
-import GameScoreDialog from '../../../components/GameScoreDialog';
 import GameHeader from '../../../components/GameHeader';
+import GameScoreDialog from '../../../components/GameScoreDialog';
 import PauseOverlay from '../../../components/PauseOverlay';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { GAME_METADATA, PRONOUNS } from '../../../constants/gameConstants';

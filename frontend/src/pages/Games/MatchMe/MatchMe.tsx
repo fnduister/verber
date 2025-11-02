@@ -1,4 +1,4 @@
-import { CheckCircle, DragIndicator, EmojiEvents, Timer, TrendingUp } from '@mui/icons-material';
+import { CheckCircle, TrendingUp } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -6,8 +6,7 @@ import {
     CardContent,
     Chip,
     Container,
-    Grid, LinearProgress, Stack,
-    Typography
+    Grid, Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';

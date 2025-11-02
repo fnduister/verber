@@ -1,4 +1,4 @@
-import { CheckCircle, Edit, EmojiEvents, Timer, TrendingUp } from '@mui/icons-material';
+import { CheckCircle, TrendingUp } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -6,10 +6,7 @@ import {
     CardContent,
     Chip,
     Container,
-    Grid,
-    LinearProgress,
-    Stack,
-    TextField,
+    Grid, TextField,
     Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';

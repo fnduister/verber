@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Exercises from './pages/Exercises/Exercises';
 import FindError from './pages/Games/FindError/FindError';
 import GameRoom from './pages/Games/GameRoom';
+import Games from './pages/Games/Games';
 import MatchMe from './pages/Games/MatchMe/MatchMe';
 import Participe from './pages/Games/Participe/Participe';
 import Race from './pages/Games/Race/Race';
@@ -18,6 +19,9 @@ import WriteMe from './pages/Games/WriteMe/WriteMe';
 import Home from './pages/Home/Home';
 import Leaderboard from './pages/Leaderboard/Leaderboard';
 import Profile from './pages/Profile/Profile';
+import ConjugationTables from './pages/Study/ConjugationTables';
+import Study from './pages/Study/Study';
+import VerbPractice from './pages/Study/VerbPractice';
 import { fetchUserProfile } from './store/slices/authSlice';
 import { AppDispatch, RootState } from './store/store';
 
@@ -54,6 +58,22 @@ const App: React.FC = () => {
                     <Route
                         path="/dashboard"
                         element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/study"
+                        element={isAuthenticated ? <Study /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/study/conjugation"
+                        element={isAuthenticated ? <ConjugationTables /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/study/practice"
+                        element={isAuthenticated ? <VerbPractice /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games"
+                        element={isAuthenticated ? <Games /> : <Navigate to="/login" />}
                     />
                     <Route
                         path="/game-room/:gameId"

@@ -1,5 +1,5 @@
-import { EmojiEvents, Pause, PlayArrow, Timer, TrendingUp } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Chip, Container, IconButton, LinearProgress, Stack, Tooltip, Typography } from '@mui/material';
+import { TrendingUp } from '@mui/icons-material';
+import { Box, Button, Container, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

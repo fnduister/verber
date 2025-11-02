@@ -1,10 +1,15 @@
 import {
+    EmojiEvents,
+    GamepadOutlined,
+    MenuBook,
+    School,
+    SportsEsports
+} from '@mui/icons-material';
+import {
     Box,
-    Button,
     Card,
-    CardActions,
+    CardActionArea,
     CardContent,
-    Chip,
     Container,
     Grid,
     Typography
@@ -14,7 +19,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { DIFFICULTY_COLORS, GAME_TYPES } from '../../constants/gameConstants';
 import { RootState } from '../../store/store';
 
 const Dashboard: React.FC = () => {
@@ -22,19 +26,29 @@ const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    const handleStartGame = (gameType: string) => {
-        // Navigate to GameRoom for game configuration
-        // The gameId will be picked up by useParams() in GameRoom  
-        navigate(`/game-room/${gameType}`);
-    };
-
-    const getDifficultyColor = (difficulty: string) => {
-        return DIFFICULTY_COLORS[difficulty] || 'default';
-    };
+    const mainSections = [
+        {
+            id: 'study',
+            title: t('dashboard.study.title'),
+            description: t('dashboard.study.description'),
+            icon: <School sx={{ fontSize: 80 }} />,
+            color: '#8b5cf6',
+            gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+            path: '/study'
+        },
+        {
+            id: 'play',
+            title: t('dashboard.play.title'),
+            description: t('dashboard.play.description'),
+            icon: <SportsEsports sx={{ fontSize: 80 }} />,
+            color: '#ec4899',
+            gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+            path: '/games'
+        }
+    ];
 
     return (
-        <Box sx={{ flexGrow: 1 }}>
-            {/* Main Content */}
+        <Box sx={{ flexGrow: 1, minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}>
             <Container maxWidth="lg">
                 <Box sx={{ py: 6 }}>
                     <motion.div
@@ -42,75 +56,51 @@ const Dashboard: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <Typography variant="h2" component="h1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                        <Typography variant="h2" component="h1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
                             {t('dashboard.welcomeBack', { username: user?.username })}
                         </Typography>
-                        <Typography variant="h5" component="p" sx={{ mb: 6, color: 'text.secondary' }}>
-                            {t('dashboard.chooseGame')}
+                        <Typography variant="h5" component="p" sx={{ mb: 6, color: 'text.secondary', textAlign: 'center' }}>
+                            {t('dashboard.chooseActivity')}
                         </Typography>
                     </motion.div>
 
-                    <Grid container spacing={3}>
-                        {GAME_TYPES.map((game, index) => (
-                            <Grid item xs={12} md={6} key={game.id}>
+                    {/* Main Sections: Study & Play */}
+                    <Grid container spacing={4} sx={{ mb: 6 }}>
+                        {mainSections.map((section, index) => (
+                            <Grid item xs={12} md={6} key={section.id}>
                                 <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.6, delay: index * 0.2 }}
                                 >
                                     <Card 
                                         sx={{ 
                                             height: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            transition: 'transform 0.2s, box-shadow 0.2s',
+                                            background: section.gradient,
+                                            color: 'white',
+                                            transition: 'transform 0.3s, box-shadow 0.3s',
                                             '&:hover': {
-                                                transform: 'translateY(-4px)',
-                                                boxShadow: 4,
+                                                transform: 'translateY(-8px)',
+                                                boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
                                             }
                                         }}
                                     >
-                                        <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <Box sx={{ color: game.color, mr: 2 }}>
-                                                    {game.icon}
+                                        <CardActionArea 
+                                            onClick={() => navigate(section.path)}
+                                            sx={{ height: '100%', p: 4 }}
+                                        >
+                                            <CardContent sx={{ textAlign: 'center' }}>
+                                                <Box sx={{ mb: 3, opacity: 0.9 }}>
+                                                    {section.icon}
                                                 </Box>
-                                                <Box sx={{ flexGrow: 1 }}>
-                                                    <Typography variant="h5" component="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                                        {t(`games.${game.id}.title`)}
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                                        <Chip 
-                                                            label={t(`games.difficulty.${game.difficulty.toLowerCase()}`)} 
-                                                            size="small" 
-                                                            color={getDifficultyColor(game.difficulty) as any}
-                                                        />
-                                                        <Chip label={game.duration} size="small" variant="outlined" />
-                                                        <Chip label={game.players} size="small" variant="outlined" />
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-                                            <Typography variant="body1" color="text.secondary">
-                                                {t(`games.${game.id}.description`)}
-                                            </Typography>
-                                        </CardContent>
-                                        <CardActions sx={{ p: 3, pt: 0 }}>
-                                            <Button 
-                                                variant="contained" 
-                                                fullWidth
-                                                size="large"
-                                                onClick={() => handleStartGame(game.id)}
-                                                sx={{ 
-                                                    backgroundColor: game.color,
-                                                    '&:hover': {
-                                                        backgroundColor: game.color,
-                                                        filter: 'brightness(0.9)',
-                                                    }
-                                                }}
-                                            >
-                                                {t('dashboard.startGame')}
-                                            </Button>
-                                        </CardActions>
+                                                <Typography variant="h3" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                                    {section.title}
+                                                </Typography>
+                                                <Typography variant="h6" sx={{ opacity: 0.9, lineHeight: 1.6 }}>
+                                                    {section.description}
+                                                </Typography>
+                                            </CardContent>
+                                        </CardActionArea>
                                     </Card>
                                 </motion.div>
                             </Grid>
@@ -118,10 +108,15 @@ const Dashboard: React.FC = () => {
                     </Grid>
 
                     {/* Quick Stats Section */}
-                    <Box sx={{ mt: 6 }}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                    >
                         <Grid container spacing={3}>
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ textAlign: 'center', p: 3 }}>
+                                <Card sx={{ textAlign: 'center', p: 3, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                    <EmojiEvents sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
                                     <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
                                         {user?.level || 1}
                                     </Typography>
@@ -131,7 +126,8 @@ const Dashboard: React.FC = () => {
                                 </Card>
                             </Grid>
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ textAlign: 'center', p: 3 }}>
+                                <Card sx={{ textAlign: 'center', p: 3, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                    <GamepadOutlined sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
                                     <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
                                         {user?.xp || 0}
                                     </Typography>
@@ -141,7 +137,8 @@ const Dashboard: React.FC = () => {
                                 </Card>
                             </Grid>
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ textAlign: 'center', p: 3 }}>
+                                <Card sx={{ textAlign: 'center', p: 3, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+                                    <MenuBook sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} />
                                     <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
                                         956
                                     </Typography>
@@ -151,7 +148,7 @@ const Dashboard: React.FC = () => {
                                 </Card>
                             </Grid>
                         </Grid>
-                    </Box>
+                    </motion.div>
                 </Box>
             </Container>
         </Box>
