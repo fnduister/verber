@@ -387,7 +387,9 @@ server {
     gzip on;
     gzip_vary on;
     gzip_min_length 10240;
-    gzip_proxied expired no-cache no-store private must-revalidate auth;
+    # 'must-revalidate' is not a valid token for gzip_proxied in some nginx versions
+    # remove it to avoid startup failures (was causing: invalid value "must-revalidate")
+    gzip_proxied expired no-cache no-store private auth;
     gzip_types
         text/plain
         text/css

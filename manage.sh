@@ -12,10 +12,43 @@ NC='\033[0m'
 
 DEPLOY_DIR="/opt/verber"
 
+# Environment selection (default: production)
+ENV="${VERBER_ENV:-production}"
+
+# Map environment names to compose file names
+case "$ENV" in
+    production|prod)
+        ENV="production"
+        COMPOSE_FILE="docker-compose.prod.yml"
+        ;;
+    staging|stage)
+        ENV="staging"
+        COMPOSE_FILE="docker-compose.staging.yml"
+        ;;
+    development|dev)
+        ENV="development"
+        COMPOSE_FILE="docker-compose.yml"
+        ;;
+    *)
+        echo -e "${RED}❌ Unknown environment: $ENV${NC}"
+        echo "Valid environments: production, staging, development"
+        exit 1
+        ;;
+esac
+
+# Override deploy dir if running locally
+if [[ ! -d "$DEPLOY_DIR" ]] && [[ -f "docker-compose.prod.yml" ]]; then
+    DEPLOY_DIR="$(pwd)"
+fi
+
 show_help() {
     echo "🔧 Verber Server Management Helper"
     echo ""
-    echo "Usage: $0 <command>"
+    echo "Usage: [VERBER_ENV=<env>] $0 <command>"
+    echo ""
+    echo "Environment:"
+    echo "  VERBER_ENV - Set environment (production, staging, development)"
+    echo "               Default: production"
     echo ""
     echo "Commands:"
     echo "  status     - Show application status"
@@ -29,6 +62,11 @@ show_help() {
     echo "  monitor    - Real-time monitoring"
     echo "  help       - Show this help message"
     echo ""
+    echo "Examples:"
+    echo "  $0 status                    # Show production status"
+    echo "  VERBER_ENV=staging $0 status # Show staging status"
+    echo "  VERBER_ENV=staging $0 restart # Restart staging"
+    echo ""
 }
 
 check_deploy_dir() {
@@ -38,34 +76,54 @@ check_deploy_dir() {
         exit 1
     fi
     cd $DEPLOY_DIR
+    
+    if [[ ! -f "$COMPOSE_FILE" ]]; then
+        echo -e "${RED}❌ Compose file not found: $COMPOSE_FILE${NC}"
+        echo "Available files:"
+        ls -1 docker-compose*.yml 2>/dev/null || echo "No compose files found"
+        exit 1
+    fi
+    
+    echo -e "${BLUE}📁 Environment: ${ENV}${NC}"
+    echo -e "${BLUE}📄 Compose file: ${COMPOSE_FILE}${NC}"
+    echo ""
 }
 
 show_status() {
-    echo -e "${BLUE}📊 Verber Application Status${NC}"
+    echo -e "${BLUE}📊 Verber Application Status (${ENV})${NC}"
     echo "==============================="
     
     # Docker containers
     echo -e "\n${YELLOW}🐳 Docker Containers:${NC}"
-    docker-compose -f docker-compose.prod.yml ps
+    docker-compose -f $COMPOSE_FILE ps
     
     # System resources
     echo -e "\n${YELLOW}💾 System Resources:${NC}"
-    echo "Disk Usage: $(df -h /opt/verber | tail -1 | awk '{print $5 " used of " $2}')"
+    echo "Disk Usage: $(df -h $DEPLOY_DIR | tail -1 | awk '{print $5 " used of " $2}')"
     echo "Memory: $(free -h | grep '^Mem:' | awk '{print $3 " used of " $2}')"
     echo "Load: $(uptime | awk -F'load average:' '{print $2}')"
     
-    # Service health
+    # Service health - adjust ports based on environment
     echo -e "\n${YELLOW}🌐 Service Health:${NC}"
-    if curl -s -o /dev/null -w "%{http_code}" localhost:3000 | grep -q "200\|301\|302"; then
-        echo -e "${GREEN}✅ Frontend: OK${NC}"
+    
+    if [[ "$ENV" == "staging" ]]; then
+        FRONTEND_PORT=3001
+        BACKEND_PORT=8081
     else
-        echo -e "${RED}❌ Frontend: DOWN${NC}"
+        FRONTEND_PORT=3000
+        BACKEND_PORT=8080
     fi
     
-    if curl -s -o /dev/null -w "%{http_code}" localhost:8080/api/health | grep -q "200"; then
-        echo -e "${GREEN}✅ Backend: OK${NC}"
+    if curl -s -o /dev/null -w "%{http_code}" localhost:$FRONTEND_PORT | grep -q "200\|301\|302"; then
+        echo -e "${GREEN}✅ Frontend (port $FRONTEND_PORT): OK${NC}"
     else
-        echo -e "${RED}❌ Backend: DOWN${NC}"
+        echo -e "${RED}❌ Frontend (port $FRONTEND_PORT): DOWN${NC}"
+    fi
+    
+    if curl -s -o /dev/null -w "%{http_code}" localhost:$BACKEND_PORT/health | grep -q "200"; then
+        echo -e "${GREEN}✅ Backend (port $BACKEND_PORT): OK${NC}"
+    else
+        echo -e "${RED}❌ Backend (port $BACKEND_PORT): DOWN${NC}"
     fi
     
     # SSL status
@@ -78,38 +136,49 @@ show_status() {
 }
 
 show_logs() {
-    echo -e "${BLUE}📋 Application Logs${NC}"
+    echo -e "${BLUE}📋 Application Logs (${ENV})${NC}"
     echo "==================="
     echo "Press Ctrl+C to exit"
     echo ""
     
-    docker-compose -f docker-compose.prod.yml logs -f --tail=50
+    docker-compose -f $COMPOSE_FILE logs -f --tail=50
 }
 
 restart_services() {
-    echo -e "${BLUE}🔄 Restarting Verber Services${NC}"
+    echo -e "${BLUE}🔄 Restarting Verber Services (${ENV})${NC}"
     echo "=============================="
     
+    # Note: docker-compose will automatically load .env file
+    # No need to source it here (causes issues with special characters)
+    
     echo "Stopping services..."
-    docker compose -f docker-compose.prod.yml down
+    docker-compose -f $COMPOSE_FILE down
+    
+    echo "Removing old images to force rebuild..."
+    docker rmi verber-frontend verber-backend 2>/dev/null || true
+    
+    echo "Building services from scratch..."
+    docker-compose -f $COMPOSE_FILE build --no-cache
     
     echo "Starting services..."
-    docker compose -f docker-compose.prod.yml up --build -d
+    docker-compose -f $COMPOSE_FILE up -d
     
     echo "Waiting for services to start..."
-    sleep 20
+    sleep 30
     
     echo -e "${GREEN}✅ Services restarted${NC}"
     show_status
 }
 
 update_app() {
-    echo -e "${BLUE}🔄 Updating Verber Application${NC}"
+    echo -e "${BLUE}🔄 Updating Verber Application (${ENV})${NC}"
     echo "==============================="
     
-    # Create backup first
-    echo "Creating backup..."
-    ./backup.sh
+    # Create backup first (only for production)
+    if [[ "$ENV" == "production" ]] && [[ -f "./backup.sh" ]]; then
+        echo "Creating backup..."
+        ./backup.sh
+    fi
     
     # Pull latest changes
     echo "Pulling latest code..."
@@ -117,13 +186,13 @@ update_app() {
     
     # Rebuild containers
     echo "Rebuilding containers..."
-    docker-compose -f docker-compose.prod.yml up -d --build
+    docker-compose -f $COMPOSE_FILE up -d --build
     
     # Wait and check
     echo "Waiting for services..."
     sleep 30
     
-    if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if docker-compose -f $COMPOSE_FILE ps | grep -q "Up"; then
         echo -e "${GREEN}✅ Update completed successfully${NC}"
     else
         echo -e "${RED}❌ Update failed. Check logs${NC}"
