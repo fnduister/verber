@@ -21,7 +21,7 @@ import Leaderboard from './pages/Leaderboard/Leaderboard';
 import Profile from './pages/Profile/Profile';
 import ConjugationTables from './pages/Study/ConjugationTables';
 import Study from './pages/Study/Study';
-import VerbPractice from './pages/Study/VerbPractice';
+import VerbPractice from './pages/Study/Practice';
 import { fetchUserProfile } from './store/slices/authSlice';
 import { AppDispatch, RootState } from './store/store';
 

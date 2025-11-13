@@ -24,7 +24,7 @@ import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { getPronoun, randElement } from '../../../utils/gameUtils';
-import { findVerbByInfinitive, getConjugation, normalizeString } from '../../../utils/tenseUtils';
+import { compareConjugations, findVerbByInfinitive, getConjugation } from '../../../utils/tenseUtils';
 
 interface RandomVerbQuestion {
     verb: string;
@@ -106,47 +106,65 @@ const RandomVerb: React.FC = () => {
                     userAnswer: ''
                 };
 
-                // Generate 6 random questions for this step
+                // Generate 6 random questions for this step (no duplicates)
                 const questions: RandomVerbQuestion[] = [];
+                const usedCombinations = new Set<string>();
 
                 for (let j = 0; j < 6; j++) {
-                    const selectedVerb = randElement(currentVerbs);
-                    const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
+                    let attempts = 0;
+                    const maxAttempts = 50;
+                    let uniqueFound = false;
 
-                    if (!verbData) {
-                        console.error(`❌ Verb data not found for "${selectedVerb}"`, {
-                            attemptedVerb: selectedVerb,
-                            availableVerbs: allVerbs.map(v => v.infinitive).slice(0, 10),
-                            totalAvailable: allVerbs.length
-                        });
-                        throw new Error(t('games.error.verbDataMissing', { verb: selectedVerb }));
+                    while (attempts < maxAttempts && !uniqueFound) {
+                        const selectedVerb = randElement(currentVerbs);
+                        const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
+
+                        if (!verbData) {
+                            console.error(`❌ Verb data not found for "${selectedVerb}"`, {
+                                attemptedVerb: selectedVerb,
+                                availableVerbs: allVerbs.map(v => v.infinitive).slice(0, 10),
+                                totalAvailable: allVerbs.length
+                            });
+                            throw new Error(t('games.error.verbDataMissing', { verb: selectedVerb }));
+                        }
+
+                        const selectedTense = randElement(currentTenses);
+                        const pronounIndex = Math.floor(Math.random() * 6);
+                        const combinationKey = `${selectedVerb}-${selectedTense}-${pronounIndex}`;
+
+                        if (!usedCombinations.has(combinationKey)) {
+                            const correctAnswer = verbData.conjugations
+                                ? getConjugation(verbData.conjugations, selectedTense, pronounIndex)
+                                : '';
+
+                            if (!correctAnswer) {
+                                console.error(`❌ Failed to get conjugation`, {
+                                    verb: selectedVerb,
+                                    tense: selectedTense,
+                                    pronounIndex: pronounIndex,
+                                    pronoun: getPronoun(pronounIndex),
+                                    hasConjugations: !!verbData.conjugations,
+                                    conjugationsKeys: verbData.conjugations ? Object.keys(verbData.conjugations).slice(0, 5) : []
+                                });
+                                attempts++;
+                                continue;
+                            }
+
+                            questions.push({
+                                verb: selectedVerb,
+                                tense: selectedTense,
+                                pronounIndex,
+                                correctAnswer
+                            });
+                            usedCombinations.add(combinationKey);
+                            uniqueFound = true;
+                        }
+                        attempts++;
                     }
 
-                    const selectedTense = randElement(currentTenses);
-                    const pronounIndex = Math.floor(Math.random() * 6);
-
-                    const correctAnswer = verbData.conjugations
-                        ? getConjugation(verbData.conjugations, selectedTense, pronounIndex)
-                        : '';
-
-                    if (!correctAnswer) {
-                        console.error(`❌ Failed to get conjugation`, {
-                            verb: selectedVerb,
-                            tense: selectedTense,
-                            pronounIndex: pronounIndex,
-                            pronoun: getPronoun(pronounIndex),
-                            hasConjugations: !!verbData.conjugations,
-                            conjugationsKeys: verbData.conjugations ? Object.keys(verbData.conjugations).slice(0, 5) : []
-                        });
+                    if (!uniqueFound) {
                         throw new Error(t('games.error.failedToGenerate'));
                     }
-
-                    questions.push({
-                        verb: selectedVerb,
-                        tense: selectedTense,
-                        pronounIndex,
-                        correctAnswer
-                    });
                 }
 
                 // Store all 6 questions for this step
@@ -260,9 +278,9 @@ const RandomVerb: React.FC = () => {
         let correctCount = 0;
 
         for (let i = 0; i < 6; i++) {
-            const userAnswer = normalizeString(userAnswersRef.current[i].trim().toLowerCase());
-            const correctAnswer = normalizeString(currentQuestions[i].question.correctAnswer.toLowerCase());
-            const isCorrect = userAnswer === correctAnswer;
+            const userAnswer = userAnswersRef.current[i].trim();
+            const correctAnswer = currentQuestions[i].question.correctAnswer.trim();
+            const isCorrect = compareConjugations(userAnswer, correctAnswer);
             correctness[i] = isCorrect;
             if (isCorrect) correctCount++;
         }
@@ -285,56 +303,72 @@ const RandomVerb: React.FC = () => {
             playFailure(isNextLastStep);
         }
 
-        // Move to next question after delay
-        setTimeout(() => {
-            setShowAnswers(false);
-            setIsProcessingAnswer(false);
-            setCorrectnessStatus(Array(6).fill(null));
-            userAnswersRef.current = Array(6).fill('');
+        // Timer stays paused - player must click Next button
+    }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, playSuccess, playFailure]);
 
-            // Clear all input fields
-            inputRefs.current.forEach(ref => {
-                if (ref) ref.value = '';
-            });
+    const handleNext = () => {
+        setShowAnswers(false);
+        setIsProcessingAnswer(false);
+        setCorrectnessStatus(Array(6).fill(null));
+        userAnswersRef.current = Array(6).fill('');
 
-            if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                setShowScore(true);
-            } else {
-                // Generate new questions for next step
-                const newQuestions: RandomVerbRow[] = [];
+        // Clear all input fields
+        inputRefs.current.forEach(ref => {
+            if (ref) ref.value = '';
+        });
 
-                for (let j = 0; j < 6; j++) {
+        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
+            setShowScore(true);
+        } else {
+            // Generate new questions for next step (no duplicates)
+            const newQuestions: RandomVerbRow[] = [];
+            const usedCombinations = new Set<string>();
+
+            for (let j = 0; j < 6; j++) {
+                let attempts = 0;
+                const maxAttempts = 50;
+                let uniqueFound = false;
+
+                while (attempts < maxAttempts && !uniqueFound) {
                     const selectedVerb = randElement(currentVerbs);
                     const verbData = findVerbByInfinitive(allVerbs, selectedVerb);
 
                     if (verbData) {
                         const selectedTense = randElement(currentTenses);
                         const pronounIndex = Math.floor(Math.random() * 6);
+                        const combinationKey = `${selectedVerb}-${selectedTense}-${pronounIndex}`;
 
-                        const correctAnswer = verbData.conjugations
-                            ? getConjugation(verbData.conjugations, selectedTense, pronounIndex)
-                            : '';
+                        if (!usedCombinations.has(combinationKey)) {
+                            const correctAnswer = verbData.conjugations
+                                ? getConjugation(verbData.conjugations, selectedTense, pronounIndex)
+                                : '';
 
-                        newQuestions.push({
-                            question: {
-                                verb: selectedVerb,
-                                tense: selectedTense,
-                                pronounIndex,
-                                correctAnswer
-                            },
-                            userAnswer: ''
-                        });
+                            if (correctAnswer) {
+                                newQuestions.push({
+                                    question: {
+                                        verb: selectedVerb,
+                                        tense: selectedTense,
+                                        pronounIndex,
+                                        correctAnswer
+                                    },
+                                    userAnswer: ''
+                                });
+                                usedCombinations.add(combinationKey);
+                                uniqueFound = true;
+                            }
+                        }
                     }
+                    attempts++;
                 }
-
-                setGameData(newQuestions);
-                setGameScore(prev => ({
-                    ...prev,
-                    currentStep: prev.currentStep + 1,
-                }));
             }
-        }, 3000);
-    }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, playSuccess, playFailure, currentVerbs, currentTenses, allVerbs]);
+
+            setGameData(newQuestions);
+            setGameScore(prev => ({
+                ...prev,
+                currentStep: prev.currentStep + 1,
+            }));
+        }
+    };
 
     const handlePause = () => {
         setIsPaused(true);
@@ -722,6 +756,38 @@ const RandomVerb: React.FC = () => {
                                     </Typography>
                                 </motion.div>
                             )}
+                        </Box>
+                    </motion.div>
+                )}
+
+                {/* Next Button */}
+                {showAnswers && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={handleNext}
+                                sx={{
+                                    minWidth: 200,
+                                    minHeight: 56,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                                    boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)',
+                                    '&:hover': {
+                                        boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)',
+                                        transform: 'translateY(-2px)'
+                                    }
+                                }}
+                            >
+                                {t('games.common.next')}
+                            </Button>
                         </Box>
                     </motion.div>
                 )}

@@ -137,6 +137,9 @@ export interface Verb {
     infinitive: string;
     past_simple: string;
     past_participle: string;
+    present_participle?: string;
+    auxiliary?: string;
+    pronominal_form?: string;
     translation: string;
     category: string;
     difficulty: number;

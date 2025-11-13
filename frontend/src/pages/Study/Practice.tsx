@@ -76,11 +76,10 @@ const VerbPractice: React.FC = () => {
                                 }} 
                             />
                             <Typography variant="h4" sx={{ mb: 2, color: '#64748b' }}>
-                                🚧 Coming Soon
+                                🚧 {t('study.practice.comingSoon')}
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#94a3b8', maxWidth: 600, mx: 'auto' }}>
-                                This feature is under development. Soon you'll be able to practice specific verbs 
-                                with interactive exercises and personalized feedback.
+                                {t('study.practice.comingSoonDescription')}
                             </Typography>
                         </CardContent>
                     </Card>

@@ -18,6 +18,34 @@ export const findVerbByInfinitive = (verbs: any[], infinitive: string): any | un
     return verbs.find(verb => compareVerbs(verb.infinitive, infinitive));
 };
 
+// Helper function to compare conjugated forms, treating (e) as optional
+export const compareConjugations = (userAnswer: string, correctAnswer: string): boolean => {
+    const normalizedUser = normalizeString(userAnswer.trim().toLowerCase());
+    const normalizedCorrect = normalizeString(correctAnswer.trim().toLowerCase());
+    
+    // Exact match
+    if (normalizedUser === normalizedCorrect) {
+        return true;
+    }
+    
+    // Check if the correct answer has (e) and user answer matches without it
+    // Match patterns like: "parlé(e)", "parlé(e)s", "parlé(es)"
+    const optionalEPattern = /\(e\)s?/g;
+    
+    if (optionalEPattern.test(normalizedCorrect)) {
+        // Remove (e) and (e)s and (es) from correct answer to create variants
+        const withoutParens = normalizedCorrect.replace(/\(e\)/g, 'e'); // parlé(e) -> parlée
+        const withoutE = normalizedCorrect.replace(/\(e\)s?/g, ''); // parlé(e) -> parlé, parlé(e)s -> parlés
+        const withoutEButWithS = normalizedCorrect.replace(/\(e\)(s)/g, '$1'); // parlé(e)s -> parlés
+        
+        return normalizedUser === withoutParens || 
+               normalizedUser === withoutE || 
+               normalizedUser === withoutEButWithS;
+    }
+    
+    return false;
+};
+
 // Helper function to get conjugation for a specific tense and person
 export const getConjugation = (conjugations: VerbConjugation, tense: string, person: number): string => {
     debugger;

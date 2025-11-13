@@ -103,14 +103,22 @@
     "title": "Mode Étude",
     "subtitle": "Choisissez votre méthode d'apprentissage",
     "conjugation": {
-      "title": "Tables de conjugaison",
+      "title": "Tables de Conjugaison",
       "description": "Consultez les tables de conjugaison complètes pour n'importe quel verbe",
       "selectVerb": "Sélectionnez un verbe pour voir ses conjugaisons",
-      "selectVerbDescription": "Choisissez un verbe dans la liste déroulante ci-dessus pour afficher sa table de conjugaison complète"
+      "selectVerbDescription": "Choisissez un verbe dans la liste déroulante ci-dessus pour afficher sa table de conjugaison complète",
+      "infinitive": "Infinitif",
+      "auxiliary": "Auxiliaire",
+      "pronominal": "Pronominal",
+      "nonPronominal": "Non-pronominal",
+      "pastParticiple": "Participe Passé",
+      "presentParticiple": "Participe Présent"
     },
     "practice": {
-      "title": "Pratique des Verbes",
-      "description": "Pratiquez des verbes spécifiques à votre rythme"
+      "comingSoon": "À venir",
+      "comingSoonDescription": "Cette fonctionnalité est en cours de développement. Vous pourrez bientôt pratiquer des verbes spécifiques ou des temps avec des exercices interactifs et des retours personnalisés.",
+      "title": "Pratique des Verbes et des Temps",
+      "description": "Pratiquez des verbes spécifiques ou des temps à votre rythme"
     }
   },
   "games": {
@@ -207,7 +215,7 @@
       "excellent": "🎉 Excellent ! Bonne réponse !",
       "incorrect": "😔 Incorrect !",
       "correctAnswerWas": "La bonne réponse était :",
-      "nextQuestion": "Question suivante",
+      "next": "Question suivante",
       "tryAgain": "Réessayer",
       "wellDone": "Bien joué !",
       "pronoun": "Pronom",

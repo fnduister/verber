@@ -24,7 +24,7 @@ import api from '../../../services/api';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { randElement } from '../../../utils/gameUtils';
-import { findVerbByInfinitive, getConjugation, normalizeString } from '../../../utils/tenseUtils';
+import { compareConjugations, findVerbByInfinitive, getConjugation } from '../../../utils/tenseUtils';
 
 interface SentenceVerb {
     infinitive: string;
@@ -259,9 +259,9 @@ const Sentence: React.FC = () => {
         }
 
         // Check answer
-        const normalizedUserAnswer = normalizeString(userAnswer.trim().toLowerCase());
-        const normalizedCorrectAnswer = normalizeString(currentQuestion.correctAnswer.toLowerCase());
-        const correct = normalizedUserAnswer === normalizedCorrectAnswer;
+        const userAnswerValue = userAnswer.trim();
+        const correctAnswerValue = currentQuestion.correctAnswer.trim();
+        const correct = compareConjugations(userAnswerValue, correctAnswerValue);
 
         setIsCorrect(correct);
         setShowAnswer(true);
@@ -283,24 +283,25 @@ const Sentence: React.FC = () => {
             playFailure(isNextLastStep);
         }
 
-        // Move to next question after delay
-        setTimeout(() => {
-            setShowAnswer(false);
-            setIsProcessingAnswer(false);
-            setUserAnswer('');
-            userAnswerRef.current = '';
-            setIsCorrect(null);
-            
-            if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                setShowScore(true);
-            } else {
-                setGameScore(prev => ({
-                    ...prev,
-                    currentStep: prev.currentStep + 1,
-                }));
-            }
-        }, 3000);
+        // Timer stays paused - player must click Next button
     }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, userAnswer, playSuccess, playFailure]);
+
+    const handleNext = () => {
+        setShowAnswer(false);
+        setIsProcessingAnswer(false);
+        setUserAnswer('');
+        userAnswerRef.current = '';
+        setIsCorrect(null);
+        
+        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
+            setShowScore(true);
+        } else {
+            setGameScore(prev => ({
+                ...prev,
+                currentStep: prev.currentStep + 1,
+            }));
+        }
+    };
 
     const handlePause = () => {
         setIsPaused(true);
@@ -374,9 +375,9 @@ const Sentence: React.FC = () => {
                     // Time's up - submit the current answer
                     setIsProcessingAnswer(true);
                     const currentQuestion = gameData[gameScore.currentStep];
-                    const normalizedUserAnswer = normalizeString(userAnswerRef.current.trim().toLowerCase());
-                    const normalizedCorrectAnswer = normalizeString(currentQuestion.correctAnswer.toLowerCase());
-                    const correct = normalizedUserAnswer === normalizedCorrectAnswer;
+                    const userAnswerValue = userAnswerRef.current.trim();
+                    const correctAnswerValue = currentQuestion.correctAnswer.trim();
+                    const correct = compareConjugations(userAnswerValue, correctAnswerValue);
                     
                     setIsCorrect(correct);
                     setShowAnswer(true);
@@ -395,22 +396,7 @@ const Sentence: React.FC = () => {
                         playFailure(isNextLastStep);
                     }
                     
-                    setTimeout(() => {
-                        setShowAnswer(false);
-                        setIsProcessingAnswer(false);
-                        setUserAnswer('');
-                        userAnswerRef.current = '';
-                        setIsCorrect(null);
-                        
-                        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                            setShowScore(true);
-                        } else {
-                            setGameScore(prev => ({
-                                ...prev,
-                                currentStep: prev.currentStep + 1,
-                            }));
-                        }
-                    }, 3000);
+                    // Timer stays paused - player must click Next button
                 }
                 return;
             }
@@ -739,6 +725,38 @@ const Sentence: React.FC = () => {
                                 }}
                             >
                                 {t('games.common.checkAnswers')}
+                            </Button>
+                        </Box>
+                    </motion.div>
+                )}
+
+                {/* Next Button */}
+                {showAnswer && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={handleNext}
+                                sx={{
+                                    minWidth: 200,
+                                    minHeight: 56,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 100%)',
+                                    boxShadow: '0 4px 16px rgba(6, 182, 212, 0.3)',
+                                    '&:hover': {
+                                        boxShadow: '0 6px 20px rgba(6, 182, 212, 0.4)',
+                                        transform: 'translateY(-2px)'
+                                    }
+                                }}
+                            >
+                                {t('games.common.next')}
                             </Button>
                         </Box>
                     </motion.div>

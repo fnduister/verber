@@ -106,11 +106,19 @@
       "title": "Conjugation Tables",
       "description": "View complete conjugation tables for any verb",
       "selectVerb": "Select a verb to view its conjugations",
-      "selectVerbDescription": "Choose a verb from the dropdown above to display its full conjugation table"
+      "selectVerbDescription": "Choose a verb from the dropdown above to display its full conjugation table",
+      "infinitive": "Infinitive",
+      "auxiliary": "Auxiliary",
+      "pronominal": "Pronominal",
+      "nonPronominal": "Non-pronominal",
+      "pastParticiple": "Past Participle",
+      "presentParticiple": "Present Participle"
     },
     "practice": {
-      "title": "Verb Practice",
-      "description": "Practice specific verbs at your own pace"
+      "comingSoon": "Coming Soon",
+      "comingSoonDescription": "This feature is under development. Soon you'll be able to practice specific verbs or tenses with interactive exercises and personalized feedback.",
+      "title": "Practice Verbs and Tenses",
+      "description": "Practice specific verbs or tenses at your own pace"
     }
   },
   "games": {
@@ -207,7 +215,7 @@
       "excellent": "🎉 Excellent! Correct answer!",
       "incorrect": "😔 Incorrect!",
       "correctAnswerWas": "The correct answer was:",
-      "nextQuestion": "Next Question",
+      "next": "Next Question",
       "tryAgain": "Try Again",
       "wellDone": "Well done!",
       "pronoun": "Pronoun",

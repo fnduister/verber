@@ -455,24 +455,25 @@ const MatchMe: React.FC = () => {
             playFailure(isNextLastStep);
         }
 
-        // Move to next question after delay
-        setTimeout(() => {
-            setShowAnswers(false);
-            setIsProcessingAnswer(false);
-            setUserMatches({});
-            setCorrectnessStatus({});
-            userMatchesRef.current = {};
-
-            if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                setShowScore(true);
-            } else {
-                setGameScore(prev => ({
-                    ...prev,
-                    currentStep: prev.currentStep + 1,
-                }));
-            }
-        }, 3000);
+        // Timer stays paused - player must click Next button
     }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, playSuccess, playFailure]);
+
+    const handleNext = () => {
+        setShowAnswers(false);
+        setIsProcessingAnswer(false);
+        setUserMatches({});
+        setCorrectnessStatus({});
+        userMatchesRef.current = {};
+
+        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
+            setShowScore(true);
+        } else {
+            setGameScore(prev => ({
+                ...prev,
+                currentStep: prev.currentStep + 1,
+            }));
+        }
+    };
 
     const handleSubmit = () => {
         checkAnswers();
@@ -890,6 +891,38 @@ const MatchMe: React.FC = () => {
                                     </Typography>
                                 </motion.div>
                             )}
+                        </Box>
+                    </motion.div>
+                )}
+
+                {/* Next Button */}
+                {showAnswers && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={handleNext}
+                                sx={{
+                                    minWidth: 200,
+                                    minHeight: 56,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(135deg, #667eea 0%, #5568d3 100%)',
+                                    boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+                                    '&:hover': {
+                                        boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+                                        transform: 'translateY(-2px)'
+                                    }
+                                }}
+                            >
+                                {t('games.common.next')}
+                            </Button>
                         </Box>
                     </motion.div>
                 )}

@@ -34,11 +34,11 @@ type User struct {
 // Verb represents a French verb with its basic information
 type Verb struct {
 	ID                uint      `json:"id" gorm:"primaryKey"`
-	Infinitive        string    `json:"infinitive" gorm:"uniqueIndex;not null"` // Infinitif
-	PastParticiple    string    `json:"past_participle"`                        // ParticipePasse
-	PresentParticiple string    `json:"present_participle"`                     // ParticipePresent
-	Auxiliary         string    `json:"auxiliary"`                              // Auxiliaire (avoir/être)
-	PronomininalForm  string    `json:"pronominal_form"`                        // FormePronominale
+	Infinitive        string    `json:"infinitive" gorm:"uniqueIndex;not null"`        // Infinitif
+	PastParticiple    string    `json:"past_participle"`                               // ParticipePasse
+	PresentParticiple string    `json:"present_participle"`                            // ParticipePresent
+	Auxiliary         string    `json:"auxiliary"`                                     // Auxiliaire (avoir/être)
+	PronominalForm    string    `json:"pronominal_form" gorm:"column:pronominal_form"` // FormePronominale
 	Translation       string    `json:"translation"`
 	Category          string    `json:"category"`                    // regular, irregular, modal, etc.
 	Difficulty        int       `json:"difficulty" gorm:"default:1"` // 1-5

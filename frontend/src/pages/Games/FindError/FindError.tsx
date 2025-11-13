@@ -223,23 +223,24 @@ const FindError: React.FC = () => {
             }));
         }
 
-        // Move to next question or show score
-        setTimeout(() => {
-            setSelectedAnswer(null);
-            setIsCorrect(null);
-            setIsProcessingAnswer(false);
-            
-            if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                setShowScore(true);
-            } else {
-                setGameScore(prev => ({
-                    ...prev,
-                    currentStep: prev.currentStep + 1,
-                }));
-                // Timer will restart automatically via useEffect dependency change
-            }
-        }, 1500);
+        // Timer stays paused - player must click Next button
     }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer, playSuccess, playFailure]);
+
+    const handleNext = () => {
+        setSelectedAnswer(null);
+        setIsCorrect(null);
+        setIsProcessingAnswer(false);
+        
+        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
+            setShowScore(true);
+        } else {
+            setGameScore(prev => ({
+                ...prev,
+                currentStep: prev.currentStep + 1,
+            }));
+            // Timer will restart automatically via useEffect dependency change
+        }
+    };
 
     const handlePause = () => {
         setIsPaused(true);
@@ -638,6 +639,41 @@ const FindError: React.FC = () => {
                                 </Box>
                             </CardContent>
                         </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Next Button */}
+            <AnimatePresence>
+                {selectedAnswer !== null && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={handleNext}
+                                sx={{
+                                    minWidth: 200,
+                                    minHeight: 56,
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
+                                    boxShadow: '0 4px 16px rgba(33, 150, 243, 0.3)',
+                                    '&:hover': {
+                                        boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)',
+                                        transform: 'translateY(-2px)'
+                                    }
+                                }}
+                            >
+                                {t('games.common.next')}
+                            </Button>
+                        </Box>
                     </motion.div>
                 )}
             </AnimatePresence>

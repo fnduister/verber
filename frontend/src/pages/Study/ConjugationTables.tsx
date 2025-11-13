@@ -22,8 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { PRONOUNS, TENSE_MAP } from '../../constants';
 import {
-    PRESET_TENSE_GROUPS,
-    SPECIAL_TENSES
+    PRESET_TENSE_GROUPS
 } from '../../constants/gameConstants';
 import {
     addCustomTenseGroup,
@@ -53,7 +52,8 @@ const ConjugationTables: React.FC = () => {
     }, [allVerbs]);
 
     const availableTenses = useMemo(() => {
-        return allTenses.filter((tense) => !SPECIAL_TENSES.includes(tense));
+        // Include all tenses, including imperative which was previously filtered out
+        return allTenses;
     }, [allTenses]);
 
     useEffect(() => {
@@ -114,6 +114,10 @@ const ConjugationTables: React.FC = () => {
         
         return getConjugation(verbData.conjugations, tense, pronounIndex) || '-';
     };
+
+    const verbData = useMemo(() => {
+        return selectedVerb ? findVerbByInfinitive(allVerbs, selectedVerb) : null;
+    }, [selectedVerb, allVerbs]);
 
     const tensesToDisplay = selectedTenses.length > 0 ? selectedTenses : availableTenses;
 
@@ -381,6 +385,62 @@ const ConjugationTables: React.FC = () => {
                                     📚 {selectedVerb}
                                 </Typography>
 
+                                {/* Verb Information Card */}
+                                {verbData && (
+                                    <Card 
+                                        sx={{ 
+                                            mb: 3, 
+                                            backgroundColor: '#f8fafc',
+                                            border: '1px solid #e2e8f0'
+                                        }}
+                                    >
+                                        <CardContent>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12} sm={6} md={3}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                                                        {t('study.conjugation.infinitive')}
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#3b82f6' }}>
+                                                        {verbData.infinitive}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} md={3}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                                                        {t('study.conjugation.auxiliary')}
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                        {verbData.auxiliary || '-'}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} md={3}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                                                        {t('study.conjugation.pronominal')}
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                        {verbData.pronominal_form || t('study.conjugation.nonPronominal')}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} md={3}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                                                        {t('study.conjugation.pastParticiple')}
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                        {verbData.past_participle || '-'}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} md={3}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                                                        {t('study.conjugation.presentParticiple')}
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                        {verbData.present_participle || '-'}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
                                 <Grid container spacing={3}>
                                     {tensesToDisplay.map((tense) => (
                                         <Grid item xs={12} md={4} key={tense}>
@@ -413,42 +473,50 @@ const ConjugationTables: React.FC = () => {
                                                         {TENSE_MAP[tense]?.displayName || tense}
                                                     </Typography>
                                                     <Stack spacing={1}>
-                                                        {PRONOUNS.map((pronoun, index) => (
-                                                            <Box 
-                                                                key={pronoun}
-                                                                sx={{
-                                                                    display: 'flex',
-                                                                    justifyContent: 'space-between',
-                                                                    alignItems: 'center',
-                                                                    py: 0.5,
-                                                                    px: 1,
-                                                                    borderRadius: 1,
-                                                                    '&:hover': {
-                                                                        backgroundColor: '#f0f9ff'
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Typography 
-                                                                    variant="body2" 
-                                                                    sx={{ 
-                                                                        fontWeight: 'medium', 
-                                                                        color: '#64748b',
-                                                                        minWidth: 80
+                                                        {PRONOUNS.map((pronoun, index) => {
+                                                            // For imperative tenses, only show tu (index 1), nous (index 3), vous (index 4)
+                                                            const isImperative = tense === 'imperatif' || tense === 'imperatif_passe';
+                                                            if (isImperative && ![1, 3, 4].includes(index)) {
+                                                                return null;
+                                                            }
+                                                            
+                                                            return (
+                                                                <Box 
+                                                                    key={pronoun}
+                                                                    sx={{
+                                                                        display: 'flex',
+                                                                        justifyContent: 'space-between',
+                                                                        alignItems: 'center',
+                                                                        py: 0.5,
+                                                                        px: 1,
+                                                                        borderRadius: 1,
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#f0f9ff'
+                                                                        }
                                                                     }}
                                                                 >
-                                                                    {pronoun}
-                                                                </Typography>
-                                                                <Typography 
-                                                                    variant="body1" 
-                                                                    sx={{ 
-                                                                        fontWeight: 'bold',
-                                                                        color: '#0f172a'
-                                                                    }}
-                                                                >
-                                                                    {getVerbConjugation(selectedVerb, tense, index)}
-                                                                </Typography>
-                                                            </Box>
-                                                        ))}
+                                                                    <Typography 
+                                                                        variant="body2" 
+                                                                        sx={{ 
+                                                                            fontWeight: 'medium', 
+                                                                            color: '#64748b',
+                                                                            minWidth: 80
+                                                                        }}
+                                                                    >
+                                                                        {pronoun}
+                                                                    </Typography>
+                                                                    <Typography 
+                                                                        variant="body1" 
+                                                                        sx={{ 
+                                                                            fontWeight: 'bold',
+                                                                            color: '#0f172a'
+                                                                        }}
+                                                                    >
+                                                                        {getVerbConjugation(selectedVerb, tense, index)}
+                                                                    </Typography>
+                                                                </Box>
+                                                            );
+                                                        })}
                                                     </Stack>
                                                 </CardContent>
                                             </Card>

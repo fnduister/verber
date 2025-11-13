@@ -21,7 +21,7 @@ import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { randElement } from '../../../utils/gameUtils';
-import { findVerbByInfinitive, getConjugation, normalizeString } from '../../../utils/tenseUtils';
+import { compareConjugations, findVerbByInfinitive, getConjugation } from '../../../utils/tenseUtils';
 
 interface WriteMeStepData {
     verb: string;
@@ -175,9 +175,9 @@ const WriteMe: React.FC = () => {
         let correctCount = 0;
         
         for (let i = 0; i < 6; i++) {
-            const userAnswer = normalizeString(userAnswersRef.current[i].trim().toLowerCase());
-            const correctAnswer = normalizeString(currentQuestion.correctAnswers[i].toLowerCase());
-            const isCorrect = userAnswer === correctAnswer;
+            const userAnswer = userAnswersRef.current[i].trim();
+            const correctAnswer = currentQuestion.correctAnswers[i].trim();
+            const isCorrect = compareConjugations(userAnswer, correctAnswer);
             correctness[i] = isCorrect;
             if (isCorrect) correctCount++;
         }
@@ -201,24 +201,25 @@ const WriteMe: React.FC = () => {
             playFailure(isNextLastStep);
         }
 
-        // Move to next question after delay
-        setTimeout(() => {
-            setShowAnswers(false);
-            setIsProcessingAnswer(false);
-            setUserAnswers(Array(6).fill(''));
-            setCorrectnessStatus(Array(6).fill(null));
-            userAnswersRef.current = Array(6).fill(''); // Keep ref in sync
-            
-            if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                setShowScore(true);
-            } else {
-                setGameScore(prev => ({
-                    ...prev,
-                    currentStep: prev.currentStep + 1,
-                }));
-            }
-        }, 3000);
+        // Timer stays paused - player must click Next button
     }, [gameData, gameScore.currentStep, gameScore.maxStep, isProcessingAnswer, playSuccess, playFailure]);
+
+    const handleNext = () => {
+        setShowAnswers(false);
+        setIsProcessingAnswer(false);
+        setUserAnswers(Array(6).fill(''));
+        setCorrectnessStatus(Array(6).fill(null));
+        userAnswersRef.current = Array(6).fill(''); // Keep ref in sync
+        
+        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
+            setShowScore(true);
+        } else {
+            setGameScore(prev => ({
+                ...prev,
+                currentStep: prev.currentStep + 1,
+            }));
+        }
+    };
 
     const handlePause = () => {
         setIsPaused(true);
@@ -313,9 +314,9 @@ const WriteMe: React.FC = () => {
                     let correctCount = 0;
                     
                     for (let i = 0; i < 6; i++) {
-                        const userAnswer = normalizeString(userAnswersRef.current[i].trim().toLowerCase());
-                        const correctAnswer = normalizeString(currentQuestion.correctAnswers[i].toLowerCase());
-                        const isCorrect = userAnswer === correctAnswer;
+                        const userAnswer = userAnswersRef.current[i].trim();
+                        const correctAnswer = currentQuestion.correctAnswers[i].trim();
+                        const isCorrect = compareConjugations(userAnswer, correctAnswer);
                         correctness[i] = isCorrect;
                         if (isCorrect) correctCount++;
                     }
@@ -339,23 +340,7 @@ const WriteMe: React.FC = () => {
                         playFailure(isNextLastStep);
                     }
 
-                    // Move to next question after delay
-                    setTimeout(() => {
-                        setShowAnswers(false);
-                        setIsProcessingAnswer(false);
-                        setUserAnswers(Array(6).fill(''));
-                        setCorrectnessStatus(Array(6).fill(null));
-                        userAnswersRef.current = Array(6).fill(''); // Keep ref in sync
-                        
-                        if (gameScore.currentStep + 1 >= gameScore.maxStep) {
-                            setShowScore(true);
-                        } else {
-                            setGameScore(prev => ({
-                                ...prev,
-                                currentStep: prev.currentStep + 1,
-                            }));
-                        }
-                    }, 3000);
+                    // Timer stays paused - player must click Next button
                 }
                 return;
             }
@@ -675,6 +660,38 @@ const WriteMe: React.FC = () => {
                                 </Typography>
                             </motion.div>
                         )}
+                    </Box>
+                </motion.div>
+            )}
+
+            {/* Next Button */}
+            {showAnswers && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.5 }}
+                >
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={handleNext}
+                            sx={{
+                                minWidth: 200,
+                                minHeight: 56,
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                borderRadius: 3,
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+                                '&:hover': {
+                                    boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                        >
+                            {t('games.common.next')}
+                        </Button>
                     </Box>
                 </motion.div>
             )}

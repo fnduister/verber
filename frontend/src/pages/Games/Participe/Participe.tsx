@@ -23,7 +23,7 @@ import { useAudio } from '../../../hooks/useAudio';
 import { fetchVerbs } from '../../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../../store/store';
 import { randElement } from '../../../utils/gameUtils';
-import { findVerbByInfinitive, normalizeString } from '../../../utils/tenseUtils';
+import { compareConjugations, findVerbByInfinitive } from '../../../utils/tenseUtils';
 
 type ParticipeType = 'past' | 'present';
 
@@ -171,10 +171,10 @@ const Participe: React.FC = () => {
         }
 
         const currentQuestion = gameData[gameScore.currentStep];
-        const normalizedUserAnswer = normalizeString(userAnswerRef.current.trim());
-        const normalizedCorrectAnswer = normalizeString(currentQuestion.correctAnswer.trim());
+        const userAnswer = userAnswerRef.current.trim();
+        const correctAnswer = currentQuestion.correctAnswer.trim();
         
-        const correct = normalizedUserAnswer === normalizedCorrectAnswer;
+        const correct = compareConjugations(userAnswer, correctAnswer);
         
         setIsCorrect(correct);
         setShowAnswer(true);
@@ -522,7 +522,7 @@ const Participe: React.FC = () => {
                                     >
                                         {gameScore.currentStep + 1 >= gameScore.maxStep 
                                             ? t('common.finish') 
-                                            : t('games.common.nextQuestion')}
+                                            : t('games.common.next')}
                                     </Button>
                                 )}
                             </Stack>
