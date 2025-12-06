@@ -27,6 +27,11 @@ func Initialize(databaseURL string) (*gorm.DB, error) {
 		&models.Exercise{},
 		&models.UserProgress{},
 		&models.Score{},
+		&models.MultiplayerGame{},
+		&models.MultiplayerGamePlayer{},
+		&models.MultiplayerGameRound{},
+		&models.PlayerAnswer{},
+		&models.Invite{},
 	)
 	if err != nil {
 		return nil, err

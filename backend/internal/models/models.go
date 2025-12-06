@@ -11,20 +11,22 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	Username  string         `json:"username" gorm:"uniqueIndex;not null"`
-	Email     string         `json:"email" gorm:"uniqueIndex;not null"`
-	Password  string         `json:"-" gorm:"not null"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Avatar    string         `json:"avatar"`
-	Age       int            `json:"age"`
-	Grade     string         `json:"grade"`
-	Level     int            `json:"level" gorm:"default:1"`
-	XP        int            `json:"xp" gorm:"default:0"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	ID               uint           `json:"id" gorm:"primaryKey"`
+	Username         string         `json:"username" gorm:"uniqueIndex;not null"`
+	Email            string         `json:"email" gorm:"uniqueIndex"` // Optional - only for parents
+	Password         string         `json:"-" gorm:"not null"`
+	UserType         string         `json:"user_type" gorm:"default:'student'"` // 'student' or 'parent'
+	FirstName        string         `json:"first_name"`
+	LastName         string         `json:"last_name"`
+	Avatar           string         `json:"avatar"`
+	Age              int            `json:"age"`
+	Grade            string         `json:"grade"`
+	Level            int            `json:"level" gorm:"default:1"`
+	XP               int            `json:"xp" gorm:"default:0"`
+	IsAdultConfirmed bool           `json:"is_adult_confirmed" gorm:"default:false"` // For parents to confirm they're adults
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `json:"-" gorm:"index"`
 
 	// Relationships
 	Progress []UserProgress `json:"progress,omitempty"`
@@ -419,4 +421,20 @@ type Sentence struct {
 	Tenses    StringArray   `json:"tenses" gorm:"type:text[]"`      // Appropriate tenses for this sentence
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
+}
+
+// Invite represents a game invitation from one user to another
+type Invite struct {
+	ID         uint             `json:"id" gorm:"primaryKey"`
+	SenderID   uint             `json:"sender_id" gorm:"not null"`
+	Sender     User             `json:"sender" gorm:"foreignKey:SenderID"`
+	ReceiverID uint             `json:"receiver_id" gorm:"not null"`
+	Receiver   User             `json:"receiver" gorm:"foreignKey:ReceiverID"`
+	GameID     string           `json:"game_id" gorm:"not null"` // multiplayer game code
+	Game       *MultiplayerGame `json:"game,omitempty" gorm:"foreignKey:GameID;references:ID"`
+	Status     string           `json:"status" gorm:"default:'pending'"` // pending, accepted, declined, expired
+	ReadAt     *time.Time       `json:"read_at"`
+	CreatedAt  time.Time        `json:"created_at"`
+	UpdatedAt  time.Time        `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt   `json:"-" gorm:"index"`
 }

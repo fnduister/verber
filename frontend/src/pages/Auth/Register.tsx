@@ -3,7 +3,9 @@ import {
     Alert,
     Box,
     Button,
+    Checkbox,
     Container,
+    FormControlLabel,
     Grid,
     IconButton,
     InputAdornment,
@@ -32,8 +34,10 @@ const Register: React.FC = () => {
         email: '',
         password: '',
         confirmPassword: '',
+        userType: 'student',
         age: '',
         grade: '',
+        isAdultConfirmed: false,
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -85,22 +89,54 @@ const Register: React.FC = () => {
             return;
         }
 
-        // Validate age
-        const age = parseInt(formData.age);
-        if (isNaN(age) || age < 10 || age > 100) {
-            setPasswordError('Please enter a valid age between 10 and 100');
-            return;
+        // Validate based on user type
+        if (formData.userType === 'student') {
+            // Students must provide age and grade (no email required)
+            const age = parseInt(formData.age);
+            if (isNaN(age) || age < 10 || age > 100) {
+                setPasswordError('Please enter a valid age between 10 and 100');
+                return;
+            }
+
+            if (!formData.grade) {
+                setPasswordError('Please select your grade');
+                return;
+            }
+
+            const userData = {
+                username: formData.username,
+                email: '', // Students don't provide email
+                password: formData.password,
+                user_type: 'student',
+                age: age,
+                grade: formData.grade,
+                is_adult_confirmed: false,
+            };
+
+            await dispatch(registerUser(userData));
+        } else {
+            // Parents must confirm they're adults and provide email
+            if (!formData.isAdultConfirmed) {
+                setPasswordError('Please confirm that you are an adult');
+                return;
+            }
+
+            if (!formData.email) {
+                setPasswordError('Email is required for parents');
+                return;
+            }
+
+            const userData: any = {
+                username: formData.username,
+                email: formData.email,
+                password: formData.password,
+                user_type: 'parent',
+                is_adult_confirmed: true,
+            };
+            // Don't send age or grade for parents
+
+            await dispatch(registerUser(userData));
         }
-
-        const userData = {
-            username: formData.username,
-            email: formData.email,
-            password: formData.password,
-            age: age,
-            grade: formData.grade,
-        };
-
-        await dispatch(registerUser(userData));
     };
 
     return (
@@ -146,6 +182,20 @@ const Register: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <TextField
                                 fullWidth
+                                select
+                                label="I am a..."
+                                name="userType"
+                                value={formData.userType}
+                                onChange={handleChange}
+                                required
+                                margin="normal"
+                            >
+                                <MenuItem value="student">Student</MenuItem>
+                                <MenuItem value="parent">Parent</MenuItem>
+                            </TextField>
+
+                            <TextField
+                                fullWidth
                                 label={t('auth.username')}
                                 name="username"
                                 value={formData.username}
@@ -156,49 +206,69 @@ const Register: React.FC = () => {
                                 autoFocus
                             />
 
-                            <TextField
-                                fullWidth
-                                label={t('auth.email')}
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                                margin="normal"
-                                autoComplete="email"
-                            />
+                            {formData.userType === 'parent' && (
+                                <TextField
+                                    fullWidth
+                                    label={t('auth.email')}
+                                    name="email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    margin="normal"
+                                    autoComplete="email"
+                                    helperText="Required for email verification"
+                                />
+                            )}
 
-                            <Grid container spacing={2} sx={{ mt: 0 }}>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label={t('auth.age')}
-                                        name="age"
-                                        type="number"
-                                        value={formData.age}
-                                        onChange={handleChange}
-                                        required
-                                        inputProps={{ min: 10, max: 100 }}
+                            {formData.userType === 'student' && (
+                                <Grid container spacing={2} sx={{ mt: 0 }}>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label={t('auth.age')}
+                                            name="age"
+                                            type="number"
+                                            value={formData.age}
+                                            onChange={handleChange}
+                                            required
+                                            inputProps={{ min: 10, max: 100 }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            select
+                                            label={t('auth.grade')}
+                                            name="grade"
+                                            value={formData.grade}
+                                            onChange={handleChange}
+                                            required
+                                        >
+                                            {grades.map((grade) => (
+                                                <MenuItem key={grade.key} value={grade.value}>
+                                                    {grade.value}
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid>
+                                </Grid>
+                            )}
+
+                            {formData.userType === 'parent' && (
+                                <Box sx={{ mt: 2, mb: 1 }}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                name="isAdultConfirmed"
+                                                checked={formData.isAdultConfirmed}
+                                                onChange={(e) => setFormData({ ...formData, isAdultConfirmed: e.target.checked })}
+                                            />
+                                        }
+                                        label="I confirm that I am an adult (18+ years old)"
                                     />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        select
-                                        label={t('auth.grade')}
-                                        name="grade"
-                                        value={formData.grade}
-                                        onChange={handleChange}
-                                        required
-                                    >
-                                        {grades.map((grade) => (
-                                            <MenuItem key={grade.key} value={grade.value}>
-                                                {grade.value}
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
-                                </Grid>
-                            </Grid>
+                                </Box>
+                            )}
 
                             <TextField
                                 fullWidth

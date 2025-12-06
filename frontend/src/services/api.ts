@@ -82,3 +82,72 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// User API
+export const userAPI = {
+    getRecentPlayers: (limit: number = 20) =>
+        api.get(`/users/recent?limit=${limit}`),
+    getOnlineUsers: () =>
+        api.get('/users/online'),
+    presencePing: () => api.post('/presence/ping'),
+};
+
+// Invite API
+export interface Invite {
+    id: number;
+    sender_id: number;
+    receiver_id: number;
+    game_id: string;
+    status: 'pending' | 'accepted' | 'declined' | 'expired';
+    read_at?: string;
+    created_at: string;
+    updated_at: string;
+    sender?: {
+        id: number;
+        username: string;
+        avatar: string;
+        level: number;
+    };
+    game?: {
+        game_id: string;
+        title: string;
+        game_type: string;
+        max_players: number;
+        status: string;
+    };
+}
+
+export const inviteAPI = {
+    sendInvite: (receiverId: number, gameId: string) =>
+        api.post('/invites/send', { receiver_id: receiverId, game_id: gameId }),
+    
+    getInvites: (status?: string) =>
+        api.get<{ invites: Invite[] }>(`/invites${status ? `?status=${status}` : ''}`),
+    
+    getSentInvites: () =>
+        api.get<{ invites: Invite[] }>('/invites/sent'),
+    
+    getUnreadCount: () =>
+        api.get<{ count: number }>('/invites/unread-count'),
+    
+    acceptInvite: (inviteId: number) =>
+        api.post(`/invites/${inviteId}/accept`),
+    
+    declineInvite: (inviteId: number) =>
+        api.post(`/invites/${inviteId}/decline`),
+    
+    markAsRead: (inviteId: number) =>
+        api.post(`/invites/${inviteId}/read`),
+};
+
+// Dev-only Multiplayer utilities (only use in development)
+export const devMultiplayerAPI = {
+    createFakePlayer: (username: string) => api.post('/dev/fake-players/create', { username }),
+    disconnectFakePlayer: (userId: number) => api.post('/dev/fake-players/disconnect', { user_id: userId }),
+    joinGameAsFakePlayer: (params: { gameId: string; username?: string; userId?: number }) =>
+        api.post('/dev/fake-players/join-game', {
+            game_id: params.gameId,
+            username: params.username,
+            user_id: params.userId,
+        }),
+};

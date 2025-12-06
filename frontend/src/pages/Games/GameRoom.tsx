@@ -24,7 +24,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AudioSettings } from '../../components/AudioSettings';
 import { TENSE_MAP } from '../../constants';
 import {
@@ -38,6 +38,7 @@ import {
     PRESET_VERB_GROUPS,
     SPECIAL_TENSES
 } from '../../constants/gameConstants';
+import { multiplayerAPI } from '../../services/multiplayerApi';
 import {
     addCustomTenseGroup,
     addCustomVerbGroup,
@@ -55,8 +56,12 @@ import { AppDispatch, RootState } from '../../store/store';
 const GameRoom = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const { gameId } = useParams<{ gameId: string }>();
+    const [searchParams] = useSearchParams();
+    const isMultiplayer = searchParams.get('mode') === 'multiplayer';
 
+    const { user, isAuthenticated, token } = useSelector((state: RootState) => state.auth);
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
     const currentParticipeTypes = useSelector((state: RootState) => state.game.currentParticipeTypes);
@@ -225,10 +230,92 @@ const GameRoom = () => {
         
         // For games that don't require verbs (minVerbs === 0), only check tenses
         if (prerequisiteStatus.minVerbs === 0) {
-            return !prerequisiteStatus.tensesMet;
+            return currentTenses.length === 0 || !prerequisiteStatus.tensesMet;
         }
-        // For other games, check both verbs and tenses
+        
         return currentVerbs.length === 0 || currentTenses.length === 0 || !prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet;
+    };
+
+    const handleStartGame = async () => {
+        if (canAdvance()) return;
+
+        if (isMultiplayer) {
+            // Check if this game type supports multiplayer
+            if (gameType !== 'find-error') {
+                alert('Multiplayer mode is only available for "Find Error" game type at the moment. Other game types are coming soon!');
+                navigate('/games/multiplayer');
+                return;
+            }
+
+            // Check authentication
+            if (!isAuthenticated || !token) {
+                console.error('User not authenticated. Redirecting to login...');
+                alert('Please log in to create a multiplayer game');
+                navigate('/auth/login');
+                return;
+            }
+
+            // Debug: Check token in localStorage
+            const storedToken = localStorage.getItem('token');
+            console.log('Auth check:', {
+                isAuthenticated,
+                hasToken: !!token,
+                storedToken: storedToken?.substring(0, 20) + '...',
+                user: user?.username
+            });
+
+            // Get multiplayer game data from session storage
+            const multiplayerData = sessionStorage.getItem('multiplayerGameData');
+            if (!multiplayerData) {
+                console.error('No multiplayer game data found');
+                return;
+            }
+
+            const gameData = JSON.parse(multiplayerData);
+            
+            try {
+                console.log('Creating multiplayer game with data:', {
+                    title: gameData.title,
+                    game_type: gameData.game_type,
+                    max_players: gameData.max_players,
+                    verbs: currentVerbs,
+                    tenses: currentTenses
+                });
+
+                // Create multiplayer game with configured verbs and tenses
+                const game = await multiplayerAPI.createGame({
+                    title: gameData.title,
+                    game_type: gameData.game_type,
+                    max_players: gameData.max_players,
+                    difficulty: gameData.difficulty,
+                    duration: gameData.duration,
+                    config: {
+                        verbs: currentVerbs,
+                        tenses: currentTenses,
+                        max_time: ongoingGameInfo.maxTime,
+                    },
+                });
+
+                console.log('Multiplayer game created successfully:', game);
+
+                // Clear session storage
+                sessionStorage.removeItem('multiplayerGameData');
+
+                // Navigate to multiplayer game
+                navigate(`/games/multiplayer/${gameData.game_type}/${game.id}`);
+            } catch (error: any) {
+                console.error('Failed to create multiplayer game:', error);
+                if (error.response?.status === 401) {
+                    alert('Session expired. Please log in again.');
+                    navigate('/auth/login');
+                } else {
+                    alert('Failed to create game: ' + (error.response?.data?.error || error.message));
+                }
+            }
+        } else {
+            // Single player - navigate to game
+            navigate('/games/' + currentGame.url);
+        }
     };
 
     const handleStepsChange = (event: SelectChangeEvent) => {
@@ -722,12 +809,11 @@ const GameRoom = () => {
                     disabled={canAdvance()}
                     sx={{ minWidth: 150 }}
                     size="large"
-                    component={Link}
-                    to={'/games/' + currentGame.url}
+                    onClick={handleStartGame}
                     variant="contained"
                     color="warning"
                 >
-                    {t('gameRoom.start')}
+                    {isMultiplayer ? t('gameRoom.createGame') : t('gameRoom.start')}
                 </Button>
             </Box>
         </Container>

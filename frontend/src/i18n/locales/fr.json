@@ -124,7 +124,67 @@
   "games": {
     "title": "Jeux",
     "subtitle": "Choisissez un jeu pour tester vos compétences",
+    "playNow": "Jouer Maintenant",
     "startGame": "Commencer le Jeu",
+    "round": "Tour",
+    "singlePlayer": {
+      "title": "Solo",
+      "subtitle": "Pratiquez à votre rythme",
+      "description": "Jouez seul et améliorez vos compétences de conjugaison avec tous les jeux disponibles",
+      "switchTo": "Passer au mode Solo"
+    },
+    "multiplayer": {
+      "title": "Multijoueur",
+      "subtitle": "Défiez d'autres joueurs",
+      "description": "Créez ou rejoignez des parties pour affronter d'autres joueurs en temps réel",
+      "switchTo": "Passer au mode Multijoueur",
+      "createNew": "Créer une Nouvelle Partie",
+      "createDescription": "Démarrez une nouvelle partie multijoueur et invitez d'autres à rejoindre",
+      "createButton": "Créer une Partie",
+      "waitingRooms": "Salles d'Attente",
+      "noWaitingRooms": "Aucune partie n'attend des joueurs",
+      "hostedBy": "Hébergé par {{name}}",
+      "joinRoom": "Rejoindre",
+      "roomFull": "Salle Pleine",
+      "gameTitle": "Titre de la Partie",
+      "gameTitlePlaceholder": "ex: Bataille de Conjugaison du Vendredi Soir",
+      "selectGame": "Sélectionner le Type de Jeu",
+      "maxPlayers": "Nombre Maximum de Joueurs",
+      "players": "Joueurs",
+      "duration": "Durée",
+      "create": "Créer",
+      "waitingForPlayers": "En attente de joueurs...",
+      "host": "Hôte",
+      "ready": "Prêt",
+      "waitingForOthers": "En attente des autres joueurs...",
+      "connecting": "Connexion à la partie...",
+      "onlinePlayers": "joueurs en ligne",
+      "offlinePlayers": "joueurs hors ligne",
+      "noOnlinePlayers": "Aucun joueur en ligne",
+      "noOfflinePlayers": "Tous les joueurs sont en ligne !",
+      "searchPlaceholder": "Rechercher des parties par nom...",
+      "gamesCount": "{{count}} parties",
+      "allTypes": "Tous les types",
+      "level": "Niveau {{level}}",
+      "allGames": "Tous les jeux",
+      "allLevels": "Toutes les difficultés",
+      "you": "Vous",
+      "slot": "Place {{number}}",
+      "waitingForPlayer": "En attente d'un joueur...",
+      "connectionError": "Échec de connexion. Veuillez réessayer.",
+      "gameNotFound": "Jeu introuvable",
+      "failedToLoadGame": "Échec du chargement du jeu",
+      "failedToSetReady": "Échec de la mise à jour du statut prêt",
+      "failedToSubmitAnswer": "Échec de l'envoi de la réponse",
+      "roundResults": "Résultats du tour",
+      "nextRoundIn": "Prochain tour dans {{seconds}} secondes...",
+      "gameFinished": "Jeu terminé !",
+      "playAgain": "Rejouer",
+      "allReady": "Tous Prêts - Début Imminent !",
+      "gameConfiguration": "Configuration du Jeu",
+      "startGame": "Commencer le Jeu",
+      "needMorePlayers": "Besoin de 2+ Joueurs Prêts"
+    },
     "find-error": {
       "title": "🎯 Trouver l'erreur",
       "description": "Identifiez et corrigez les erreurs dans les phrases. Parfait pour perfectionner vos compétences grammaticales."
@@ -178,6 +238,7 @@
       "description": "Mode d'entraînement complet avec toutes les fonctionnalités."
     },
     "difficulty": {
+      "label": "Difficulté",
       "easy": "Facile",
       "medium": "Moyen",
       "hard": "Difficile"
@@ -237,7 +298,10 @@
       "resume": "Reprendre le jeu"
     },
     "findError": {
-      "instruction": "🔍 Trouvez l'erreur !"
+      "instruction": "🔍 Trouvez l'erreur !",
+      "findTheError": "Trouvez l'erreur dans cette phrase",
+      "correct": "Correct ! Bien joué !",
+      "incorrect": "Incorrect. Réessayez la prochaine fois !"
     }
   },
   "gameRoom": {
@@ -266,6 +330,7 @@
     "numberOfQuestions": "Nombre de questions",
     "timePerQuestion": "Temps par question",
     "start": "Commencer",
+    "createGame": "Créer Partie Multijoueur",
     "prerequisitesFor": "Prérequis pour {{game}}",
     "prerequisiteDescription": "Ce jeu nécessite un niveau minimum pour une expérience optimale :",
     "verbsSelected": "verbes sélectionnés",
@@ -352,6 +417,13 @@
     "playAgain": "Rejouer",
     "start": "Commencer",
     "tenses": "Temps",
-    "verbs": "Verbes"
+    "verbs": "Verbes",
+    "refresh": "Actualiser",
+    "minutes": "minutes",
+    "submit": "Soumettre",
+    "correct": "Correct !",
+    "incorrect": "Incorrect",
+    "leave": "Quitter",
+    "backToGames": "Retour aux Jeux"
   }
 }

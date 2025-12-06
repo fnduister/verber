@@ -8,20 +8,23 @@ import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Exercises from './pages/Exercises/Exercises';
 import FindError from './pages/Games/FindError/FindError';
+import FindErrorMultiplayer from './pages/Games/FindError/FindErrorMultiplayer';
 import GameRoom from './pages/Games/GameRoom';
 import Games from './pages/Games/Games';
 import MatchMe from './pages/Games/MatchMe/MatchMe';
+import Multiplayer from './pages/Games/Multiplayer';
 import Participe from './pages/Games/Participe/Participe';
 import Race from './pages/Games/Race/Race';
 import RandomVerb from './pages/Games/RandomVerb/RandomVerb';
 import Sentence from './pages/Games/Sentence/Sentence';
+import SinglePlayer from './pages/Games/SinglePlayer';
 import WriteMe from './pages/Games/WriteMe/WriteMe';
 import Home from './pages/Home/Home';
 import Leaderboard from './pages/Leaderboard/Leaderboard';
 import Profile from './pages/Profile/Profile';
 import ConjugationTables from './pages/Study/ConjugationTables';
-import Study from './pages/Study/Study';
 import VerbPractice from './pages/Study/Practice';
+import Study from './pages/Study/Study';
 import { fetchUserProfile } from './store/slices/authSlice';
 import { AppDispatch, RootState } from './store/store';
 
@@ -74,6 +77,18 @@ const App: React.FC = () => {
                     <Route
                         path="/games"
                         element={isAuthenticated ? <Games /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games/singleplayer"
+                        element={isAuthenticated ? <SinglePlayer /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games/multiplayer"
+                        element={isAuthenticated ? <Multiplayer /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/games/multiplayer/find-error/:gameId"
+                        element={isAuthenticated ? <FindErrorMultiplayer /> : <Navigate to="/login" />}
                     />
                     <Route
                         path="/game-room/:gameId"

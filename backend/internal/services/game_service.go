@@ -7,20 +7,17 @@ import (
 	"time"
 
 	"verber-backend/internal/models"
-	"verber-backend/internal/websocket"
 
 	"gorm.io/gorm"
 )
 
 type GameService struct {
-	db  *gorm.DB
-	hub *websocket.Hub
+	db *gorm.DB
 }
 
-func NewGameService(db *gorm.DB, hub *websocket.Hub) *GameService {
+func NewGameService(db *gorm.DB) *GameService {
 	return &GameService{
-		db:  db,
-		hub: hub,
+		db: db,
 	}
 }
 
@@ -109,11 +106,8 @@ func (gs *GameService) JoinGame(userID uint, code string) (*models.Game, error) 
 	// Reload game with participants
 	gs.db.Preload("CreatedBy").Preload("Participants.User").First(&game, game.ID)
 
-	// Notify other players via WebSocket
-	gs.hub.NotifyGameRoom(code, "player-joined", map[string]interface{}{
-		"user_id": userID,
-		"game":    game,
-	})
+	// Note: Notifications now handled by multiplayer WebSocket hub directly
+	// Old single-player game room notifications removed
 
 	return &game, nil
 }

@@ -124,7 +124,77 @@
   "games": {
     "title": "Games",
     "subtitle": "Choose a game to test your skills",
+    "playNow": "Play Now",
     "startGame": "Start Game",
+    "round": "Round",
+    "singlePlayer": {
+      "title": "Single Player",
+      "subtitle": "Practice at your own pace",
+      "description": "Play solo and improve your conjugation skills with all available games",
+      "switchTo": "Switch to Single Player"
+    },
+    "multiplayer": {
+      "title": "Multiplayer",
+      "subtitle": "Challenge other players",
+      "description": "Create or join games to compete with other players in real-time",
+      "switchTo": "Switch to Multiplayer",
+      "createNew": "Create New Game",
+      "createDescription": "Start a new multiplayer game and invite others to join",
+      "createButton": "Create Game",
+      "waitingRooms": "Waiting Rooms",
+      "noWaitingRooms": "No games waiting for players",
+      "hostedBy": "Hosted by {{name}}",
+      "joinRoom": "Join Game",
+      "roomFull": "Room Full",
+      "gameTitle": "Game Title",
+      "gameTitlePlaceholder": "e.g., Friday Night Conjugation Battle",
+      "selectGame": "Select Game Type",
+      "maxPlayers": "Max Players",
+      "players": "Players",
+      "duration": "Duration",
+      "create": "Create",
+      "waitingForPlayers": "Waiting for players to join...",
+      "host": "Host",
+      "ready": "Ready",
+      "waitingForOthers": "Waiting for other players...",
+      "connecting": "Connecting to game...",
+      "recentPlayers": "Recent Players",
+      "noRecentPlayers": "No recent players",
+      "searchPlaceholder": "Search games...",
+      "noMatchingGames": "No games match your filters",
+      "beFirstToCreate": "Be the first to create a game!",
+      "clearFilters": "Clear Filters",
+      "allTypes": "All Types",
+      "allGames": "All Games",
+      "hasSpace": "Has Space",
+      "full": "Full",
+      "allLevels": "All Levels",
+      "gamesCount": "{{count}} games",
+      "level": "Level {{level}}",
+      "onlinePlayers": "Online Players",
+      "offlinePlayers": "Offline Players",
+      "noOnlinePlayers": "No players online",
+      "noOfflinePlayers": "All players are online!",
+      "you": "You",
+      "slot": "Slot {{number}}",
+      "waitingForPlayer": "Waiting for player...",
+      "connectionError": "Failed to connect. Please try again.",
+      "gameNotFound": "Game not found",
+      "failedToLoadGame": "Failed to load game",
+      "failedToSetReady": "Failed to set ready status",
+      "failedToSubmitAnswer": "Failed to submit answer",
+      "roundResults": "Round Results",
+      "nextRoundIn": "Next round starts in {{seconds}} seconds...",
+      "gameFinished": "Game Finished!",
+      "playAgain": "Play Again",
+      "allReady": "All Ready - Starting Soon!",
+      "gameConfiguration": "Game Configuration",
+      "startGame": "Start Game",
+      "needMorePlayers": "Need 2+ Ready Players",
+      "allPlayersAnswered": "All players have answered!",
+      "joinGame": "Join Game",
+      "backToLobby": "Back to Lobby"
+    },
     "find-error": {
       "title": "🎯 Find Error",
       "description": "Identify and correct errors in sentences. Perfect for honing your grammar skills."
@@ -178,6 +248,7 @@
       "description": "Complete training mode with all features enabled."
     },
     "difficulty": {
+      "label": "Difficulty",
       "easy": "Easy",
       "medium": "Medium",
       "hard": "Hard"
@@ -237,7 +308,10 @@
       "resume": "Resume Game"
     },
     "findError": {
-      "instruction": "🔍 Find the error!"
+      "instruction": "🔍 Find the error!",
+      "findTheError": "Find the error in this sentence",
+      "correct": "Correct! Well done!",
+      "incorrect": "Incorrect. Try again next time!"
     }
   },
   "gameRoom": {
@@ -266,6 +340,7 @@
     "numberOfQuestions": "Number of questions",
     "timePerQuestion": "Time per question",
     "start": "Start",
+    "createGame": "Create Multiplayer Game",
     "prerequisitesFor": "Prerequisites for {{game}}",
     "prerequisiteDescription": "This game requires a minimum level for an optimal experience:",
     "verbsSelected": "verbs selected",
@@ -352,6 +427,13 @@
     "playAgain": "Play Again",
     "start": "Start",
     "tenses": "Tenses",
-    "verbs": "Verbs"
+    "verbs": "Verbs",
+    "refresh": "Refresh",
+    "minutes": "minutes",
+    "submit": "Submit",
+    "correct": "Correct!",
+    "incorrect": "Incorrect",
+    "leave": "Leave",
+    "backToGames": "Back to Games"
   }
 }

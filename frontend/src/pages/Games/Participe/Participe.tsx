@@ -431,6 +431,13 @@ const Participe: React.FC = () => {
                                 onKeyPress={handleKeyPress}
                                 disabled={showAnswer}
                                 autoComplete='off'
+                                autoCorrect='off'
+                                autoCapitalize='off'
+                                spellCheck={false}
+                                inputProps={{
+                                    'data-form-type': 'other',
+                                    'data-lpignore': 'true'
+                                }}
                                 sx={{
                                     mb: 3,
                                     '& .MuiOutlinedInput-root': {

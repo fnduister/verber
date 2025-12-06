@@ -627,6 +627,14 @@ const Sentence: React.FC = () => {
                                         disabled={showAnswer || isProcessingAnswer}
                                         fullWidth
                                         autoFocus
+                                        autoComplete="off"
+                                        autoCorrect="off"
+                                        autoCapitalize="off"
+                                        spellCheck={false}
+                                        inputProps={{
+                                            'data-form-type': 'other',
+                                            'data-lpignore': 'true'
+                                        }}
                                         sx={{
                                             maxWidth: 400,
                                             '& .MuiOutlinedInput-root': {

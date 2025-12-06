@@ -1,8 +1,12 @@
 package services
 
 import (
+	"fmt"
+	"time"
 	"verber-backend/internal/models"
 
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -173,4 +177,75 @@ func (us *UserService) getFavoriteCategory(userID uint) string {
 	}
 
 	return category
+}
+
+// GetRecentPlayers returns recently active users for the multiplayer lobby
+func (s *UserService) GetUsersByIDs(userIDs []uint) ([]models.User, error) {
+	var users []models.User
+	if len(userIDs) == 0 {
+		return users, nil
+	}
+	err := s.db.Where("id IN ?", userIDs).Find(&users).Error
+	return users, err
+}
+
+func (s *UserService) GetRecentPlayers(limit int) ([]models.User, error) {
+	var users []models.User
+
+	// Simply get all users ordered by level and XP (most engaged players first)
+	err := s.db.
+		Order("level DESC, xp DESC, created_at DESC").
+		Limit(limit).
+		Find(&users).Error
+
+	// Clear passwords for security
+	for i := range users {
+		users[i].Password = ""
+	}
+
+	return users, err
+}
+
+// CreateFakeUser creates a development fake user (only use in development)
+func (us *UserService) CreateFakeUser(username string) (*models.User, error) {
+	if username == "" {
+		return nil, fmt.Errorf("username required")
+	}
+
+	// Ensure uniqueness: append short suffix if exists
+	finalUsername := username
+	var count int64
+	us.db.Model(&models.User{}).Where("username = ?", finalUsername).Count(&count)
+	if count > 0 {
+		finalUsername = fmt.Sprintf("%s_%s", username, uuid.New().String()[:8])
+	}
+
+	email := fmt.Sprintf("%s@dev.local", finalUsername)
+	// Basic hashed password: 'password'
+	pwdHash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &models.User{
+		Username:  finalUsername,
+		Email:     email,
+		Password:  string(pwdHash),
+		FirstName: "Fake",
+		LastName:  "Player",
+		Avatar:    "",
+		Age:       18,
+		Grade:     "dev",
+		Level:     1,
+		XP:        0,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := us.db.Create(user).Error; err != nil {
+		return nil, err
+	}
+
+	user.Password = "" // sanitize
+	return user, nil
 }
