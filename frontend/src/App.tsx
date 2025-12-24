@@ -1,32 +1,65 @@
-import React, { useEffect } from 'react';
+import { Box, CircularProgress } from '@mui/material';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import ConjugationTestComponent from './components/ConjugationTestComponent';
+import { GlobalMultiplayerListener } from './components/GlobalEvents/GlobalMultiplayerListener';
+import { GlobalToast } from './components/GlobalToast/GlobalToast';
 import AppLayout from './components/Layout/AppLayout';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Exercises from './pages/Exercises/Exercises';
-import FindError from './pages/Games/FindError/FindError';
-import FindErrorMultiplayer from './pages/Games/FindError/FindErrorMultiplayer';
-import GameRoom from './pages/Games/GameRoom';
-import Games from './pages/Games/Games';
-import MatchMe from './pages/Games/MatchMe/MatchMe';
-import Multiplayer from './pages/Games/Multiplayer';
-import Participe from './pages/Games/Participe/Participe';
-import Race from './pages/Games/Race/Race';
-import RandomVerb from './pages/Games/RandomVerb/RandomVerb';
-import Sentence from './pages/Games/Sentence/Sentence';
-import SinglePlayer from './pages/Games/SinglePlayer';
-import WriteMe from './pages/Games/WriteMe/WriteMe';
-import Home from './pages/Home/Home';
-import Leaderboard from './pages/Leaderboard/Leaderboard';
-import Profile from './pages/Profile/Profile';
-import ConjugationTables from './pages/Study/ConjugationTables';
-import VerbPractice from './pages/Study/Practice';
-import Study from './pages/Study/Study';
 import { fetchUserProfile } from './store/slices/authSlice';
 import { AppDispatch, RootState } from './store/store';
+
+// Lazy load components
+const Home = lazy(() => import('./pages/Home/Home'));
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Register = lazy(() => import('./pages/Auth/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
+const Study = lazy(() => import('./pages/Study/Study'));
+const ConjugationTables = lazy(() => import('./pages/Study/ConjugationTables'));
+const VerbPractice = lazy(() => import('./pages/Study/Practice'));
+const Games = lazy(() => import('./pages/Games/Games'));
+const SinglePlayer = lazy(() => import('./pages/Games/SinglePlayer'));
+const Multiplayer = lazy(() => import('./pages/Games/Multiplayer'));
+const GameRoom = lazy(() => import('./pages/Games/GameRoom'));
+const Exercises = lazy(() => import('./pages/Exercises/Exercises'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard/Leaderboard'));
+const Profile = lazy(() => import('./pages/Profile/Profile'));
+
+// Single player games
+const FindError = lazy(() => import('./pages/Games/FindError/FindError'));
+const Race = lazy(() => import('./pages/Games/Race/Race'));
+const WriteMe = lazy(() => import('./pages/Games/WriteMe/WriteMe'));
+const MatchMe = lazy(() => import('./pages/Games/MatchMe/MatchMe'));
+const RandomVerb = lazy(() => import('./pages/Games/RandomVerb/RandomVerb'));
+const Sentence = lazy(() => import('./pages/Games/Sentence/Sentence'));
+const Participe = lazy(() => import('./pages/Games/Participe/Participe'));
+
+// Multiplayer games
+const FindErrorMultiplayer = lazy(() => import('./pages/Games/FindError/FindErrorMultiplayer'));
+
+// Dev test component
+const ConjugationTestComponent = lazy(() => import('./components/ConjugationTestComponent'));
+
+// Loading fallback component
+const LoadingFallback = () => (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+    </Box>
+);
+
+// Protected Route wrapper component
+interface ProtectedRouteProps {
+    children: React.ReactElement;
+    isAuthenticated: boolean;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, isAuthenticated }) => {
+    return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// Public Route wrapper (redirects to dashboard if already authenticated)
+const PublicRoute: React.FC<ProtectedRouteProps> = ({ children, isAuthenticated }) => {
+    return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+};
 
 const App: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -41,113 +74,57 @@ const App: React.FC = () => {
 
     return (
         <div className="App">
+            <GlobalToast />
+            <GlobalMultiplayerListener />
             <AppLayout>
-                <Routes>
-                    {/* Public routes */}
-                    <Route 
-                        path="/" 
-                        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Home />} 
-                    />
-                    <Route
-                        path="/login"
-                        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />}
-                    />
-                    <Route
-                        path="/register"
-                        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />}
-                    />
+                <Suspense fallback={<LoadingFallback />}>
+                    <Routes>
+                        {/* Public routes - redirect to dashboard if authenticated */}
+                        <Route path="/" element={<PublicRoute isAuthenticated={isAuthenticated}><Home /></PublicRoute>} />
+                        <Route path="/login" element={<PublicRoute isAuthenticated={isAuthenticated}><Login /></PublicRoute>} />
+                        <Route path="/register" element={<PublicRoute isAuthenticated={isAuthenticated}><Register /></PublicRoute>} />
 
-                    {/* Protected routes */}
-                    <Route
-                        path="/dashboard"
-                        element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/study"
-                        element={isAuthenticated ? <Study /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/study/conjugation"
-                        element={isAuthenticated ? <ConjugationTables /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/study/practice"
-                        element={isAuthenticated ? <VerbPractice /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games"
-                        element={isAuthenticated ? <Games /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/singleplayer"
-                        element={isAuthenticated ? <SinglePlayer /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/multiplayer"
-                        element={isAuthenticated ? <Multiplayer /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/multiplayer/find-error/:gameId"
-                        element={isAuthenticated ? <FindErrorMultiplayer /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/game-room/:gameId"
-                        element={isAuthenticated ? <GameRoom /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/:gameId"
-                        element={isAuthenticated ? <GameRoom /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/find-error"
-                        element={isAuthenticated ? <FindError /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/race"
-                        element={isAuthenticated ? <Race /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/write-me"
-                        element={isAuthenticated ? <WriteMe /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/matching"
-                        element={isAuthenticated ? <MatchMe /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/random-verb"
-                        element={isAuthenticated ? <RandomVerb /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/sentence"
-                        element={isAuthenticated ? <Sentence /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/games/participe"
-                        element={isAuthenticated ? <Participe /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/exercises"
-                        element={isAuthenticated ? <Exercises /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/leaderboard"
-                        element={isAuthenticated ? <Leaderboard /> : <Navigate to="/login" />}
-                    />
-                    <Route
-                        path="/profile"
-                        element={isAuthenticated ? <Profile /> : <Navigate to="/login" />}
-                    />
+                        {/* Protected routes - Main sections */}
+                        <Route path="/dashboard" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Dashboard /></ProtectedRoute>} />
+                        <Route path="/exercises" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Exercises /></ProtectedRoute>} />
+                        <Route path="/leaderboard" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Leaderboard /></ProtectedRoute>} />
+                        <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Profile /></ProtectedRoute>} />
 
-                    {/* Development test route */}
-                    <Route
-                        path="/test"
-                        element={<ConjugationTestComponent />}
-                    />
+                        {/* Study routes */}
+                        <Route path="/study" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Study /></ProtectedRoute>} />
+                        <Route path="/study/conjugation" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ConjugationTables /></ProtectedRoute>} />
+                        <Route path="/study/practice" element={<ProtectedRoute isAuthenticated={isAuthenticated}><VerbPractice /></ProtectedRoute>} />
 
-                    {/* Catch all route */}
-                    <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
+                        {/* Games routes */}
+                        <Route path="/games" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Games /></ProtectedRoute>} />
+                        <Route path="/games/singleplayer" element={<ProtectedRoute isAuthenticated={isAuthenticated}><SinglePlayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Multiplayer /></ProtectedRoute>} />
+
+                        {/* Single player game routes */}
+                        <Route path="/games/find-error" element={<ProtectedRoute isAuthenticated={isAuthenticated}><FindError /></ProtectedRoute>} />
+                        <Route path="/games/race" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Race /></ProtectedRoute>} />
+                        <Route path="/games/write-me" element={<ProtectedRoute isAuthenticated={isAuthenticated}><WriteMe /></ProtectedRoute>} />
+                        <Route path="/games/matching" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MatchMe /></ProtectedRoute>} />
+                        <Route path="/games/random-verb" element={<ProtectedRoute isAuthenticated={isAuthenticated}><RandomVerb /></ProtectedRoute>} />
+                        <Route path="/games/sentence" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Sentence /></ProtectedRoute>} />
+                        <Route path="/games/participe" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Participe /></ProtectedRoute>} />
+
+                        {/* Multiplayer game routes */}
+                        <Route path="/games/multiplayer/find-error/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><FindErrorMultiplayer /></ProtectedRoute>} />
+
+                        {/* Legacy game room routes (kept for backward compatibility) */}
+                        <Route path="/game-room/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><GameRoom /></ProtectedRoute>} />
+                        <Route path="/games/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><GameRoom /></ProtectedRoute>} />
+
+                        {/* Development test route */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <Route path="/test" element={<ConjugationTestComponent />} />
+                        )}
+
+                        {/* Catch all route - redirect to home */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Suspense>
             </AppLayout>
         </div>
     );

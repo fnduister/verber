@@ -1,20 +1,22 @@
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import {
-    Alert, Avatar, Box, Button, Chip, CircularProgress, Container, Divider, Grid, LinearProgress, Paper, Snackbar, Stack, Typography
+    Alert, Avatar, Box, Button, Chip, CircularProgress, Container, Divider, Grid, LinearProgress, Paper, Stack, Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import InvitePopup from '../../../components/Invites/InvitePopup';
+import WaitingRoom from '../../../components/Multiplayer/WaitingRoom';
 import { useMultiplayerWebSocket } from '../../../hooks/useMultiplayerWebSocket';
+import { Invite, inviteAPI, userAPI } from '../../../services/api';
 import {
     GameRound, multiplayerAPI,
     MultiplayerGame
 } from '../../../services/multiplayerApi';
+import { toastService } from '../../../services/toastService';
 import { RootState } from '../../../store/store';
 
 export interface FindErrorGameData {
@@ -26,6 +28,16 @@ export interface FindErrorGameData {
     verb?: string;
     tense?: string;
 }
+
+type FinalResultsPlayer = {
+    user_id: number;
+    score: number;
+    user: {
+        username: string;
+        avatar?: string;
+        level: number;
+    };
+};
 
 const FindErrorMultiplayer: React.FC = () => {
     const { gameId } = useParams<{ gameId: string }>();
@@ -42,9 +54,7 @@ const FindErrorMultiplayer: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showFinalResults, setShowFinalResults] = useState(false);
-    const [finalResults, setFinalResults] = useState<any>(null);
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
-    const [showToast, setShowToast] = useState(false);
+    const [finalResults, setFinalResults] = useState<unknown>(null);
     const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
     const [answerResult, setAnswerResult] = useState<{word: string, correct: boolean} | null>(null);
     const [allPlayersAnswered, setAllPlayersAnswered] = useState(false);
@@ -52,6 +62,14 @@ const FindErrorMultiplayer: React.FC = () => {
     const [roundScoreGains, setRoundScoreGains] = useState<{[userId: number]: number}>({});
     const [playersAnswered, setPlayersAnswered] = useState<Set<number>>(new Set());
     const [previousScores, setPreviousScores] = useState<{[userId: number]: number}>({});
+    
+    // Invite functionality state
+    const [onlinePlayers, setOnlinePlayers] = useState<Array<{ id: number; username: string; avatar: string; level: number; is_online: boolean }>>([]);
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [pendingInvites, setPendingInvites] = useState<Array<{ id: number; inviteId?: number; receiver: NonNullable<Invite['receiver']> }>>([]);
+    const [currentInvite, setCurrentInvite] = useState<Invite | null>(null);
+    const [invitePopupOpen, setInvitePopupOpen] = useState(false);
+    
     const isSubmittingRef = useRef(false);
     const timerStartedRef = useRef(false);
     const autoSubmittedRef = useRef(false);
@@ -64,7 +82,6 @@ const FindErrorMultiplayer: React.FC = () => {
         gameId: gameId!,
         enabled: !loading && !!game, // Only connect after game data is loaded
         onGameStarting: (data) => {
-            console.log('Game starting countdown:', data);
             if (data.countdown !== undefined) {
                 setGameStartCountdown(data.countdown);
                 // Clear countdown when it reaches 0
@@ -74,23 +91,20 @@ const FindErrorMultiplayer: React.FC = () => {
             }
         },
         onTimerSync: (data) => {
-            console.log('Timer sync:', data);
             // Optionally update timeLeft from server for synchronization
             if (data.time_left !== undefined) {
                 setTimeLeft(data.time_left);
             }
         },
         onAnswerSubmitted: (data) => {
-            console.log('Player answered:', data);
             // Mark this player as answered for all clients
             if (data.user_id) {
                 setPlayersAnswered(prev => new Set(prev).add(data.user_id));
             }
         },
         onPlayerJoined: (data) => {
-            console.log('Player joined:', data);
             // Support both payload shapes: {player: {...}} or raw player
-            const joinedPlayer = (data as any).player ? (data as any).player : data;
+            const joinedPlayer = (data as unknown as { player?: MultiplayerGame['players'][number] }).player ?? (data as unknown as MultiplayerGame['players'][number]);
             if (game && joinedPlayer && !game.players.find(p => p.user_id === joinedPlayer.user_id)) {
                 setGame({
                     ...game,
@@ -99,16 +113,13 @@ const FindErrorMultiplayer: React.FC = () => {
             }
         },
         onPlayerLeft: (data) => {
-            console.log('🔴 Player left:', data);
-            
             // Find player name before removing
             const leftPlayer = game?.players.find(p => p.user_id === data.user_id);
             const playerName = data.username || leftPlayer?.user?.username || 'A player';
             
             // Show toast notification to remaining players
             if (leftPlayer && leftPlayer.user_id !== currentUser?.id) {
-                setToastMessage(`${playerName} left the game`);
-                setShowToast(true);
+                toastService.info(`${playerName} left the game`);
             }
             
             // Update game state to remove player
@@ -122,7 +133,6 @@ const FindErrorMultiplayer: React.FC = () => {
             
             // If game ended due to insufficient players, show final results
             if (data.game_ended) {
-                console.log('🏁 Game ended - only one player left, showing final results');
                 if (data.final_results) {
                     setFinalResults(data.final_results);
                 } else {
@@ -141,7 +151,6 @@ const FindErrorMultiplayer: React.FC = () => {
             }
         },
         onPlayerReady: (data) => {
-            console.log('Player ready:', data);
             if (game) {
                 setGame({
                     ...game,
@@ -152,16 +161,13 @@ const FindErrorMultiplayer: React.FC = () => {
             }
         },
         onRoundStart: (data) => {
-            console.log('🔵 Round start - Full data:', data);
             // Normalize payload: accept {round: {...}} or raw round object
-            const round = (data as any)?.round ?? (data as any);
+            const round = (data as unknown as { round?: GameRound }).round ?? (data as unknown as GameRound);
             if (!round || !round.round_data) {
-                console.error('Invalid or missing round_data in payload:', data);
                 setError(t('games.multiplayer.failedToLoadGame'));
                 return;
             }
 
-            console.log('🔵 Resetting all round state...');
             // Update game status to 'in_progress' when first round starts
             if (game && game.status === 'waiting') {
                 setGame({
@@ -196,8 +202,6 @@ const FindErrorMultiplayer: React.FC = () => {
             
             // Transform round data to game data format
             const roundData = round.round_data;
-            console.log('🔵 Setting game data from round:', roundData);
-            console.log('🔵 State after reset - hasAnswered: false, selectedWord: null, timeLeft:', game?.config.max_time || 30);
             setGameData({
                 error: roundData.error_word,
                 visibleWords: roundData.options || [],
@@ -210,14 +214,13 @@ const FindErrorMultiplayer: React.FC = () => {
             // 2. Show the game board LAST (after data is ready)
         },
         onRoundEnd: (data) => {
-            console.log('Round end:', data);
-            
             // Update player scores if players data is available
-            if (game && (data as any).players && Array.isArray((data as any).players)) {
+            const roundEnd = data as unknown as { players?: Array<{ user_id: number; score: number }>; round_winners?: number[] };
+            if (game && roundEnd.players && Array.isArray(roundEnd.players)) {
                 // Calculate score gains for this round
                 const scoreGains: {[userId: number]: number} = {};
                 const updatedPlayers = game.players.map((p) => {
-                    const updatedPlayer = (data as any).players.find((player: any) => player.user_id === p.user_id);
+                    const updatedPlayer = roundEnd.players?.find((player) => player.user_id === p.user_id);
                     if (updatedPlayer) {
                         const previousScore = previousScores[p.user_id] || 0;
                         const gain = updatedPlayer.score - previousScore;
@@ -230,8 +233,8 @@ const FindErrorMultiplayer: React.FC = () => {
                 setRoundScoreGains(scoreGains);
                 
                 // Determine round winners (players with highest score gain in THIS round)
-                if ((data as any).round_winners && Array.isArray((data as any).round_winners)) {
-                    setRoundWinners((data as any).round_winners);
+                if (roundEnd.round_winners && Array.isArray(roundEnd.round_winners)) {
+                    setRoundWinners(roundEnd.round_winners);
                 } else {
                     // Fallback: find player(s) with highest score gain this round
                     const gains = Object.values(scoreGains);
@@ -256,14 +259,55 @@ const FindErrorMultiplayer: React.FC = () => {
             setAllPlayersAnswered(true);
         },
         onGameFinished: (data) => {
-            console.log('Game finished:', data);
             setFinalResults(data);
             setShowFinalResults(true);
             // Stop the timer
             setCurrentRound(null);
         },
-        onError: (err) => {
-            console.error('WebSocket error:', err);
+        onInviteEvent: (type, data) => {
+            const invite = data as Invite;
+            const receiver = invite?.receiver;
+            const receiverName = receiver?.username || 'player';
+
+            if (type === 'invite_sent') {
+                // Keep everyone’s waiting room in sync
+                if (receiver) {
+                    setPendingInvites((prev) => {
+                        const exists = prev.some((p) => p?.inviteId === invite.id || p?.id === invite.id);
+                        if (exists) return prev;
+                        return [
+                            ...prev,
+                            {
+                                id: invite.id,
+                                inviteId: invite.id,
+                                receiver,
+                            },
+                        ];
+                    });
+                }
+                const senderName = invite?.sender?.username;
+                toastService.info(senderName ? `${senderName} invited ${receiverName}` : `Invite sent to ${receiverName}`);
+                return;
+            }
+
+            if (type === 'invite_accepted') {
+                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id));
+                toastService.success(`${receiverName} accepted the invite`);
+                return;
+            }
+
+            if (type === 'invite_declined') {
+                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id));
+                toastService.info(`${receiverName} declined the invite`);
+                return;
+            }
+
+            if (type === 'invite_expired') {
+                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id));
+                toastService.warning(`Invite to ${receiverName} expired`);
+            }
+        },
+        onError: () => {
             setError(t('games.multiplayer.connectionError'));
         },
     });
@@ -272,7 +316,6 @@ const FindErrorMultiplayer: React.FC = () => {
     useEffect(() => {
         const handleVisibilityChange = () => {
             isPageVisible.current = !document.hidden;
-            console.log('📍 Page visibility changed:', isPageVisible.current ? 'visible' : 'hidden');
         };
         
         document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -294,7 +337,6 @@ const FindErrorMultiplayer: React.FC = () => {
                 try {
                     await multiplayerAPI.sendHeartbeat(gameId);
                 } catch (err) {
-                    console.error('Failed to send heartbeat:', err);
                 }
             }
         };
@@ -320,11 +362,7 @@ const FindErrorMultiplayer: React.FC = () => {
                 return;
             }
             try {
-                console.log('Loading game data for gameId:', gameId);
                 const fetched = await multiplayerAPI.getGame(gameId);
-                console.log('Fetched game:', fetched);
-                console.log('Current user ID:', currentUser?.id);
-                console.log('Players in game:', fetched.players);
                 
                 // Ensure players array exists
                 if (!fetched.players) {
@@ -333,22 +371,17 @@ const FindErrorMultiplayer: React.FC = () => {
                 
                 // Determine if current user already a player
                 const alreadyPlayer = !!fetched.players.find(p => p.user_id === currentUser?.id);
-                console.log('Already player?', alreadyPlayer);
                 
                 // If game waiting and user not in players and capacity available => auto join
                 if (fetched.status === 'waiting' && !alreadyPlayer && fetched.players.length < fetched.max_players) {
-                    console.log('Auto-joining game...');
                     try {
                         const newPlayer = await multiplayerAPI.joinGame(gameId);
-                        console.log('Auto-join successful, new player:', newPlayer);
                         fetched.players.push(newPlayer);
                     } catch (joinErr) {
-                        console.warn('Auto-join failed (maybe already in game):', joinErr);
                     }
                 }
                 setGame(fetched);
             } catch (err) {
-                console.error('Error loading game:', err);
                 setError(t('games.multiplayer.failedToLoadGame'));
             } finally {
                 setLoading(false);
@@ -357,23 +390,9 @@ const FindErrorMultiplayer: React.FC = () => {
         initLobby();
     }, [gameId, currentUser?.id, t]);
 
-    const handleManualJoin = async () => {
-        if (!game || !gameId) return;
-        if (game.status !== 'waiting') return;
-        if (game.players.find(p => p.user_id === currentUser?.id)) return;
-        try {
-            const newPlayer = await multiplayerAPI.joinGame(gameId);
-            setGame({ ...game, players: [...game.players, newPlayer] });
-        } catch (err) {
-            console.error('Join failed:', err);
-            setError(t('games.multiplayer.failedToJoin'));
-        }
-    };
-
     // Timer countdown - calculate from server time to avoid tab sync issues
     useEffect(() => {
         if (!currentRound) {
-            console.log('⏱️ Timer: No current round');
             return;
         }
 
@@ -393,13 +412,11 @@ const FindErrorMultiplayer: React.FC = () => {
             setTimeLeft(remaining);
             
             if (remaining <= 0) {
-                console.log('⏱️ Timer: Time is up');
                 return;
             }
         };
 
         if (!timerStartedRef.current) {
-            console.log('⏱️ Timer: Starting for round', currentRound.round_number, 'started at', currentRound.started_at);
             timerStartedRef.current = true;
         }
 
@@ -409,55 +426,19 @@ const FindErrorMultiplayer: React.FC = () => {
         return () => clearInterval(timer);
     }, [currentRound, hasAnswered, game?.config.max_time]);
 
-    const handleReady = async () => {
-        if (!gameId || !game) return;
-
-        try {
-            const updatedPlayer = await multiplayerAPI.setReady(gameId, true);
-            setGame({
-                ...game,
-                players: game.players.map((p) =>
-                    p.user_id === currentUser?.id ? updatedPlayer : p
-                ),
-            });
-        } catch (err) {
-            console.error('Error setting ready:', err);
-            setError(t('games.multiplayer.failedToSetReady'));
-        }
-    };
-
-    const handleStartGame = async () => {
-        if (!gameId || !game) return;
-
-        try {
-            await multiplayerAPI.startGame(gameId);
-        } catch (err: any) {
-            console.error('Error starting game:', err);
-            setError(err.response?.data?.error || t('games.multiplayer.failedToStartGame'));
-        }
-    };
-
     const handleSelectWord = (word: string) => {
-        console.log('🟢 handleSelectWord called with:', word);
-        console.log('🟢 Current state - hasAnswered:', hasAnswered, 'selectedWord:', selectedWord, 'isSubmitting:', isSubmittingRef.current);
-        
         if (hasAnswered) {
-            console.log('🔴 Selection blocked - already answered');
             return;
         }
         if (isSubmittingRef.current) {
-            console.log('🔴 Selection blocked - currently submitting');
             return;
         }
         
         setSelectedWord(word);
-        console.log('🟢 selectedWord set to:', word);
     };
 
     const handleSubmitAnswer = async (answer: string, isCorrect: boolean) => {
-        console.log('handleSubmitAnswer called with answer:', answer, 'isCorrect:', isCorrect);
         if (!gameId || !currentRound || hasAnswered || isSubmittingRef.current) {
-            console.log('Submit blocked - gameId:', gameId, 'currentRound:', currentRound, 'hasAnswered:', hasAnswered, 'isSubmitting:', isSubmittingRef.current);
             return;
         }
 
@@ -494,14 +475,10 @@ const FindErrorMultiplayer: React.FC = () => {
                 points,
                 time_spent: timeSpent * 1000,
             };
-            console.log('Submitting answer payload:', payload);
-
             await multiplayerAPI.submitAnswer(gameId, currentRound.id, payload);
-            console.log('Answer submitted successfully');
-        } catch (err: any) {
-            console.error('Error submitting answer:', err);
-            console.error('Error response:', err?.response?.data);
-            setError(err?.response?.data?.error || t('games.multiplayer.failedToSubmitAnswer'));
+        } catch (err: unknown) {
+            const errMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            setError(errMsg || t('games.multiplayer.failedToSubmitAnswer'));
             // If this was an auto-submit, keep hasAnswered=true to avoid retry loops
             if (isAutoSubmittingRef.current) {
                 setHasAnswered(true);
@@ -528,7 +505,6 @@ const FindErrorMultiplayer: React.FC = () => {
             autoSubmittedRef.current = true;
             isAutoSubmittingRef.current = true;
             const answerToSend = selectedWord ?? 'NO_ANSWER';
-            console.log('Auto-submit triggered - selectedWord:', selectedWord, 'answerToSend:', answerToSend);
             handleSubmitAnswer(answerToSend, false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -539,7 +515,6 @@ const FindErrorMultiplayer: React.FC = () => {
     // appears already set and the timer isn't reset yet.
 
     const handleAnswerSubmit = () => {
-        console.log('handleAnswerSubmit called - selectedWord:', selectedWord, 'gameData:', gameData);
         if (!selectedWord || !gameData) return;
         const isCorrect = selectedWord === gameData.correctAnswer;
         handleSubmitAnswer(selectedWord, isCorrect);
@@ -552,13 +527,81 @@ const FindErrorMultiplayer: React.FC = () => {
             await multiplayerAPI.leaveGame(gameId);
             navigate('/games/multiplayer');
         } catch (err) {
-            console.error('Error leaving game:', err);
             navigate('/games/multiplayer');
         }
     };
 
-    const handlePlayAgain = () => {
-        navigate('/games/multiplayer');
+    // Fetch online players for invites
+    useEffect(() => {
+        if (game?.status !== 'waiting') return;
+
+        const fetchOnlinePlayers = async () => {
+            try {
+                const response = await userAPI.getOnlineUsers();
+                const gamePlayerIds = game.players.map((p) => p.user_id);
+                const filtered = response.data.online.filter(
+                    (p: { id: number }) => !gamePlayerIds.includes(p.id) && p.id !== currentUser?.id
+                );
+                setOnlinePlayers(
+                    filtered.map((p: { id: number; username: string; avatar: string; level: number } & Partial<{ is_online: boolean }>) => ({
+                        ...p,
+                        is_online: p.is_online ?? true,
+                    }))
+                );
+            } catch (error) {
+            }
+        };
+        
+        fetchOnlinePlayers();
+        const interval = setInterval(fetchOnlinePlayers, 30000);
+        return () => clearInterval(interval);
+    }, [game?.status, game?.players, currentUser?.id]);
+
+    // Invite handlers
+    const handleSendInvite = async (playerId: number) => {
+        if (!gameId) {
+            return;
+        }
+        try {
+            await inviteAPI.sendInvite(playerId, gameId);
+            const player = onlinePlayers.find((p) => p.id === playerId);
+            if (player) {
+                setPendingInvites((prev) => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        receiver: player,
+                    },
+                ]);
+                toastService.success(`Invite sent to ${player.username}!`);
+            }
+        } catch (error: unknown) {
+            const errMsg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            toastService.error(errMsg || 'Failed to send invite');
+        }
+    };
+
+    const handleAcceptInvite = async (inviteId: number) => {
+        try {
+            await inviteAPI.acceptInvite(inviteId);
+            setInvitePopupOpen(false);
+            setCurrentInvite(null);
+            toastService.success('Invite accepted! Joining game...');
+        } catch (error: unknown) {
+            const errMsg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            toastService.error(errMsg || 'Failed to accept invite');
+        }
+    };
+
+    const handleDeclineInvite = async (inviteId: number) => {
+        try {
+            await inviteAPI.declineInvite(inviteId);
+            setInvitePopupOpen(false);
+            setCurrentInvite(null);
+            toastService.info('Invite declined');
+        } catch (error: unknown) {
+            toastService.error('Failed to decline invite');
+        }
     };
 
     if (loading) {
@@ -596,468 +639,62 @@ const FindErrorMultiplayer: React.FC = () => {
     if (game.status === 'waiting') {
         // Safety check for players array
         if (!game.players || !Array.isArray(game.players)) {
-            console.error('Game players array is undefined or invalid:', game);
             setError(t('games.multiplayer.gameNotFound'));
             return null;
         }
-        const currentPlayer = game.players.find((p) => p.user_id === currentUser?.id);
-        const gameFull = game.players.length === game.max_players;
-        const allReady = gameFull && game.players.every((p) => p.is_ready);
-        const canJoin = !currentPlayer && game.players.length < game.max_players;
-        const emptySlots = game.max_players - game.players.length;
 
         return (
-            <Box sx={{ 
-                minHeight: '100vh',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                py: 4
-            }}>
-                <Container maxWidth="lg">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                    >
-                        <Paper sx={{ p: 4, position: 'relative' }}>
-                            {/* Countdown Overlay */}
-                            {gameStartCountdown !== null && gameStartCountdown > 0 && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        right: 0,
-                                        bottom: 0,
-                                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        zIndex: 1000,
-                                        borderRadius: 1,
-                                    }}
-                                >
-                                    <motion.div
-                                        key={gameStartCountdown}
-                                        initial={{ scale: 0.5, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        exit={{ scale: 1.5, opacity: 0 }}
-                                        transition={{ duration: 0.5 }}
-                                    >
-                                        <Typography
-                                            variant="h1"
-                                            sx={{
-                                                fontSize: '10rem',
-                                                fontWeight: 'bold',
-                                                color: 'white',
-                                                textShadow: '0 0 30px rgba(102, 126, 234, 0.8)',
-                                            }}
-                                        >
-                                            {gameStartCountdown}
-                                        </Typography>
-                                    </motion.div>
-                                </Box>
-                            )}
-                            
-                            {/* Header with Back Button */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                                <Button
-                                    startIcon={<ArrowBackIcon />}
-                                    onClick={() => navigate('/games/multiplayer')}
-                                    variant="outlined"
-                                    sx={{ mr: 2 }}
-                                >
-                                    {t('common.back')}
-                                </Button>
-                                <Box sx={{ flexGrow: 1 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                        {game.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {t('games.multiplayer.hostedBy', { name: game.host.username })}
-                                    </Typography>
-                                </Box>
-                                <Chip 
-                                    label={allReady ? t('games.multiplayer.allReady') : t('games.multiplayer.waitingForPlayers')}
-                                    color={allReady ? 'success' : 'warning'}
-                                    sx={{ fontWeight: 'bold' }}
-                                />
-                            </Box>
-
-                            <Divider sx={{ mb: 4 }} />
-
-                            {/* Game Info */}
-                            <Grid container spacing={3} sx={{ mb: 4 }}>
-                                <Grid item xs={12} md={3}>
-                                    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            {t('games.multiplayer.maxPlayers')}
-                                        </Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                            {game.players.length} / {game.max_players}
-                                        </Typography>
-                                    </Paper>
-                                </Grid>
-                                <Grid item xs={12} md={3}>
-                                    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            {t('games.difficulty.label')}
-                                        </Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                            {t(`games.difficulty.${game.difficulty.toLowerCase()}`)}
-                                        </Typography>
-                                    </Paper>
-                                </Grid>
-                                <Grid item xs={12} md={3}>
-                                    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            {t('gameRoom.numberOfQuestions')}
-                                        </Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                            {game.max_steps}
-                                        </Typography>
-                                    </Paper>
-                                </Grid>
-                                <Grid item xs={12} md={3}>
-                                    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            {t('gameRoom.timePerQuestion')}
-                                        </Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                            {game.config.max_time}s
-                                        </Typography>
-                                    </Paper>
-                                </Grid>
-                            </Grid>
-
-                            {/* Game Configuration */}
-                            {game.config && (game.config.verbs || game.config.tenses) && (
-                                <Box sx={{ mb: 4 }}>
-                                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                                        {t('games.multiplayer.gameConfiguration')}
-                                    </Typography>
-                                    <Grid container spacing={2}>
-                                        {game.config.verbs && game.config.verbs.length > 0 && (
-                                            <Grid item xs={12} md={6}>
-                                                <Paper variant="outlined" sx={{ p: 2 }}>
-                                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                                        {t('common.verbs')} ({game.config.verbs.length})
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                                                        {game.config.verbs.slice(0, 10).map((verb, idx) => (
-                                                            <Chip key={idx} label={verb} size="small" variant="outlined" />
-                                                        ))}
-                                                        {game.config.verbs.length > 10 && (
-                                                            <Chip label={`+${game.config.verbs.length - 10}`} size="small" color="primary" />
-                                                        )}
-                                                    </Box>
-                                                </Paper>
-                                            </Grid>
-                                        )}
-                                        {game.config.tenses && game.config.tenses.length > 0 && (
-                                            <Grid item xs={12} md={6}>
-                                                <Paper variant="outlined" sx={{ p: 2 }}>
-                                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                                        {t('common.tenses')} ({game.config.tenses.length})
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                                                        {game.config.tenses.slice(0, 10).map((tense, idx) => (
-                                                            <Chip key={idx} label={tense} size="small" variant="outlined" />
-                                                        ))}
-                                                        {game.config.tenses.length > 10 && (
-                                                            <Chip label={`+${game.config.tenses.length - 10}`} size="small" color="secondary" />
-                                                        )}
-                                                    </Box>
-                                                </Paper>
-                                            </Grid>
-                                        )}
-                                    </Grid>
-                                </Box>
-                            )}
-
-                            {/* Players Grid */}
-                            <Box sx={{ mb: 4 }}>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
-                                    {t('games.multiplayer.players')}
-                                </Typography>
-                                <Grid container spacing={2}>
-                                    {/* Actual Players */}
-                                    {game.players.map((player, index) => (
-                                        <Grid item xs={12} sm={6} md={game.max_players <= 4 ? 6 : 4} key={player.user_id}>
-                                            <motion.div
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                                            >
-                                                <Paper 
-                                                    elevation={3}
-                                                    sx={{ 
-                                                        p: 2,
-                                                        background: player.is_ready 
-                                                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                                                            : 'white',
-                                                        color: player.is_ready ? 'white' : 'inherit',
-                                                        border: player.user_id === currentUser?.id ? '3px solid #f59e0b' : 'none',
-                                                        position: 'relative',
-                                                        overflow: 'hidden'
-                                                    }}
-                                                >
-                                                    {player.user_id === currentUser?.id && (
-                                                        <Chip 
-                                                            label={t('games.multiplayer.you')}
-                                                            size="small"
-                                                            sx={{ 
-                                                                position: 'absolute',
-                                                                top: 8,
-                                                                right: 8,
-                                                                backgroundColor: '#f59e0b',
-                                                                color: 'white',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                        <Avatar 
-                                                            src={player.user.avatar}
-                                                            sx={{ 
-                                                                width: 56, 
-                                                                height: 56,
-                                                                bgcolor: player.is_ready ? 'rgba(255,255,255,0.3)' : '#667eea',
-                                                                fontSize: '1.5rem'
-                                                            }}
-                                                        >
-                                                            {player.user.username[0].toUpperCase()}
-                                                        </Avatar>
-                                                        <Box sx={{ flexGrow: 1 }}>
-                                                            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                                                {player.user.username}
-                                                                {player.is_host && (
-                                                                    <Chip 
-                                                                        label={t('games.multiplayer.host')}
-                                                                        size="small"
-                                                                        sx={{ 
-                                                                            ml: 1,
-                                                                            height: 20,
-                                                                            backgroundColor: player.is_ready ? 'rgba(255,255,255,0.3)' : '#f59e0b',
-                                                                            color: 'white'
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                            </Typography>
-                                                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                                {t('games.multiplayer.level', { level: player.user.level })}
-                                                            </Typography>
-                                                        </Box>
-                                                        {player.is_ready ? (
-                                                            <CheckCircleIcon sx={{ fontSize: 40, opacity: 0.9 }} />
-                                                        ) : (
-                                                            <RadioButtonUncheckedIcon sx={{ fontSize: 40, opacity: 0.5 }} />
-                                                        )}
-                                                    </Box>
-                                                </Paper>
-                                            </motion.div>
-                                        </Grid>
-                                    ))}
-                                    
-                                    {/* Empty Slots with Animation */}
-                                    {Array.from({ length: emptySlots }).map((_, index) => (
-                                        <Grid item xs={12} sm={6} md={game.max_players <= 4 ? 6 : 4} key={`empty-${index}`}>
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{ duration: 0.3, delay: (game.players.length + index) * 0.1 }}
-                                            >
-                                                <Paper 
-                                                    variant="outlined"
-                                                    sx={{ 
-                                                        p: 2,
-                                                        height: '100%',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        minHeight: 96,
-                                                        border: '2px dashed',
-                                                        borderColor: 'divider',
-                                                        backgroundColor: 'rgba(0,0,0,0.02)',
-                                                        position: 'relative',
-                                                        overflow: 'hidden'
-                                                    }}
-                                                >
-                                                    <motion.div
-                                                        animate={{
-                                                            opacity: [0.3, 0.6, 0.3],
-                                                        }}
-                                                        transition={{
-                                                            duration: 2,
-                                                            repeat: Infinity,
-                                                            ease: "easeInOut",
-                                                            delay: index * 0.3
-                                                        }}
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: 16
-                                                        }}
-                                                    >
-                                                        <Avatar 
-                                                            sx={{ 
-                                                                width: 56, 
-                                                                height: 56,
-                                                                bgcolor: 'action.disabled',
-                                                            }}
-                                                        >
-                                                            ?
-                                                        </Avatar>
-                                                        <Box>
-                                                            <Typography variant="body1" color="text.secondary">
-                                                                {t('games.multiplayer.waitingForPlayer')}
-                                                            </Typography>
-                                                            <Typography variant="caption" color="text.disabled">
-                                                                {t('games.multiplayer.slot', { number: game.players.length + index + 1 })}
-                                                            </Typography>
-                                                        </Box>
-                                                    </motion.div>
-                                                    
-                                                    {/* Animated gradient overlay */}
-                                                    <motion.div
-                                                        animate={{
-                                                            x: ['-100%', '200%'],
-                                                        }}
-                                                        transition={{
-                                                            duration: 2,
-                                                            repeat: Infinity,
-                                                            ease: "linear",
-                                                            delay: index * 0.5
-                                                        }}
-                                                        style={{
-                                                            position: 'absolute',
-                                                            top: 0,
-                                                            left: 0,
-                                                            right: 0,
-                                                            bottom: 0,
-                                                            background: 'linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent)',
-                                                            pointerEvents: 'none'
-                                                        }}
-                                                    />
-                                                </Paper>
-                                            </motion.div>
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                            </Box>
-
-                            {!isConnected && (
-                                <Alert severity="warning" sx={{ mb: 3 }}>
-                                    {t('games.multiplayer.connecting')}
-                                </Alert>
-                            )}
-
-                            {/* Countdown in waiting room */}
-                            {gameStartCountdown !== null && gameStartCountdown > 0 && (
-                                <Box sx={{ mb: 3, textAlign: 'center' }}>
-                                    <motion.div
-                                        key={gameStartCountdown}
-                                        initial={{ scale: 0.5, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        <Typography variant="h2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                            {gameStartCountdown}
-                                        </Typography>
-                                        <Typography variant="h6" color="text.secondary">
-                                            {t('games.multiplayer.startingIn', 'Starting in...')}
-                                        </Typography>
-                                    </motion.div>
-                                </Box>
-                            )}
-
-                            {/* Action Buttons */}
-                            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-                                {canJoin && (
-                                    <Button
-                                        variant="contained"
-                                        size="large"
-                                        onClick={handleManualJoin}
-                                        disabled={!isConnected}
-                                        sx={{ 
-                                            minWidth: 200,
-                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                            '&:hover': {
-                                                background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
-                                            }
-                                        }}
-                                    >
-                                        {t('games.multiplayer.joinGame')}
-                                    </Button>
-                                )}
-                                {!canJoin && currentPlayer && !currentPlayer.is_ready && (
-                                    <Button
-                                        variant="contained"
-                                        size="large"
-                                        onClick={handleReady}
-                                        disabled={!isConnected}
-                                        sx={{ 
-                                            minWidth: 200,
-                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                            '&:hover': {
-                                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                                            }
-                                        }}
-                                    >
-                                        {t('games.multiplayer.ready')}
-                                    </Button>
-                                )}
-                                {/* Show Start Game button for host when at least 2 players ready (but not in 2-player games when full) */}
-                                {currentPlayer?.is_host && !allReady && game.players.length >= 2 && !(game.max_players === 2 && game.players.length === 2) && (
-                                    <Button
-                                        variant="contained"
-                                        size="large"
-                                        onClick={handleStartGame}
-                                        disabled={!isConnected || game.players.filter(p => p.is_ready).length < 2}
-                                        sx={{ 
-                                            minWidth: 200,
-                                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                                            '&:hover': {
-                                                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-                                            },
-                                            '&:disabled': {
-                                                background: 'rgba(0, 0, 0, 0.12)',
-                                            }
-                                        }}
-                                    >
-                                        {game.players.filter(p => p.is_ready).length >= 2 
-                                            ? t('games.multiplayer.startGame')
-                                            : t('games.multiplayer.needMorePlayers')}
-                                    </Button>
-                                )}
-                                {currentPlayer?.is_ready && !allReady && !currentPlayer?.is_host && (
-                                    <Typography variant="body1" color="success.main">
-                                        {t('games.multiplayer.waitingForOthers')}
-                                    </Typography>
-                                )}
-                                {allReady && (
-                                    <Typography variant="body1" color="success.main" sx={{ fontWeight: 'bold' }}>
-                                        {t('games.multiplayer.allReady')}
-                                    </Typography>
-                                )}
-                                <Button 
-                                    variant="outlined" 
-                                    size="large"
-                                    onClick={handleLeaveGame}
-                                    sx={{ minWidth: 150 }}
-                                >
-                                    {t('common.leave')}
-                                </Button>
-                            </Box>
-                        </Paper>
-                    </motion.div>
-                </Container>
-            </Box>
+            <>
+                <WaitingRoom
+                    game={game}
+                    currentUserId={currentUser?.id}
+                    gameStartCountdown={gameStartCountdown}
+                    isConnected={isConnected}
+                    onJoinGame={async () => {
+                        if (!gameId) return;
+                        try {
+                            await multiplayerAPI.joinGame(gameId);
+                        } catch (err) {
+                        }
+                    }}
+                    onReady={async () => {
+                        if (!gameId) return;
+                        try {
+                            await multiplayerAPI.setReady(gameId, true);
+                        } catch (err) {
+                        }
+                    }}
+                    onStartGame={async () => {
+                        if (!gameId) return;
+                        try {
+                            await multiplayerAPI.startGame(gameId);
+                        } catch (err) {
+                        }
+                    }}
+                    onLeaveGame={handleLeaveGame}
+                    inviteDialogOpen={inviteDialogOpen}
+                    onInviteDialogClose={() => setInviteDialogOpen(false)}
+                    onInviteDialogOpen={() => setInviteDialogOpen(true)}
+                    onlinePlayers={onlinePlayers}
+                    pendingInvites={pendingInvites}
+                    onSendInvite={handleSendInvite}
+                />
+                
+                <InvitePopup
+                    invite={currentInvite}
+                    open={invitePopupOpen}
+                    onClose={() => setInvitePopupOpen(false)}
+                    onAccept={handleAcceptInvite}
+                    onDecline={handleDeclineInvite}
+                />
+            </>
         );
     }
 
     // Final results phase
     if (showFinalResults && finalResults) {
-        const sortedPlayers = [...(finalResults.players || [])].sort((a, b) => b.score - a.score);
+        const results = finalResults as { players?: FinalResultsPlayer[] };
+        const sortedPlayers = [...(results.players || [])].sort((a, b) => b.score - a.score);
         const topPlayer = sortedPlayers[0];
         
         return (
@@ -1121,14 +758,14 @@ const FindErrorMultiplayer: React.FC = () => {
                                                     boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)'
                                                 }}
                                             >
-                                                {(topPlayer.user?.username || topPlayer.username)?.[0]?.toUpperCase()}
+                                                {topPlayer.user.username[0].toUpperCase()}
                                             </Avatar>
                                             <Box>
-                                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                                    {topPlayer.user?.username || topPlayer.username}
+                                                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#764ba2' }}>
+                                                    {topPlayer.user.username}
                                                 </Typography>
-                                                <Typography variant="h5" color="primary" sx={{ fontWeight: 'bold' }}>
-                                                    {topPlayer.score} points
+                                                <Typography variant="h6" color="text.secondary">
+                                                    {topPlayer.score} {t('games.points')}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -1136,157 +773,126 @@ const FindErrorMultiplayer: React.FC = () => {
                                 </motion.div>
                             )}
 
-                            <Divider sx={{ my: 3 }} />
-                            
-                            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-                                Final Standings
-                            </Typography>
+                            {/* Leaderboard */}
+                <Divider sx={{ my: 4 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#764ba2' }}>
+                        {t('games.multiplayer.leaderboard')}
+                    </Typography>
+                </Divider>
 
-                            <Box sx={{ my: 3 }}>
-                                {sortedPlayers.map((player: any, index: number) => {
-                                    const rank = index + 1;
-                                    const medals = ['🥇', '🥈', '🥉'];
-                                    const medal = medals[index];
-                                    
-                                    return (
-                                        <motion.div
-                                            key={player.user_id}
-                                            initial={{ opacity: 0, x: -50 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.5 + index * 0.15 }}
-                                        >
-                                            <Paper
-                                                elevation={rank === 1 ? 8 : rank === 2 ? 6 : rank === 3 ? 4 : 2}
-                                                sx={{
-                                                    p: 3,
-                                                    mb: 2,
-                                                    background: rank === 1
-                                                        ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
-                                                        : rank === 2
-                                                        ? 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)'
-                                                        : rank === 3
-                                                        ? 'linear-gradient(135deg, #CD7F32 0%, #B8860B 100%)'
-                                                        : 'linear-gradient(145deg, #ffffff, #f0f0f0)',
-                                                    transform: rank === 1 ? 'scale(1.05)' : 'scale(1)',
-                                                    transition: 'transform 0.3s ease',
-                                                    '&:hover': {
-                                                        transform: 'scale(1.02)',
-                                                    }
-                                                }}
-                                            >
-                                                <Grid container alignItems="center" spacing={2}>
-                                                    <Grid item xs={2}>
-                                                        <Typography variant="h3" sx={{ 
-                                                            fontWeight: 'bold',
-                                                            color: rank <= 3 ? 'white' : 'text.primary'
-                                                        }}>
-                                                            {medal || `#${rank}`}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={2}>
-                                                        <Avatar
-                                                            src={player.user?.avatar}
-                                                            sx={{
-                                                                width: 56,
-                                                                height: 56,
-                                                                border: rank <= 3 ? '3px solid white' : '2px solid #ddd',
-                                                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                                                            }}
-                                                        >
-                                                            {(player.user?.username || player.username)?.[0]?.toUpperCase()}
-                                                        </Avatar>
-                                                    </Grid>
-                                                    <Grid item xs={5}>
-                                                        <Typography 
-                                                            variant="h6" 
-                                                            sx={{ 
-                                                                fontWeight: rank === 1 ? 'bold' : 'normal',
-                                                                color: rank <= 3 ? 'white' : 'text.primary'
-                                                            }}
-                                                        >
-                                                            {player.user?.username || player.username}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={3}>
-                                                        <Box sx={{ textAlign: 'right' }}>
-                                                            <Typography 
-                                                                variant="h5" 
-                                                                sx={{ 
-                                                                    fontWeight: 'bold',
-                                                                    color: rank <= 3 ? 'white' : 'primary.main'
-                                                                }}
-                                                            >
-                                                                {player.score}
-                                                            </Typography>
-                                                            <Typography 
-                                                                variant="caption" 
-                                                                sx={{ 
-                                                                    color: rank <= 3 ? 'rgba(255,255,255,0.9)' : 'text.secondary'
-                                                                }}
-                                                            >
-                                                                points
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                </Grid>
-                                            </Paper>
-                                        </motion.div>
-                                    );
-                                })}
-                            </Box>
+                <Box sx={{ mb: 4 }}>
+                    {sortedPlayers.map((player, index) => (
+                        <motion.div
+                            key={player.user_id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 * index }}
+                        >
+                            <Paper
+                                elevation={index === 0 ? 8 : 2}
+                                sx={{
+                                    p: 2,
+                                    mb: 2,
+                                    background: index === 0
+                                        ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
+                                        : index === 1
+                                        ? 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)'
+                                        : index === 2
+                                        ? 'linear-gradient(135deg, #CD7F32 0%, #B87333 100%)'
+                                        : 'white',
+                                    border: player.user_id === currentUser?.id ? '3px solid #667eea' : 'none',
+                                    color: index < 3 ? 'white' : 'inherit',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {player.user_id === currentUser?.id && (
+                                    <Chip
+                                        label={t('games.multiplayer.you')}
+                                        size="small"
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            backgroundColor: '#667eea',
+                                            color: 'white',
+                                            fontWeight: 'bold'
+                                        }}
+                                    />
+                                )}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Typography
+                                        variant="h4"
+                                        sx={{
+                                            fontWeight: 'bold',
+                                            minWidth: 40,
+                                            opacity: 0.8
+                                        }}
+                                    >
+                                        #{index + 1}
+                                    </Typography>
+                                    <Avatar
+                                        src={player.user?.avatar}
+                                        sx={{
+                                            width: 60,
+                                            height: 60,
+                                            bgcolor: index < 3 ? 'rgba(255,255,255,0.3)' : '#667eea',
+                                            border: index < 3 ? '3px solid rgba(255,255,255,0.5)' : 'none'
+                                        }}
+                                    >
+                                        {player.user.username[0].toUpperCase()}
+                                    </Avatar>
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                            {player.user.username}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                            {t('games.multiplayer.level', { level: player.user.level })}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ textAlign: 'right' }}>
+                                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                                            {player.score}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                            {t('games.points')}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </Paper>
+                        </motion.div>
+                    ))}
+                </Box>
 
-                            <Divider sx={{ my: 4 }} />
-
-                            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-                                <Button 
-                                    variant="contained" 
-                                    size="large"
-                                    onClick={handlePlayAgain}
-                                    sx={{
-                                        minWidth: 180,
-                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                        fontSize: '1.1rem',
-                                        py: 1.5,
-                                        '&:hover': {
-                                            background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
-                                        }
-                                    }}
-                                >
-                                    🔄 {t('games.multiplayer.playAgain')}
-                                </Button>
-                                <Button 
-                                    variant="outlined" 
-                                    size="large"
-                                    onClick={() => navigate('/games/multiplayer')}
-                                    sx={{
-                                        minWidth: 180,
-                                        borderWidth: 2,
-                                        fontSize: '1.1rem',
-                                        py: 1.5,
-                                        '&:hover': {
-                                            borderWidth: 2,
-                                        }
-                                    }}
-                                >
-                                    🏠 {t('games.multiplayer.backToLobby', 'Back to Lobby')}
-                                </Button>
-                                <Button 
-                                    variant="text"
-                                    size="large"
-                                    onClick={() => navigate('/games')}
-                                    sx={{
-                                        minWidth: 180,
-                                        fontSize: '1.1rem',
-                                        py: 1.5,
-                                    }}
-                                >
-                                    {t('common.backToGames')}
-                                </Button>
-                            </Box>
-                        </Paper>
-                    </motion.div>
-                </Container>
-            </Box>
+                {/* Action Buttons */}
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={() => navigate('/games/multiplayer')}
+                        sx={{
+                            minWidth: 200,
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
+                            }
+                        }}
+                    >
+                        {t('games.multiplayer.backToLobby')}
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={() => navigate('/leaderboard')}
+                        sx={{ minWidth: 200 }}
+                    >
+                        {t('nav.leaderboard')}
+                    </Button>
+                </Box>
+            </Paper>
+        </motion.div>
+    </Container>
+</Box>
         );
     }
 
@@ -1355,12 +961,9 @@ const FindErrorMultiplayer: React.FC = () => {
                                                     scale: [1, 0.9, 1],
                                                     opacity: [1, 0.7, 1],
                                                 } : {}}
-                                                transition={{
-                                                    duration: 0.8,
-                                                    ease: "easeInOut"
-                                                }}
+                                                transition={{ duration: 0.3 }}
                                             >
-                                                <Avatar
+                                            <Avatar
                                                     src={player.user.avatar}
                                                     sx={{
                                                         width: 56,
@@ -1691,17 +1294,6 @@ const FindErrorMultiplayer: React.FC = () => {
                 )}
             </Paper>
 
-            {/* Toast Notification for Player Left */}
-            <Snackbar
-                open={showToast}
-                autoHideDuration={4000}
-                onClose={() => setShowToast(false)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert onClose={() => setShowToast(false)} severity="info" sx={{ width: '100%' }}>
-                    {toastMessage}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 };

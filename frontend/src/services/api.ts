@@ -108,6 +108,12 @@ export interface Invite {
         avatar: string;
         level: number;
     };
+    receiver?: {
+        id: number;
+        username: string;
+        avatar: string;
+        level: number;
+    };
     game?: {
         game_id: string;
         title: string;

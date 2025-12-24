@@ -5,7 +5,6 @@ import {
     Timer
 } from '@mui/icons-material';
 import {
-    Alert,
     Avatar, Badge, Box,
     Button,
     Card,
@@ -26,12 +25,11 @@ import {
     List,
     ListItem,
     ListItemAvatar,
+    ListItemButton,
     ListItemText,
     MenuItem,
     Paper,
-    Select,
-    Snackbar,
-    Stack,
+    Select, Stack,
     TextField,
     Tooltip,
     Typography
@@ -45,6 +43,7 @@ import InvitePopup from '../../../components/Invites/InvitePopup';
 import { DIFFICULTY_COLORS, GAME_TYPES } from '../../../constants/gameConstants';
 import { Invite, inviteAPI, userAPI } from '../../../services/api';
 import { multiplayerAPI, MultiplayerGame } from '../../../services/multiplayerApi';
+import { toastService } from '../../../services/toastService';
 import { RootState } from '../../../store/store';
 
 interface Player {
@@ -59,8 +58,6 @@ const Multiplayer: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const currentUser = useSelector((state: RootState) => state.auth.user);
-    const currentVerbs = useSelector((state: RootState) => state.verb.verbs);
-    const currentTenses = useSelector((state: RootState) => state.verb.tenses);
     
     const [openCreateDialog, setOpenCreateDialog] = useState(false);
     const [waitingRooms, setWaitingRooms] = useState<MultiplayerGame[]>([]);
@@ -71,8 +68,8 @@ const Multiplayer: React.FC = () => {
     const [currentInvite, setCurrentInvite] = useState<Invite | null>(null);
     const [invitePopupOpen, setInvitePopupOpen] = useState(false);
     const [sendingInvite, setSendingInvite] = useState<number | null>(null);
-    const [inviteSentSnackbar, setInviteSentSnackbar] = useState(false);
-    const [invitedPlayerName, setInvitedPlayerName] = useState('');
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [selectedRoomForInvite, setSelectedRoomForInvite] = useState<string | null>(null);
     
     // Filter state
     const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +92,6 @@ const Multiplayer: React.FC = () => {
             const supportedGames = (games || []).filter(game => game.game_type === 'find-error');
             setWaitingRooms(supportedGames);
         } catch (error: any) {
-            console.error('Failed to fetch waiting rooms:', error);
             if (error?.response?.status === 401) {
                 // Token expired or invalid, redirect to login
                 navigate('/login');
@@ -115,7 +111,6 @@ const Multiplayer: React.FC = () => {
             const recentResponse = await userAPI.getRecentPlayers(20);
             setOfflinePlayers(recentResponse.data.offline || []);
         } catch (error) {
-            console.error('Failed to fetch players:', error);
         }
     };
 
@@ -123,7 +118,6 @@ const Multiplayer: React.FC = () => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
-            console.warn('No auth token found, redirecting to login');
             navigate('/login');
             return;
         }
@@ -142,7 +136,6 @@ const Multiplayer: React.FC = () => {
         // WebSocket connection for invites and presence updates with reconnection
         const token = localStorage.getItem('token');
         if (!token) {
-            console.warn('Multiplayer: No auth token yet, skipping WS connect. Will retry when user is available.');
             return () => {
                 clearInterval(interval);
             };
@@ -151,7 +144,6 @@ const Multiplayer: React.FC = () => {
         const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
         const wsBaseUrl = apiBaseUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace('/api', '');
         const wsUrl = `${wsBaseUrl}/ws/multiplayer?token=${token}`;
-        console.log('Connecting to WebSocket:', wsUrl);
         let reconnectAttempts = 0;
         let ws: WebSocket | null = null;
 
@@ -160,7 +152,6 @@ const Multiplayer: React.FC = () => {
 
             ws.onopen = () => {
                 reconnectAttempts = 0;
-                console.log('Connected to multiplayer WebSocket for invites and presence');
                 // Initial refresh when socket connects
                 fetchRecentPlayers();
                 fetchWaitingRooms();
@@ -174,33 +165,28 @@ const Multiplayer: React.FC = () => {
                     if (message.type === 'invite_received' && payload) {
                         setCurrentInvite(payload);
                         setInvitePopupOpen(true);
+                        const inviterName = payload?.sender_username || payload?.sender?.username || 'Someone';
+                        toastService.info(`Invite received from ${inviterName}`);
                     }
 
                     if (message.type === 'presence_update' && payload) {
-                        console.log('Presence update received:', payload);
                         fetchRecentPlayers();
                         fetchWaitingRooms();
                     }
 
                     if (message.type === 'game_created' || message.type === 'game_updated') {
-                        console.log('Game list update received:', message.type);
                         fetchWaitingRooms();
                     }
                 } catch (error) {
-                    console.error('Error parsing WebSocket message:', error);
                 }
             };
 
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                console.error('WebSocket URL was:', wsUrl);
-                console.error('WebSocket readyState:', ws?.readyState);
+            ws.onerror = () => {
             };
 
             ws.onclose = () => {
                 reconnectAttempts += 1;
                 const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempts));
-                console.warn(`WebSocket closed; reconnecting in ${delay}ms`);
                 setTimeout(connectWS, delay);
             };
         };
@@ -280,7 +266,6 @@ const Multiplayer: React.FC = () => {
             // Navigate to multiplayer game room
             navigate(`/games/multiplayer/find-error/${gameId}`);
         } catch (error: any) {
-            console.error('Failed to join game:', error);
             if (error?.response?.status === 400 && error?.response?.data?.error?.includes('already in game')) {
                 // Player already joined, navigate to game
                 navigate(`/games/multiplayer/find-error/${gameId}`);
@@ -298,15 +283,17 @@ const Multiplayer: React.FC = () => {
         return GAME_TYPES.find(g => g.id === gameType);
     };
 
-    const handleInvitePlayer = async (playerId: number) => {
-        if (!waitingRooms[0]) {
+    const handleInvitePlayer = async (playerId: number, gameId?: string) => {
+        const targetGameId = gameId || selectedRoomForInvite || waitingRooms[0]?.id;
+        
+        if (!targetGameId) {
             alert('Create or join a game first before inviting players');
             return;
         }
 
         // Check if player is already in the game
-        const game = waitingRooms[0];
-        const isPlayerInGame = game.players?.some(p => p.user_id === playerId);
+        const game = waitingRooms.find(r => r.id === targetGameId);
+        const isPlayerInGame = game?.players?.some(p => p.user_id === playerId);
         if (isPlayerInGame) {
             alert('This player is already in the game!');
             return;
@@ -314,16 +301,20 @@ const Multiplayer: React.FC = () => {
 
         setSendingInvite(playerId);
         try {
-            await inviteAPI.sendInvite(playerId, waitingRooms[0].id);
+            await inviteAPI.sendInvite(playerId, targetGameId);
             // Find player name for success message
             const player = onlinePlayers.find(p => p.id === playerId);
-            setInvitedPlayerName(player?.username || 'Player');
-            setInviteSentSnackbar(true);
+            toastService.success(`Invite sent to ${player?.username || 'Player'}!`);
         } catch (error: any) {
-            alert(error.response?.data?.error || 'Failed to send invite');
+            toastService.error(error.response?.data?.error || 'Failed to send invite');
         } finally {
             setSendingInvite(null);
         }
+    };
+
+    const handleOpenInviteDialog = (roomId: string) => {
+        setSelectedRoomForInvite(roomId);
+        setInviteDialogOpen(true);
     };
 
     const handleAcceptInvite = async (inviteId: number) => {
@@ -343,26 +334,8 @@ const Multiplayer: React.FC = () => {
         try {
             await inviteAPI.declineInvite(inviteId);
         } catch (error: any) {
-            console.error('Failed to decline invite:', error);
         }
     };
-
-    // WebSocket listener for invite notifications
-    useEffect(() => {
-        // TODO: Add WebSocket connection and listener for 'invite_received' events
-        // For now, this is a placeholder
-        const handleInviteReceived = (data: any) => {
-            setCurrentInvite(data);
-            setInvitePopupOpen(true);
-        };
-
-        // When WebSocket is implemented, add listener here
-        // ws.on('invite_received', handleInviteReceived);
-
-        return () => {
-            // Cleanup WebSocket listener
-        };
-    }, []);
 
     return (
         <Box sx={{ 
@@ -774,25 +747,52 @@ const Multiplayer: React.FC = () => {
                                                                             />
                                                                         </Stack>
                                                                     </CardContent>
-                                                                    <CardActions sx={{ px: 2, pb: 2 }}>
-                                                                        <Button
-                                                                            variant="contained"
-                                                                            fullWidth
-                                                                            onClick={() => handleJoinRoom(room.id)}
-                                                                            disabled={room.players.length >= room.max_players}
-                                                                            sx={{
-                                                                                backgroundColor: gameInfo?.color || '#667eea',
-                                                                                '&:hover': {
+                                                                    <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
+                                                                        {currentUser && room.host.id === currentUser.id ? (
+                                                                            <>
+                                                                                <Button
+                                                                                    variant="outlined"
+                                                                                    fullWidth
+                                                                                    onClick={() => handleOpenInviteDialog(room.id)}
+                                                                                    startIcon={<PersonAdd />}
+                                                                                >
+                                                                                    Invite
+                                                                                </Button>
+                                                                                <Button
+                                                                                    variant="contained"
+                                                                                    fullWidth
+                                                                                    onClick={() => handleJoinRoom(room.id)}
+                                                                                    sx={{
+                                                                                        backgroundColor: gameInfo?.color || '#667eea',
+                                                                                        '&:hover': {
+                                                                                            backgroundColor: gameInfo?.color || '#667eea',
+                                                                                            filter: 'brightness(0.9)',
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    Enter
+                                                                                </Button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <Button
+                                                                                variant="contained"
+                                                                                fullWidth
+                                                                                onClick={() => handleJoinRoom(room.id)}
+                                                                                disabled={room.players.length >= room.max_players}
+                                                                                sx={{
                                                                                     backgroundColor: gameInfo?.color || '#667eea',
-                                                                                    filter: 'brightness(0.9)',
+                                                                                    '&:hover': {
+                                                                                        backgroundColor: gameInfo?.color || '#667eea',
+                                                                                        filter: 'brightness(0.9)',
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                {room.players.length >= room.max_players 
+                                                                                    ? t('games.multiplayer.roomFull')
+                                                                                    : t('games.multiplayer.joinRoom')
                                                                                 }
-                                                                            }}
-                                                                        >
-                                                                            {room.players.length >= room.max_players 
-                                                                                ? t('games.multiplayer.roomFull')
-                                                                                : t('games.multiplayer.joinRoom')
-                                                                            }
-                                                                        </Button>
+                                                                            </Button>
+                                                                        )}
                                                                     </CardActions>
                                                                 </Card>
                                                             </Grid>
@@ -916,6 +916,81 @@ const Multiplayer: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Invite Players Dialog */}
+            <Dialog 
+                open={inviteDialogOpen} 
+                onClose={() => {
+                    setInviteDialogOpen(false);
+                    setSelectedRoomForInvite(null);
+                }}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <PersonAdd />
+                        Invite Players to Game
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Select online players to invite to your waiting room:
+                    </Typography>
+                    {onlinePlayers.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                            No online players available to invite
+                        </Typography>
+                    ) : (
+                        <List>
+                            {onlinePlayers.map((player) => {
+                                const selectedRoom = waitingRooms.find(r => r.id === selectedRoomForInvite);
+                                const isPlayerInRoom = selectedRoom?.players?.some(p => p.user_id === player.id);
+                                
+                                return (
+                                    <ListItem
+                                        key={player.id}
+                                        disablePadding
+                                        secondaryAction={
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() => handleInvitePlayer(player.id, selectedRoomForInvite!)}
+                                                disabled={sendingInvite === player.id || isPlayerInRoom}
+                                            >
+                                                {isPlayerInRoom ? 'In Game' : sendingInvite === player.id ? 'Sending...' : 'Invite'}
+                                            </Button>
+                                        }
+                                    >
+                                        <ListItemButton onClick={() => !isPlayerInRoom && handleInvitePlayer(player.id, selectedRoomForInvite!)}>
+                                            <ListItemAvatar>
+                                                <Avatar src={player.avatar}>
+                                                    {player.username[0].toUpperCase()}
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={player.username}
+                                                secondary={`Level ${player.level}`}
+                                            />
+                                        </ListItemButton>
+                                    </ListItem>
+                                );
+                            })}
+                        </List>
+                    )}
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                setInviteDialogOpen(false);
+                                setSelectedRoomForInvite(null);
+                            }}
+                        >
+                            Done
+                        </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog>
             
             {/* Invite Popup */}
             {currentInvite && (
@@ -927,23 +1002,6 @@ const Multiplayer: React.FC = () => {
                     onDecline={handleDeclineInvite}
                 />
             )}
-            
-            {/* Invite Sent Confirmation Snackbar */}
-            <Snackbar
-                open={inviteSentSnackbar}
-                autoHideDuration={3000}
-                onClose={() => setInviteSentSnackbar(false)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert
-                    onClose={() => setInviteSentSnackbar(false)}
-                    severity="success"
-                    variant="filled"
-                    sx={{ width: '100%' }}
-                >
-                    Invite sent to {invitedPlayerName}!
-                </Alert>
-            </Snackbar>
         </Box>
     );
 };

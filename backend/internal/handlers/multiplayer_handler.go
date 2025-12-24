@@ -276,7 +276,7 @@ func (mh *MultiplayerHandler) StartGame(c *gin.Context) {
 	gameID := c.Param("gameId")
 
 	log.Printf("StartGame: gameID=%s, userID=%d", gameID, userID)
-	
+
 	// Check if user is host and game can be started
 	canStart, err := mh.multiplayerService.CanManuallyStart(gameID, userID)
 	log.Printf("StartGame: CanManuallyStart returned canStart=%v, err=%v", canStart, err)
@@ -291,7 +291,7 @@ func (mh *MultiplayerHandler) StartGame(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot start game: need at least 2 ready players"})
 		return
 	}
-	
+
 	log.Printf("StartGame: MANUALLY STARTING game %s", gameID)
 
 	// Broadcast countdown before game starts

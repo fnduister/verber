@@ -1,23 +1,19 @@
 import { Add, Close, Refresh } from '@mui/icons-material';
 import {
     Alert,
-    Autocomplete,
-    Box,
+    Autocomplete, Box,
     Button,
     Checkbox,
     Chip,
     CircularProgress,
-    Container,
-    Divider,
+    Container, Divider,
     FormControl,
     FormControlLabel,
     IconButton,
-    InputLabel,
-    MenuItem,
+    InputLabel, MenuItem,
     Paper,
     Select,
-    SelectChangeEvent,
-    Stack,
+    SelectChangeEvent, Stack,
     TextField,
     Typography
 } from '@mui/material';
@@ -118,7 +114,9 @@ const GameRoom = () => {
             console.log('GameRoom - Dispatching fetchTenses...');
             dispatch(fetchTenses());
         }
-    }, [dispatch, allVerbs.length, allTenses.length]); useEffect(() => {
+    }, [dispatch, allVerbs.length, allTenses.length]);
+
+    useEffect(() => {
         if (![5, 10, 15].includes(ongoingGameInfo.maxStep)) {
             dispatch(setOngoingGameInfo({ maxStep: 5 }));
         }
@@ -142,7 +140,6 @@ const GameRoom = () => {
 
     const handleSelectVerb = (verbs: string[], isSelected: boolean) => {
         if (!isSelected) {
-            debugger;
             const newVerbs = verbs.filter((v) => !currentVerbs.includes(v));
             dispatch(setCurrentVerbs([...currentVerbs, ...newVerbs]));
         } else {
@@ -240,9 +237,9 @@ const GameRoom = () => {
         if (canAdvance()) return;
 
         if (isMultiplayer) {
-            // Check if this game type supports multiplayer
+            // Multiplayer currently supported for Find Error only
             if (gameType !== 'find-error') {
-                alert('Multiplayer mode is only available for "Find Error" game type at the moment. Other game types are coming soon!');
+                alert('Multiplayer mode is only available for "Find Error" right now.');
                 navigate('/games/multiplayer');
                 return;
             }
@@ -251,7 +248,7 @@ const GameRoom = () => {
             if (!isAuthenticated || !token) {
                 console.error('User not authenticated. Redirecting to login...');
                 alert('Please log in to create a multiplayer game');
-                navigate('/auth/login');
+                navigate('/login');
                 return;
             }
 
@@ -301,13 +298,13 @@ const GameRoom = () => {
                 // Clear session storage
                 sessionStorage.removeItem('multiplayerGameData');
 
-                // Navigate to multiplayer game
-                navigate(`/games/multiplayer/${gameData.game_type}/${game.id}`);
+                // Navigate directly to waiting room where invites are handled
+                navigate(`/games/multiplayer/find-error/${game.id}`);
             } catch (error: any) {
                 console.error('Failed to create multiplayer game:', error);
                 if (error.response?.status === 401) {
                     alert('Session expired. Please log in again.');
-                    navigate('/auth/login');
+                    navigate('/login');
                 } else {
                     alert('Failed to create game: ' + (error.response?.data?.error || error.message));
                 }
@@ -424,13 +421,17 @@ const GameRoom = () => {
                         }
                         renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseVerbs')} placeholder={t('gameRoom.verbsPlaceholder')} />}
                         renderTags={(value, getTagProps) =>
-                            value.map((option, index) => (
-                                <Chip
-                                    label={option}
-                                    {...getTagProps({ index })}
-                                    onDelete={() => handleDeleteVerb(option)}
-                                />
-                            ))
+                            value.map((option, index) => {
+                                const { key, ...tagProps } = getTagProps({ index });
+                                return (
+                                    <Chip
+                                        key={key}
+                                        label={option}
+                                        {...tagProps}
+                                        onDelete={() => handleDeleteVerb(option)}
+                                    />
+                                );
+                            })
                         }
                     />
 
@@ -608,13 +609,17 @@ const GameRoom = () => {
                         renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseTenses')} placeholder={t('gameRoom.tensesPlaceholder')} />}
                         getOptionLabel={(option) => TENSE_MAP[option]?.displayName || option}
                         renderTags={(value, getTagProps) =>
-                            value.map((option, index) => (
-                                <Chip
-                                    label={TENSE_MAP[option]?.displayName || option}
-                                    {...getTagProps({ index })}
-                                    onDelete={() => handleDeleteTense(option)}
-                                />
-                            ))
+                            value.map((option, index) => {
+                                const { key, ...tagProps } = getTagProps({ index });
+                                return (
+                                    <Chip
+                                        key={key}
+                                        label={TENSE_MAP[option]?.displayName || option}
+                                        {...tagProps}
+                                        onDelete={() => handleDeleteTense(option)}
+                                    />
+                                );
+                            })
                         }
                     />
 

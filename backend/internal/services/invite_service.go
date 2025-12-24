@@ -13,6 +13,10 @@ type InviteService struct {
 	db *gorm.DB
 }
 
+const InviteTTL = 3 * time.Minute
+
+var ErrInviteExpired = errors.New("invite expired")
+
 func NewInviteService(db *gorm.DB) *InviteService {
 	return &InviteService{db: db}
 }
@@ -63,7 +67,7 @@ func (is *InviteService) SendInvite(senderID, receiverID uint, gameID string) (*
 	}
 
 	// Preload sender and game info
-	is.db.Preload("Sender").Preload("Game").First(invite, invite.ID)
+	is.db.Preload("Sender").Preload("Receiver").Preload("Game").First(invite, invite.ID)
 
 	return invite, nil
 }
@@ -117,6 +121,15 @@ func (is *InviteService) AcceptInvite(inviteID, userID uint) (*models.Invite, er
 		return nil, errors.New("invite not found")
 	}
 
+	// Enforce TTL
+	if invite.Status == "pending" && time.Since(invite.CreatedAt) > InviteTTL {
+		now := time.Now()
+		_ = is.db.Model(&models.Invite{}).
+			Where("id = ? AND status = ?", invite.ID, "pending").
+			Updates(map[string]interface{}{"status": "expired", "updated_at": now}).Error
+		return nil, ErrInviteExpired
+	}
+
 	if invite.ReceiverID != userID {
 		return nil, errors.New("unauthorized")
 	}
@@ -132,7 +145,7 @@ func (is *InviteService) AcceptInvite(inviteID, userID uint) (*models.Invite, er
 		return nil, err
 	}
 
-	is.db.Preload("Sender").Preload("Game").First(&invite, invite.ID)
+	is.db.Preload("Sender").Preload("Receiver").Preload("Game").First(&invite, invite.ID)
 
 	return &invite, nil
 }
@@ -142,6 +155,15 @@ func (is *InviteService) DeclineInvite(inviteID, userID uint) (*models.Invite, e
 	var invite models.Invite
 	if err := is.db.First(&invite, inviteID).Error; err != nil {
 		return nil, errors.New("invite not found")
+	}
+
+	// Enforce TTL
+	if invite.Status == "pending" && time.Since(invite.CreatedAt) > InviteTTL {
+		now := time.Now()
+		_ = is.db.Model(&models.Invite{}).
+			Where("id = ? AND status = ?", invite.ID, "pending").
+			Updates(map[string]interface{}{"status": "expired", "updated_at": now}).Error
+		return nil, ErrInviteExpired
 	}
 
 	if invite.ReceiverID != userID {
@@ -159,6 +181,7 @@ func (is *InviteService) DeclineInvite(inviteID, userID uint) (*models.Invite, e
 		return nil, err
 	}
 
+	is.db.Preload("Sender").Preload("Receiver").Preload("Game").First(&invite, invite.ID)
 	return &invite, nil
 }
 
@@ -194,5 +217,41 @@ func (is *InviteService) ExpireOldInvites(olderThan time.Duration) error {
 	cutoff := time.Now().Add(-olderThan)
 	return is.db.Model(&models.Invite{}).
 		Where("status = ? AND created_at < ?", "pending", cutoff).
-		Update("status", "expired").Error
+		Updates(map[string]interface{}{"status": "expired", "updated_at": time.Now()}).Error
+}
+
+// ExpireOldInvitesReturning marks old pending invites as expired and returns the affected invites
+func (is *InviteService) ExpireOldInvitesReturning(olderThan time.Duration) ([]models.Invite, error) {
+	cutoff := time.Now().Add(-olderThan)
+	var invites []models.Invite
+	if err := is.db.
+		Where("status = ? AND created_at < ?", "pending", cutoff).
+		Preload("Sender").
+		Preload("Receiver").
+		Preload("Game").
+		Find(&invites).Error; err != nil {
+		return nil, err
+	}
+	if len(invites) == 0 {
+		return invites, nil
+	}
+
+	ids := make([]uint, 0, len(invites))
+	for _, inv := range invites {
+		ids = append(ids, inv.ID)
+	}
+
+	now := time.Now()
+	if err := is.db.Model(&models.Invite{}).
+		Where("id IN ? AND status = ?", ids, "pending").
+		Updates(map[string]interface{}{"status": "expired", "updated_at": now}).Error; err != nil {
+		return nil, err
+	}
+
+	for i := range invites {
+		invites[i].Status = "expired"
+		invites[i].UpdatedAt = now
+	}
+
+	return invites, nil
 }

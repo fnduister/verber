@@ -65,6 +65,33 @@ func (ms *MultiplayerService) CreateGame(hostID uint, gameType, title string, ma
 
 // GetWaitingRooms returns all games in waiting status
 func (ms *MultiplayerService) GetWaitingRooms() ([]models.MultiplayerGame, error) {
+	// Auto-cleanup: expire waiting rooms older than 15 minutes
+	expiryTime := time.Now().Add(-15 * time.Minute)
+
+	var expiredGames []models.MultiplayerGame
+	if err := ms.db.Where("status = ? AND created_at < ?", models.GameStatusWaiting, expiryTime).Find(&expiredGames).Error; err == nil {
+		for _, game := range expiredGames {
+			log.Printf("Expiring game %s created at %v (older than 15 minutes)", game.ID, game.CreatedAt)
+
+			// Mark all players as left
+			ms.db.Model(&models.MultiplayerGamePlayer{}).
+				Where("game_id = ? AND left_at IS NULL", game.ID).
+				Updates(map[string]interface{}{
+					"left_at":  time.Now(),
+					"is_ready": false,
+				})
+
+			// Mark game as cancelled
+			finishedAt := time.Now()
+			ms.db.Model(&models.MultiplayerGame{}).
+				Where("id = ?", game.ID).
+				Updates(map[string]interface{}{
+					"status":      models.GameStatusCancelled,
+					"finished_at": &finishedAt,
+				})
+		}
+	}
+
 	var games []models.MultiplayerGame
 
 	err := ms.db.
@@ -120,6 +147,21 @@ func (ms *MultiplayerService) JoinGame(gameID string, userID uint) (*models.Mult
 	var existingPlayer models.MultiplayerGamePlayer
 	if err := ms.db.Where("game_id = ? AND user_id = ? AND left_at IS NULL", gameID, userID).Preload("User").First(&existingPlayer).Error; err == nil {
 		return &existingPlayer, false, nil // already in game
+	}
+
+	// Check if player previously left and is rejoining
+	var leftPlayer models.MultiplayerGamePlayer
+	if err := ms.db.Where("game_id = ? AND user_id = ? AND left_at IS NOT NULL", gameID, userID).First(&leftPlayer).Error; err == nil {
+		// Clear left_at to mark player as active again
+		ms.db.Model(&leftPlayer).Updates(map[string]interface{}{
+			"left_at":  nil,
+			"is_ready": false,
+		})
+		// Reload with User
+		if err := ms.db.Preload("User").First(&leftPlayer, leftPlayer.ID).Error; err != nil {
+			return nil, false, err
+		}
+		return &leftPlayer, true, nil // rejoined
 	}
 
 	// Add player

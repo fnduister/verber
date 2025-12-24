@@ -20,11 +20,12 @@ import {
     Popover, Toolbar,
     Typography
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { inviteAPI } from '../../services/api';
+import { Invite, inviteAPI } from '../../services/api';
+import { toastService } from '../../services/toastService';
 import { logout } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
@@ -36,19 +37,44 @@ const Header: React.FC = () => {
     const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [inviteAnchorEl, setInviteAnchorEl] = useState<null | HTMLElement>(null);
-    const [invites, setInvites] = useState<any[]>([]);
+    const [invites, setInvites] = useState<Invite[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const seenInviteIdsRef = useRef<Set<number>>(new Set());
+    const invitesInitializedRef = useRef(false);
 
     // Fetch invites periodically
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated) {
+            seenInviteIdsRef.current = new Set();
+            invitesInitializedRef.current = false;
+            return;
+        }
         
         const fetchInvites = async () => {
             try {
                 const response = await inviteAPI.getInvites();
-                const pendingInvites = (response.data.invites || []).filter((inv: any) => inv.status === 'pending');
+                const pendingInvites = (response.data.invites || []).filter((inv) => inv.status === 'pending');
+
+                if (!invitesInitializedRef.current) {
+                    invitesInitializedRef.current = true;
+                    seenInviteIdsRef.current = new Set(pendingInvites.map((inv) => inv.id));
+                } else {
+                    const seen = seenInviteIdsRef.current;
+                    const newInvites = pendingInvites.filter((inv) => !seen.has(inv.id));
+                    newInvites.forEach((inv) => seen.add(inv.id));
+
+                    if (newInvites.length === 1) {
+                        const inv = newInvites[0];
+                        const from = inv?.sender?.username || 'Someone';
+                        const title = inv?.game?.title;
+                        toastService.info(title ? `New invite from ${from}: ${title}` : `New invite from ${from}`);
+                    } else if (newInvites.length > 1) {
+                        toastService.info(`You have ${newInvites.length} new game invites`);
+                    }
+                }
+
                 setInvites(pendingInvites);
-                setUnreadCount(pendingInvites.filter((inv: any) => !inv.read_at).length);
+                setUnreadCount(pendingInvites.filter((inv) => !inv.read_at).length);
             } catch (e) {
                 // Silent fail
             }
@@ -91,9 +117,9 @@ const Header: React.FC = () => {
             await inviteAPI.declineInvite(inviteId);
             // Refresh invites
             const response = await inviteAPI.getInvites();
-            const pendingInvites = (response.data.invites || []).filter((inv: any) => inv.status === 'pending');
+            const pendingInvites = (response.data.invites || []).filter((inv) => inv.status === 'pending');
             setInvites(pendingInvites);
-            setUnreadCount(pendingInvites.filter((inv: any) => !inv.read_at).length);
+            setUnreadCount(pendingInvites.filter((inv) => !inv.read_at).length);
         } catch (error) {
             console.error('Failed to decline invite:', error);
         }
@@ -272,7 +298,7 @@ const Header: React.FC = () => {
                             </Typography>
                         ) : (
                             <List sx={{ p: 0 }}>
-                                {invites.map((invite: any) => (
+                                {invites.map((invite) => (
                                     <ListItem
                                         key={invite.id}
                                         sx={{

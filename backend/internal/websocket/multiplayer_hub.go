@@ -30,6 +30,10 @@ const (
 
 	// Invites
 	TypeInviteReceived MessageType = "invite_received"
+	TypeInviteSent     MessageType = "invite_sent"
+	TypeInviteAccepted MessageType = "invite_accepted"
+	TypeInviteDeclined MessageType = "invite_declined"
+	TypeInviteExpired  MessageType = "invite_expired"
 
 	// Presence
 	TypePresenceUpdate MessageType = "presence_update"

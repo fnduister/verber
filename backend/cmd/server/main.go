@@ -6,12 +6,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"verber-backend/internal/config"
 	"verber-backend/internal/database"
 	"verber-backend/internal/handlers"
 	"verber-backend/internal/middleware"
-	"verber-backend/internal/models"
+	"verber-backend/internal/services"
 	"verber-backend/internal/websocket"
 
 	"github.com/gin-contrib/cors"
@@ -47,6 +48,24 @@ func main() {
 	// Initialize multiplayer hub
 	multiplayerHub := websocket.NewMultiplayerHub()
 	go multiplayerHub.Run()
+
+	// Periodically expire old invites (TTL = 3 minutes) and broadcast updates
+	go func() {
+		inviteSvc := services.NewInviteService(db)
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			expired, err := inviteSvc.ExpireOldInvitesReturning(services.InviteTTL)
+			if err != nil {
+				continue
+			}
+			for _, inv := range expired {
+				_ = multiplayerHub.BroadcastToGame(inv.GameID, websocket.TypeInviteExpired, inv)
+				_ = multiplayerHub.SendToUser(inv.SenderID, websocket.TypeInviteExpired, inv)
+				_ = multiplayerHub.SendToUser(inv.ReceiverID, websocket.TypeInviteExpired, inv)
+			}
+		}
+	}()
 
 	// Initialize Gin router
 	router := gin.Default()

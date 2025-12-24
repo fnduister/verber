@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -632,12 +633,17 @@ func (h *Handler) SendInvite(c *gin.Context) {
 
 	// Send real-time notification via WebSocket if hub available
 	if h.hub != nil {
-		// Type assert to get the actual hub
-		if hub, ok := h.hub.(interface {
+		if hub, ok := h.hub.(*websocket.MultiplayerHub); ok {
+			_ = hub.SendToUser(req.ReceiverID, websocket.TypeInviteReceived, invite)
+			// Notify everyone in the game room that an invite was sent
+			_ = hub.BroadcastToGame(req.GameID, websocket.TypeInviteSent, invite)
+			// Also notify the sender across any of their connections
+			_ = hub.SendToUser(senderID, websocket.TypeInviteSent, invite)
+		} else if hub, ok := h.hub.(interface {
 			SendToUser(userID uint, msgType interface{}, data interface{}) error
 		}); ok {
-			// Use a string for msgType to avoid import cycles
-			hub.SendToUser(req.ReceiverID, "invite_received", invite)
+			// Backward-compatible: at minimum notify receiver
+			_ = hub.SendToUser(req.ReceiverID, "invite_received", invite)
 		}
 	}
 
@@ -682,8 +688,29 @@ func (h *Handler) AcceptInvite(c *gin.Context) {
 
 	invite, err := h.inviteService.AcceptInvite(uint(inviteID), userID)
 	if err != nil {
+		if errors.Is(err, services.ErrInviteExpired) {
+			// Fetch details to broadcast expiration
+			expiredInvite, getErr := h.inviteService.GetInviteByID(uint(inviteID))
+			if getErr == nil && h.hub != nil {
+				if hub, ok := h.hub.(*websocket.MultiplayerHub); ok {
+					_ = hub.BroadcastToGame(expiredInvite.GameID, websocket.TypeInviteExpired, expiredInvite)
+					_ = hub.SendToUser(expiredInvite.SenderID, websocket.TypeInviteExpired, expiredInvite)
+					_ = hub.SendToUser(expiredInvite.ReceiverID, websocket.TypeInviteExpired, expiredInvite)
+				}
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invite expired"})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Broadcast acceptance to all players in the game room
+	if h.hub != nil {
+		if hub, ok := h.hub.(*websocket.MultiplayerHub); ok {
+			_ = hub.BroadcastToGame(invite.GameID, websocket.TypeInviteAccepted, invite)
+			_ = hub.SendToUser(invite.SenderID, websocket.TypeInviteAccepted, invite)
+		}
 	}
 
 	c.JSON(http.StatusOK, invite)
@@ -700,8 +727,28 @@ func (h *Handler) DeclineInvite(c *gin.Context) {
 
 	invite, err := h.inviteService.DeclineInvite(uint(inviteID), userID)
 	if err != nil {
+		if errors.Is(err, services.ErrInviteExpired) {
+			expiredInvite, getErr := h.inviteService.GetInviteByID(uint(inviteID))
+			if getErr == nil && h.hub != nil {
+				if hub, ok := h.hub.(*websocket.MultiplayerHub); ok {
+					_ = hub.BroadcastToGame(expiredInvite.GameID, websocket.TypeInviteExpired, expiredInvite)
+					_ = hub.SendToUser(expiredInvite.SenderID, websocket.TypeInviteExpired, expiredInvite)
+					_ = hub.SendToUser(expiredInvite.ReceiverID, websocket.TypeInviteExpired, expiredInvite)
+				}
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invite expired"})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Broadcast decline to all players in the game room
+	if h.hub != nil {
+		if hub, ok := h.hub.(*websocket.MultiplayerHub); ok {
+			_ = hub.BroadcastToGame(invite.GameID, websocket.TypeInviteDeclined, invite)
+			_ = hub.SendToUser(invite.SenderID, websocket.TypeInviteDeclined, invite)
+		}
 	}
 
 	c.JSON(http.StatusOK, invite)
