@@ -35,6 +35,7 @@ import {
     SPECIAL_TENSES
 } from '../../constants/gameConstants';
 import { multiplayerAPI } from '../../services/multiplayerApi';
+import { toastService } from '../../services/toastService';
 import {
     addCustomTenseGroup,
     addCustomVerbGroup,
@@ -48,6 +49,7 @@ import {
 } from '../../store/slices/gameSlice';
 import { fetchTenses, fetchVerbs } from '../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../store/store';
+import { mapMultiplayerErrorMessage } from '../../utils/multiplayerErrorMessages';
 
 const GameRoom = () => {
     const { t } = useTranslation();
@@ -117,7 +119,7 @@ const GameRoom = () => {
     }, [dispatch, allVerbs.length, allTenses.length]);
 
     useEffect(() => {
-        if (![5, 10, 15].includes(ongoingGameInfo.maxStep)) {
+        if (![5, 10, 15, 20].includes(ongoingGameInfo.maxStep)) {
             dispatch(setOngoingGameInfo({ maxStep: 5 }));
         }
     }, [dispatch, ongoingGameInfo.maxStep]);
@@ -237,9 +239,9 @@ const GameRoom = () => {
         if (canAdvance()) return;
 
         if (isMultiplayer) {
-            // Multiplayer currently supported for Find Error only
-            if (gameType !== 'find-error') {
-                alert('Multiplayer mode is only available for "Find Error" right now.');
+            // Multiplayer currently supported for Find Error and MatchMe
+            if (gameType !== 'find-error' && gameType !== 'matching') {
+                alert('Multiplayer mode is currently available for "Find Error" and "MatchMe" only.');
                 navigate('/games/multiplayer');
                 return;
             }
@@ -284,6 +286,7 @@ const GameRoom = () => {
                     title: gameData.title,
                     game_type: gameData.game_type,
                     max_players: gameData.max_players,
+                    max_steps: ongoingGameInfo.maxStep,
                     difficulty: gameData.difficulty,
                     duration: gameData.duration,
                     config: {
@@ -299,14 +302,20 @@ const GameRoom = () => {
                 sessionStorage.removeItem('multiplayerGameData');
 
                 // Navigate directly to waiting room where invites are handled
-                navigate(`/games/multiplayer/find-error/${game.id}`);
+                if (gameData.game_type === 'matching') {
+                    navigate(`/games/multiplayer/matching/${game.id}`);
+                } else {
+                    navigate(`/games/multiplayer/find-error/${game.id}`);
+                }
             } catch (error: any) {
                 console.error('Failed to create multiplayer game:', error);
                 if (error.response?.status === 401) {
                     alert('Session expired. Please log in again.');
                     navigate('/login');
                 } else {
-                    alert('Failed to create game: ' + (error.response?.data?.error || error.message));
+                    const backendError = error.response?.data?.error;
+                    const friendly = mapMultiplayerErrorMessage(backendError);
+                    toastService.error(friendly || ('Failed to create game: ' + (backendError || error.message)));
                 }
             }
         } else {
@@ -485,14 +494,14 @@ const GameRoom = () => {
                         <Paper sx={{ p: 2 }}>
                             <Stack direction="row" spacing={2} alignItems="center">
                                 <TextField
-                                    label="Nom du groupe"
+                                    label={t('gameRoom.groupName')}
                                     value={newGroupName}
                                     onChange={(e) => setNewGroupName(e.target.value)}
                                     size="small"
                                     fullWidth
                                 />
                                 <Button variant="contained" onClick={handleAddVerbGroup} disabled={!newGroupName || currentVerbs.length === 0}>
-                                    Ajouter
+                                    {t('gameRoom.add')}
                                 </Button>
                                 <IconButton onClick={() => setAddVerbMode(false)}>
                                     <Close />
@@ -627,7 +636,7 @@ const GameRoom = () => {
                     {customTenseGroups.length > 0 && (
                         <Box>
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                Groupes personnalisés
+                                {t('gameRoom.customGroups')}
                             </Typography>
                             <Stack direction="row" spacing={1} flexWrap="wrap">
                                 {customTenseGroups.map((group) => {
@@ -650,7 +659,7 @@ const GameRoom = () => {
                     {/* Preset Tense Groups */}
                     <Box>
                         <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            Groupes prédéfinis
+                            {t('gameRoom.presetGroups')}
                         </Typography>
                         <Stack direction="row" spacing={1} flexWrap="wrap">
                             {PRESET_TENSE_GROUPS.map((group) => {
@@ -673,14 +682,14 @@ const GameRoom = () => {
                         <Paper sx={{ p: 2 }}>
                             <Stack direction="row" spacing={2} alignItems="center">
                                 <TextField
-                                    label="Nom du groupe"
+                                    label={t('gameRoom.groupName')}
                                     value={newGroupName}
                                     onChange={(e) => setNewGroupName(e.target.value)}
                                     size="small"
                                     fullWidth
                                 />
                                 <Button variant="contained" onClick={handleAddTenseGroup} disabled={!newGroupName || currentTenses.length === 0}>
-                                    Ajouter
+                                    {t('gameRoom.add')}
                                 </Button>
                                 <IconButton onClick={() => setAddTenseMode(false)}>
                                     <Close />
@@ -705,14 +714,15 @@ const GameRoom = () => {
                     <FormControl variant="filled" sx={{ minWidth: 200 }}>
                         <InputLabel>{t('gameRoom.numberOfQuestions')}</InputLabel>
                         <Select value={ongoingGameInfo.maxStep.toString()} onChange={handleStepsChange}>
-                            <MenuItem value="5">5 questions</MenuItem>
-                            <MenuItem value="10">10 questions</MenuItem>
-                            <MenuItem value="15">15 questions</MenuItem>
+                            <MenuItem value="5">5 {t('gameRoom.questions')}</MenuItem>
+                            <MenuItem value="10">10 {t('gameRoom.questions')}</MenuItem>
+                            <MenuItem value="15">15 {t('gameRoom.questions')}</MenuItem>
+                            <MenuItem value="20">20 {t('gameRoom.questions')}</MenuItem>
                         </Select>
                     </FormControl>
 
                     <FormControl variant="filled" sx={{ minWidth: 200 }}>
-                        <InputLabel>Vitesse</InputLabel>
+                        <InputLabel>{t('gameRoom.timePerQuestion')}</InputLabel>
                         <Select value={ongoingGameInfo.maxTime.toString()} onChange={handleSpeedChange}>
                             {GAME_SPEEDS.map((speed) => (
                                 <MenuItem key={speed.value} value={speed.value}>

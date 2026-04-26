@@ -87,6 +87,19 @@ func (h *Handler) PresencePing(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// PresenceOffline immediately marks the current user as offline.
+// Called by the frontend on explicit logout so the status updates instantly
+// without waiting for the WebSocket to close or the Redis TTL to expire.
+func (h *Handler) PresenceOffline(c *gin.Context) {
+	userID := c.GetUint("userID")
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	h.DeletePresenceKey(userID)
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
 // DeletePresenceKey removes a user's presence key (dev utility)
 func (h *Handler) DeletePresenceKey(userID uint) {
 	ctx := context.Background()

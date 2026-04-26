@@ -16,15 +16,83 @@ type MultiplayerService struct {
 	db *gorm.DB
 }
 
+var activeHostStatuses = []models.MultiplayerGameStatus{
+	models.GameStatusWaiting,
+	models.GameStatusStarting,
+	models.GameStatusInProgress,
+}
+
+var activeLobbyStatuses = []models.MultiplayerGameStatus{
+	models.GameStatusWaiting,
+	models.GameStatusStarting,
+}
+
 func NewMultiplayerService(db *gorm.DB) *MultiplayerService {
 	return &MultiplayerService{
 		db: db,
 	}
 }
 
+// getActiveHostedGameID returns an active game ID hosted by this user, if any.
+func (ms *MultiplayerService) getActiveHostedGameID(userID uint) (string, error) {
+	var hostedGame models.MultiplayerGame
+	err := ms.db.
+		Where("host_id = ? AND status IN ?", userID, activeHostStatuses).
+		Order("created_at DESC").
+		First(&hostedGame).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+
+	return hostedGame.ID, nil
+}
+
+// getActiveLobbyGameID returns a waiting/starting lobby game ID where user is still active, if any.
+func (ms *MultiplayerService) getActiveLobbyGameID(userID uint) (string, error) {
+	type activeLobbyRow struct {
+		GameID string
+	}
+
+	var row activeLobbyRow
+	err := ms.db.
+		Table("multiplayer_game_players AS mgp").
+		Select("mgp.game_id").
+		Joins("JOIN multiplayer_games mg ON mg.id = mgp.game_id").
+		Where("mgp.user_id = ? AND mgp.left_at IS NULL AND mg.status IN ?", userID, activeLobbyStatuses).
+		Order("mg.created_at DESC").
+		Limit(1).
+		Take(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+
+	return row.GameID, nil
+}
+
 // CreateGame creates a new multiplayer game session
-func (ms *MultiplayerService) CreateGame(hostID uint, gameType, title string, maxPlayers int, difficulty string, duration int, config models.GameConfig) (*models.MultiplayerGame, error) {
+func (ms *MultiplayerService) CreateGame(hostID uint, gameType, title string, maxPlayers int, maxSteps int, difficulty string, duration int, config models.GameConfig) (*models.MultiplayerGame, error) {
+	if activeHostedGameID, err := ms.getActiveHostedGameID(hostID); err != nil {
+		return nil, err
+	} else if activeHostedGameID != "" {
+		return nil, errors.New("you are already hosting an active game")
+	}
+
+	if activeLobbyGameID, err := ms.getActiveLobbyGameID(hostID); err != nil {
+		return nil, err
+	} else if activeLobbyGameID != "" {
+		return nil, errors.New("you are already in another game lobby")
+	}
+
 	gameID := uuid.New().String()
+	if maxSteps == 0 {
+		maxSteps = 10
+	}
 
 	game := &models.MultiplayerGame{
 		ID:         gameID,
@@ -32,6 +100,7 @@ func (ms *MultiplayerService) CreateGame(hostID uint, gameType, title string, ma
 		Title:      title,
 		HostID:     hostID,
 		MaxPlayers: maxPlayers,
+		MaxSteps:   maxSteps,
 		Difficulty: difficulty,
 		Duration:   duration,
 		Status:     models.GameStatusWaiting,
@@ -135,18 +204,24 @@ func (ms *MultiplayerService) JoinGame(gameID string, userID uint) (*models.Mult
 		return nil, false, errors.New("game is not accepting new players")
 	}
 
+	// Idempotent join: if already active in this game, return current player immediately.
+	var existingPlayer models.MultiplayerGamePlayer
+	if err := ms.db.Where("game_id = ? AND user_id = ? AND left_at IS NULL", gameID, userID).Preload("User").First(&existingPlayer).Error; err == nil {
+		return &existingPlayer, false, nil // already in game
+	}
+
+	if activeLobbyGameID, err := ms.getActiveLobbyGameID(userID); err != nil {
+		return nil, false, err
+	} else if activeLobbyGameID != "" && activeLobbyGameID != gameID {
+		return nil, false, errors.New("you are already in another game lobby")
+	}
+
 	// Count current players
 	var playerCount int64
 	ms.db.Model(&models.MultiplayerGamePlayer{}).Where("game_id = ? AND left_at IS NULL", gameID).Count(&playerCount)
 
 	if int(playerCount) >= game.MaxPlayers {
 		return nil, false, errors.New("game is full")
-	}
-
-	// Check if player already joined (idempotent join)
-	var existingPlayer models.MultiplayerGamePlayer
-	if err := ms.db.Where("game_id = ? AND user_id = ? AND left_at IS NULL", gameID, userID).Preload("User").First(&existingPlayer).Error; err == nil {
-		return &existingPlayer, false, nil // already in game
 	}
 
 	// Check if player previously left and is rejoining
@@ -553,8 +628,18 @@ func getConjugation(conjugations *models.VerbConjugation, tense string, person i
 	return ""
 }
 
-// GenerateRoundData generates round data for find-error game type
+// GenerateRoundData generates round data based on game type.
 func (ms *MultiplayerService) GenerateRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if game.GameType == "matching" {
+		return ms.generateMatchingRoundData(game)
+	}
+
+	// Default to find-error generation.
+	return ms.generateFindErrorRoundData(game)
+}
+
+// generateFindErrorRoundData generates round data for find-error game type.
+func (ms *MultiplayerService) generateFindErrorRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
 	if len(game.Config.Verbs) == 0 || len(game.Config.Tenses) == 0 {
 		return models.RoundData{}, errors.New("game config missing verbs or tenses")
 	}
@@ -674,6 +759,76 @@ func (ms *MultiplayerService) GenerateRoundData(game *models.MultiplayerGame) (m
 	return roundData, nil
 }
 
+// generateMatchingRoundData generates round data for matching game type.
+func (ms *MultiplayerService) generateMatchingRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if len(game.Config.Verbs) == 0 || len(game.Config.Tenses) == 0 {
+		return models.RoundData{}, errors.New("game config missing verbs or tenses")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+
+	selectedTenses := append([]string{}, game.Config.Tenses...)
+	rand.Shuffle(len(selectedTenses), func(i, j int) {
+		selectedTenses[i], selectedTenses[j] = selectedTenses[j], selectedTenses[i]
+	})
+	if len(selectedTenses) > 3 {
+		selectedTenses = selectedTenses[:3]
+	}
+
+	pronouns := []string{"je/j' ", "tu ", "il/elle ", "nous ", "vous ", "ils/elles "}
+	matchItems := make([]models.MatchRoundItem, 0, len(selectedTenses))
+	matches := make(map[string]string)
+
+	for idx, tense := range selectedTenses {
+		attempts := 0
+		for attempts < 50 {
+			attempts++
+
+			verbInfinitive := game.Config.Verbs[rand.Intn(len(game.Config.Verbs))]
+			var verb models.Verb
+			if err := ms.db.Where("infinitive = ?", verbInfinitive).Preload("Conjugations").First(&verb).Error; err != nil {
+				continue
+			}
+			if verb.Conjugations == nil {
+				continue
+			}
+
+			pronounIndex := rand.Intn(6) + 1
+			conjugation := getConjugation(verb.Conjugations, tense, pronounIndex)
+			if conjugation == "" {
+				continue
+			}
+
+			tenseID := fmt.Sprintf("tense-%d", idx)
+			conjugationID := fmt.Sprintf("conj-%d", idx)
+			matchItems = append(matchItems, models.MatchRoundItem{
+				ID:           conjugationID,
+				Tense:        tense,
+				Verb:         verbInfinitive,
+				Conjugation:  conjugation,
+				Pronoun:      pronouns[pronounIndex-1],
+				PronounIndex: pronounIndex,
+			})
+			matches[tenseID] = conjugationID
+			break
+		}
+	}
+
+	if len(matchItems) < 2 {
+		return models.RoundData{}, errors.New("could not generate enough matching items")
+	}
+
+	rand.Shuffle(len(matchItems), func(i, j int) {
+		matchItems[i], matchItems[j] = matchItems[j], matchItems[i]
+	})
+
+	return models.RoundData{
+		MatchItems: matchItems,
+		Matches:    matches,
+		Tense:      "matching",
+	}, nil
+}
+
 // CreateRound creates a new round for the game
 func (ms *MultiplayerService) CreateRound(gameID string, roundNumber int, roundData models.RoundData) (*models.MultiplayerGameRound, error) {
 	round := &models.MultiplayerGameRound{
@@ -718,7 +873,7 @@ func (ms *MultiplayerService) SubmitAnswer(roundID uint, playerID uint, answer s
 	}
 
 	// Update player's total score
-	if isCorrect {
+	if points > 0 {
 		ms.db.Model(&models.MultiplayerGamePlayer{}).
 			Where("id = ?", playerID).
 			Update("score", gorm.Expr("score + ?", points))

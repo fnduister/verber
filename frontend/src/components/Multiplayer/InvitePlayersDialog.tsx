@@ -1,19 +1,24 @@
+import { Star, StarBorder } from '@mui/icons-material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import {
     Avatar,
     Box,
     Button,
+    Chip,
     CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     FormControlLabel,
+    IconButton,
     Radio,
     RadioGroup,
+    Tooltip,
     Typography
 } from '@mui/material';
 import { useState } from 'react';
+import { getFavoritePlayerIds, toggleFavoritePlayer } from '../../utils/favoritePlayers';
 
 interface Player {
     id: number;
@@ -40,6 +45,14 @@ const InvitePlayersDialog: React.FC<InvitePlayersDialogProps> = ({
 }) => {
     const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
     const [sending, setSending] = useState(false);
+    const [favoritePlayerIds, setFavoritePlayerIds] = useState<number[]>(() => getFavoritePlayerIds());
+
+    const favoritePlayers = onlinePlayers.filter((player) => favoritePlayerIds.includes(player.id));
+    const otherPlayers = onlinePlayers.filter((player) => !favoritePlayerIds.includes(player.id));
+
+    const handleToggleFavorite = (playerId: number) => {
+        setFavoritePlayerIds(toggleFavoritePlayer(playerId));
+    };
 
     const handleSendInvite = async () => {
         if (selectedPlayerId === null) return;
@@ -94,43 +107,72 @@ const InvitePlayersDialog: React.FC<InvitePlayersDialogProps> = ({
                             value={selectedPlayerId}
                             onChange={(e) => setSelectedPlayerId(Number(e.target.value))}
                         >
-                            {onlinePlayers.map((player) => (
-                                <FormControlLabel
-                                    key={player.id}
-                                    value={player.id}
-                                    control={<Radio />}
-                                    label={
-                                        <Box display="flex" alignItems="center" gap={2} py={0.5}>
-                                            <Avatar
-                                                src={player.avatar}
-                                                alt={player.username}
-                                                sx={{ width: 40, height: 40 }}
-                                            >
-                                                {player.username.charAt(0).toUpperCase()}
-                                            </Avatar>
-                                            <Box>
-                                                <Typography variant="body1">
-                                                    {player.username}
-                                                </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Level {player.level}
-                                                </Typography>
+                            {favoritePlayers.length > 0 && (
+                                <Box sx={{ mb: 1 }}>
+                                    <Chip
+                                        icon={<Star sx={{ color: '#f59e0b !important' }} />}
+                                        label={`Favorites (${favoritePlayers.length})`}
+                                        size="small"
+                                        sx={{ fontWeight: 'bold' }}
+                                    />
+                                </Box>
+                            )}
+                            {[...favoritePlayers, ...otherPlayers].map((player) => {
+                                const isFavorite = favoritePlayerIds.includes(player.id);
+
+                                return (
+                                    <FormControlLabel
+                                        key={player.id}
+                                        value={player.id}
+                                        control={<Radio />}
+                                        label={
+                                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} py={0.5} width="100%">
+                                                <Box display="flex" alignItems="center" gap={2}>
+                                                    <Avatar
+                                                        src={player.avatar}
+                                                        alt={player.username}
+                                                        sx={{ width: 40, height: 40 }}
+                                                    >
+                                                        {player.username.charAt(0).toUpperCase()}
+                                                    </Avatar>
+                                                    <Box>
+                                                        <Typography variant="body1">
+                                                            {player.username}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Level {player.level}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Tooltip title={isFavorite ? 'Remove favorite' : 'Add favorite'}>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            handleToggleFavorite(player.id);
+                                                        }}
+                                                        sx={{ color: isFavorite ? '#f59e0b' : 'text.secondary' }}
+                                                    >
+                                                        {isFavorite ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
+                                                    </IconButton>
+                                                </Tooltip>
                                             </Box>
-                                        </Box>
-                                    }
-                                    sx={{
-                                        border: '1px solid',
-                                        borderColor: 'divider',
-                                        borderRadius: 1,
-                                        mb: 1,
-                                        mx: 0,
-                                        px: 2,
-                                        '&:hover': {
-                                            bgcolor: 'action.hover',
-                                        },
-                                    }}
-                                />
-                            ))}
+                                        }
+                                        sx={{
+                                            border: '1px solid',
+                                            borderColor: isFavorite ? '#f59e0b' : 'divider',
+                                            borderRadius: 1,
+                                            mb: 1,
+                                            mx: 0,
+                                            px: 2,
+                                            '&:hover': {
+                                                bgcolor: 'action.hover',
+                                            },
+                                        }}
+                                    />
+                                );
+                            })}
                         </RadioGroup>
                     </>
                 )}

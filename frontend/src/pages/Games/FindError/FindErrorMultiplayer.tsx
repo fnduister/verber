@@ -1,7 +1,6 @@
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
-    Alert, Avatar, Box, Button, Chip, CircularProgress, Container, Divider, Grid, LinearProgress, Paper, Stack, Typography
+    Alert, Box, Button, CircularProgress,
+    LinearProgress, Paper, Stack, Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
@@ -9,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import InvitePopup from '../../../components/Invites/InvitePopup';
+import MultiplayerGameResults from '../../../components/Multiplayer/MultiplayerGameResults';
+import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
 import WaitingRoom from '../../../components/Multiplayer/WaitingRoom';
 import { useMultiplayerWebSocket } from '../../../hooks/useMultiplayerWebSocket';
 import { Invite, inviteAPI, userAPI } from '../../../services/api';
@@ -27,6 +28,7 @@ export interface FindErrorGameData {
     correctAnswer: string;
     verb?: string;
     tense?: string;
+    correctWords?: string[];
 }
 
 type FinalResultsPlayer = {
@@ -48,15 +50,14 @@ const FindErrorMultiplayer: React.FC = () => {
     const [game, setGame] = useState<MultiplayerGame | null>(null);
     const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
     const [gameData, setGameData] = useState<FindErrorGameData | null>(null);
-    const [selectedWord, setSelectedWord] = useState<string | null>(null);
     const [hasAnswered, setHasAnswered] = useState(false);
+    const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showFinalResults, setShowFinalResults] = useState(false);
     const [finalResults, setFinalResults] = useState<unknown>(null);
     const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
-    const [answerResult, setAnswerResult] = useState<{word: string, correct: boolean} | null>(null);
     const [allPlayersAnswered, setAllPlayersAnswered] = useState(false);
     const [roundWinners, setRoundWinners] = useState<number[]>([]);
     const [roundScoreGains, setRoundScoreGains] = useState<{[userId: number]: number}>({});
@@ -179,8 +180,7 @@ const FindErrorMultiplayer: React.FC = () => {
             // Reset all state for new round - ORDER MATTERS!
             // 1. Update data first
             setHasAnswered(false); // Enable selection
-            setSelectedWord(null); // Clear selection
-            setAnswerResult(null); // Clear answer feedback
+            setSelectedWords(new Set()); // Clear selection
             setAllPlayersAnswered(false); // Reset all answered flag
             setRoundWinners([]); // Clear round winners
             setRoundScoreGains({}); // Clear score gains
@@ -273,8 +273,22 @@ const FindErrorMultiplayer: React.FC = () => {
                 // Keep everyone’s waiting room in sync
                 if (receiver) {
                     setPendingInvites((prev) => {
-                        const exists = prev.some((p) => p?.inviteId === invite.id || p?.id === invite.id);
-                        if (exists) return prev;
+                        const existingIndex = prev.findIndex(
+                            (p) => p?.inviteId === invite.id || p?.receiver?.id === receiver.id
+                        );
+
+                        if (existingIndex >= 0) {
+                            // Merge websocket invite metadata into existing optimistic entry.
+                            const updated = [...prev];
+                            updated[existingIndex] = {
+                                ...updated[existingIndex],
+                                id: invite.id,
+                                inviteId: invite.id,
+                                receiver,
+                            };
+                            return updated;
+                        }
+
                         return [
                             ...prev,
                             {
@@ -291,19 +305,37 @@ const FindErrorMultiplayer: React.FC = () => {
             }
 
             if (type === 'invite_accepted') {
-                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id));
+                setPendingInvites((prev) =>
+                    prev.filter(
+                        (p) =>
+                            (p?.inviteId ?? p?.id) !== invite.id &&
+                            (!receiver || p?.receiver?.id !== receiver.id)
+                    )
+                );
                 toastService.success(`${receiverName} accepted the invite`);
                 return;
             }
 
             if (type === 'invite_declined') {
-                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id));
+                setPendingInvites((prev) =>
+                    prev.filter(
+                        (p) =>
+                            (p?.inviteId ?? p?.id) !== invite.id &&
+                            (!receiver || p?.receiver?.id !== receiver.id)
+                    )
+                );
                 toastService.info(`${receiverName} declined the invite`);
                 return;
             }
 
             if (type === 'invite_expired') {
-                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id));
+                setPendingInvites((prev) =>
+                    prev.filter(
+                        (p) =>
+                            (p?.inviteId ?? p?.id) !== invite.id &&
+                            (!receiver || p?.receiver?.id !== receiver.id)
+                    )
+                );
                 toastService.warning(`Invite to ${receiverName} expired`);
             }
         },
@@ -427,27 +459,36 @@ const FindErrorMultiplayer: React.FC = () => {
     }, [currentRound, hasAnswered, game?.config.max_time]);
 
     const handleSelectWord = (word: string) => {
-        if (hasAnswered) {
+        if (hasAnswered || isSubmittingRef.current) {
             return;
         }
-        if (isSubmittingRef.current) {
-            return;
-        }
-        
-        setSelectedWord(word);
+
+        setSelectedWords(prev => {
+            const updated = new Set(prev);
+            if (updated.has(word)) {
+                updated.delete(word);
+            } else {
+                updated.add(word);
+            }
+            return updated;
+        });
     };
 
-    const handleSubmitAnswer = async (answer: string, isCorrect: boolean) => {
-        if (!gameId || !currentRound || hasAnswered || isSubmittingRef.current) {
+    const handleSubmitSelection = () => {
+        if (!gameId || !currentRound || hasAnswered || isSubmittingRef.current || !gameData) {
+            return;
+        }
+        void handleSubmitAnswer(Array.from(selectedWords));
+    };
+
+    const handleSubmitAnswer = async (selectedList: string[]) => {
+        if (!gameId || !currentRound || hasAnswered || isSubmittingRef.current || !gameData) {
             return;
         }
 
         isSubmittingRef.current = true;
         setHasAnswered(true);
-        
-        // Set answer result for visual feedback
-        setAnswerResult({ word: answer, correct: isCorrect });
-        
+
         // Mark current player as answered
         if (currentUser?.id) {
             setPlayersAnswered(prev => new Set(prev).add(currentUser.id));
@@ -456,22 +497,29 @@ const FindErrorMultiplayer: React.FC = () => {
         try {
             const maxTime = game?.config.max_time || 30;
             const timeSpent = maxTime - timeLeft;
-            
-            // Better scoring formula:
-            // - Correct answer: base 100 points + time bonus (up to 100 more)
-            // - Time bonus calculated as: (timeRemaining / maxTime) * 100
-            // - Faster answers get more points
-            // - Wrong answer: 0 points
+
+            // Count correct identifications:
+            // - 1 point if error word is selected
+            // - 1 point for each correct word (non-error) selected
+            let correctCount = 0;
+            if (selectedList.includes(gameData.correctAnswer)) {
+                correctCount++; // Found the error
+            }
+            // Count correct words (non-error words)
+            const correctWords = gameData.visibleWords.filter(w => w !== gameData.correctAnswer);
+            correctCount += correctWords.filter(w => selectedList.includes(w)).length;
+
+            // Scoring formula: points = correctCount * basePoints + timeBonus
             let points = 0;
-            if (isCorrect) {
+            if (correctCount >= 1) {
                 const basePoints = 100;
                 const timeBonus = Math.floor((timeLeft / maxTime) * 100);
-                points = basePoints + timeBonus;
+                points = basePoints * correctCount + timeBonus;
             }
 
             const payload = {
-                answer,
-                is_correct: isCorrect,
+                answer: JSON.stringify(selectedList),
+                is_correct: correctCount === gameData.visibleWords.length,
                 points,
                 time_spent: timeSpent * 1000,
             };
@@ -504,8 +552,7 @@ const FindErrorMultiplayer: React.FC = () => {
         ) {
             autoSubmittedRef.current = true;
             isAutoSubmittingRef.current = true;
-            const answerToSend = selectedWord ?? 'NO_ANSWER';
-            handleSubmitAnswer(answerToSend, false);
+            handleSubmitAnswer(Array.from(selectedWords));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeLeft, currentRound, hasAnswered]);
@@ -513,12 +560,6 @@ const FindErrorMultiplayer: React.FC = () => {
     // Keep round results visible until the next onRoundStart arrives
     // This avoids returning to the previous round's UI where the answer
     // appears already set and the timer isn't reset yet.
-
-    const handleAnswerSubmit = () => {
-        if (!selectedWord || !gameData) return;
-        const isCorrect = selectedWord === gameData.correctAnswer;
-        handleSubmitAnswer(selectedWord, isCorrect);
-    };
 
     const handleLeaveGame = async () => {
         if (!gameId) return;
@@ -566,13 +607,20 @@ const FindErrorMultiplayer: React.FC = () => {
             await inviteAPI.sendInvite(playerId, gameId);
             const player = onlinePlayers.find((p) => p.id === playerId);
             if (player) {
-                setPendingInvites((prev) => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        receiver: player,
-                    },
-                ]);
+                setPendingInvites((prev) => {
+                    const exists = prev.some((p) => p?.receiver?.id === playerId);
+                    if (exists) {
+                        return prev;
+                    }
+
+                    return [
+                        ...prev,
+                        {
+                            id: Date.now(),
+                            receiver: player,
+                        },
+                    ];
+                });
                 toastService.success(`Invite sent to ${player.username}!`);
             }
         } catch (error: unknown) {
@@ -694,206 +742,7 @@ const FindErrorMultiplayer: React.FC = () => {
     // Final results phase
     if (showFinalResults && finalResults) {
         const results = finalResults as { players?: FinalResultsPlayer[] };
-        const sortedPlayers = [...(results.players || [])].sort((a, b) => b.score - a.score);
-        const topPlayer = sortedPlayers[0];
-        
-        return (
-            <Box sx={{ 
-                minHeight: '100vh',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                py: 6,
-                px: 2
-            }}>
-                <Container maxWidth="md">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <Paper sx={{ 
-                            p: 4, 
-                            textAlign: 'center',
-                            background: 'linear-gradient(145deg, #ffffff, #f5f5f5)',
-                            borderRadius: 4,
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                        }}>
-                            {/* Confetti effect */}
-                            <Box sx={{ mb: 3 }}>
-                                <motion.div
-                                    animate={{
-                                        rotate: [0, 360],
-                                        scale: [1, 1.2, 1],
-                                    }}
-                                    transition={{
-                                        duration: 2,
-                                        repeat: Infinity,
-                                        repeatDelay: 1
-                                    }}
-                                >
-                                    <EmojiEventsIcon sx={{ fontSize: 100, color: '#FFD700', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
-                                </motion.div>
-                            </Box>
-                            
-                            <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#764ba2' }}>
-                                {t('games.multiplayer.gameFinished')}
-                            </Typography>
-                            
-                            {topPlayer && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                >
-                                    <Box sx={{ mb: 4, mt: 3 }}>
-                                        <Typography variant="h5" color="text.secondary" gutterBottom>
-                                            🎊 Winner 🎊
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
-                                            <Avatar
-                                                src={topPlayer.user?.avatar}
-                                                sx={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    border: '4px solid #FFD700',
-                                                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)'
-                                                }}
-                                            >
-                                                {topPlayer.user.username[0].toUpperCase()}
-                                            </Avatar>
-                                            <Box>
-                                                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#764ba2' }}>
-                                                    {topPlayer.user.username}
-                                                </Typography>
-                                                <Typography variant="h6" color="text.secondary">
-                                                    {topPlayer.score} {t('games.points')}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </motion.div>
-                            )}
-
-                            {/* Leaderboard */}
-                <Divider sx={{ my: 4 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#764ba2' }}>
-                        {t('games.multiplayer.leaderboard')}
-                    </Typography>
-                </Divider>
-
-                <Box sx={{ mb: 4 }}>
-                    {sortedPlayers.map((player, index) => (
-                        <motion.div
-                            key={player.user_id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 * index }}
-                        >
-                            <Paper
-                                elevation={index === 0 ? 8 : 2}
-                                sx={{
-                                    p: 2,
-                                    mb: 2,
-                                    background: index === 0
-                                        ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
-                                        : index === 1
-                                        ? 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)'
-                                        : index === 2
-                                        ? 'linear-gradient(135deg, #CD7F32 0%, #B87333 100%)'
-                                        : 'white',
-                                    border: player.user_id === currentUser?.id ? '3px solid #667eea' : 'none',
-                                    color: index < 3 ? 'white' : 'inherit',
-                                    position: 'relative',
-                                    overflow: 'hidden'
-                                }}
-                            >
-                                {player.user_id === currentUser?.id && (
-                                    <Chip
-                                        label={t('games.multiplayer.you')}
-                                        size="small"
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 8,
-                                            right: 8,
-                                            backgroundColor: '#667eea',
-                                            color: 'white',
-                                            fontWeight: 'bold'
-                                        }}
-                                    />
-                                )}
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Typography
-                                        variant="h4"
-                                        sx={{
-                                            fontWeight: 'bold',
-                                            minWidth: 40,
-                                            opacity: 0.8
-                                        }}
-                                    >
-                                        #{index + 1}
-                                    </Typography>
-                                    <Avatar
-                                        src={player.user?.avatar}
-                                        sx={{
-                                            width: 60,
-                                            height: 60,
-                                            bgcolor: index < 3 ? 'rgba(255,255,255,0.3)' : '#667eea',
-                                            border: index < 3 ? '3px solid rgba(255,255,255,0.5)' : 'none'
-                                        }}
-                                    >
-                                        {player.user.username[0].toUpperCase()}
-                                    </Avatar>
-                                    <Box sx={{ flexGrow: 1 }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                            {player.user.username}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                            {t('games.multiplayer.level', { level: player.user.level })}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ textAlign: 'right' }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                            {player.score}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                            {t('games.points')}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </Paper>
-                        </motion.div>
-                    ))}
-                </Box>
-
-                {/* Action Buttons */}
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <Button
-                        variant="contained"
-                        size="large"
-                        onClick={() => navigate('/games/multiplayer')}
-                        sx={{
-                            minWidth: 200,
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
-                            }
-                        }}
-                    >
-                        {t('games.multiplayer.backToLobby')}
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={() => navigate('/leaderboard')}
-                        sx={{ minWidth: 200 }}
-                    >
-                        {t('nav.leaderboard')}
-                    </Button>
-                </Box>
-            </Paper>
-        </motion.div>
-    </Container>
-</Box>
-        );
+        return <MultiplayerGameResults players={results.players || []} />;
     }
 
     // Active game phase
@@ -908,238 +757,13 @@ const FindErrorMultiplayer: React.FC = () => {
     return (
         <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
             {/* Header with scores */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Grid container spacing={2} alignItems="center">
-                    {game.players.map((player) => {
-                        const noOneWon = roundWinners.includes(-1);
-                        const everyoneWon = roundWinners.length > 0 && roundWinners.length === game.players.length && !noOneWon;
-                        const isWinner = roundWinners.includes(player.user_id);
-                        const hasAnswered = playersAnswered.has(player.user_id);
-                        const scoreGain = roundScoreGains[player.user_id] || 0;
-                        
-                        // Determine animation type
-                        let animation = {};
-                        let animationRepeat = 0;
-                        
-                        if (noOneWon) {
-                            // Sad shake animation for everyone
-                            animation = {
-                                x: [-5, 5, -5, 5, 0],
-                                rotate: [-2, 2, -2, 2, 0],
-                            };
-                            animationRepeat = 2;
-                        } else if (everyoneWon) {
-                            // Happy bounce for everyone
-                            animation = {
-                                y: [0, -15, 0],
-                                scale: [1, 1.1, 1],
-                            };
-                            animationRepeat = 3;
-                        } else if (isWinner) {
-                            // Winner celebration
-                            animation = {
-                                scale: [1, 1.15, 1],
-                                rotate: [0, 5, -5, 0],
-                            };
-                            animationRepeat = 3;
-                        }
-                        
-                        return (
-                            <Grid item xs={12 / game.players.length} key={player.user_id}>
-                                <motion.div
-                                    animate={animation}
-                                    transition={{
-                                        duration: 0.6,
-                                        repeat: animationRepeat,
-                                    }}
-                                >
-                                    <Box textAlign="center">
-                                        <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                                            {/* Avatar with animations */}
-                                            <motion.div
-                                                animate={hasAnswered ? {
-                                                    scale: [1, 0.9, 1],
-                                                    opacity: [1, 0.7, 1],
-                                                } : {}}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                            <Avatar
-                                                    src={player.user.avatar}
-                                                    sx={{
-                                                        width: 56,
-                                                        height: 56,
-                                                        mx: 'auto',
-                                                        mb: 1,
-                                                        border: player.user_id === currentUser?.id
-                                                            ? '3px solid'
-                                                            : hasAnswered
-                                                            ? '2px solid'
-                                                            : 'none',
-                                                        borderColor: player.user_id === currentUser?.id
-                                                            ? 'primary.main'
-                                                            : 'success.main',
-                                                        boxShadow: (isWinner && !noOneWon) 
-                                                            ? '0 0 25px rgba(255, 215, 0, 0.9)' 
-                                                            : hasAnswered
-                                                            ? '0 0 15px rgba(76, 175, 80, 0.6)'
-                                                            : 'none',
-                                                        opacity: hasAnswered ? 0.8 : 1,
-                                                        filter: hasAnswered ? 'grayscale(30%)' : 'none',
-                                                    }}
-                                                >
-                                                    {player.user.username[0].toUpperCase()}
-                                                </Avatar>
-                                            </motion.div>
-                                            
-                                            {/* Winner trophy - only show for actual winners, not when no one won */}
-                                            {isWinner && !noOneWon && (
-                                                <motion.div
-                                                    initial={{ scale: 0, rotate: -180 }}
-                                                    animate={{ scale: 1, rotate: 0 }}
-                                                    transition={{ type: "spring", stiffness: 200 }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: -8,
-                                                        right: -8,
-                                                    }}
-                                                >
-                                                    <Box sx={{ 
-                                                        bgcolor: everyoneWon ? '#4caf50' : '#FFD700',
-                                                        borderRadius: '50%',
-                                                        width: 32,
-                                                        height: 32,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                                                    }}>
-                                                        <EmojiEventsIcon sx={{ color: 'white', fontSize: 20 }} />
-                                                    </Box>
-                                                </motion.div>
-                                            )}
-                                            
-                                            {/* Sad indicator when no one won */}
-                                            {noOneWon && (
-                                                <motion.div
-                                                    initial={{ scale: 0 }}
-                                                    animate={{ scale: 1 }}
-                                                    transition={{ type: "spring", stiffness: 200 }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: -8,
-                                                        right: -8,
-                                                    }}
-                                                >
-                                                    <Box sx={{ 
-                                                        bgcolor: '#f44336',
-                                                        borderRadius: '50%',
-                                                        width: 32,
-                                                        height: 32,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                                                    }}>
-                                                        <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>
-                                                            ✗
-                                                        </Typography>
-                                                    </Box>
-                                                </motion.div>
-                                            )}
-                                            
-                                            {/* Waiting indicator */}
-                                            {hasAnswered && !allPlayersAnswered && (
-                                                <motion.div
-                                                    initial={{ scale: 0 }}
-                                                    animate={{ scale: 1 }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        bottom: -5,
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
-                                                    }}
-                                                >
-                                                    <Chip
-                                                        icon={<CheckCircleIcon />}
-                                                        label="✓"
-                                                        size="small"
-                                                        sx={{ 
-                                                            height: 20,
-                                                            bgcolor: 'success.main',
-                                                            color: 'white',
-                                                            fontWeight: 'bold',
-                                                            fontSize: '0.7rem',
-                                                            '& .MuiChip-icon': {
-                                                                color: 'white',
-                                                                fontSize: 14
-                                                            }
-                                                        }}
-                                                    />
-                                                </motion.div>
-                                            )}
-                                        </Box>
-                                        
-                                        <Typography variant="body2" noWrap sx={{ fontWeight: isWinner ? 'bold' : 'normal' }}>
-                                            {player.user.username}
-                                        </Typography>
-                                        
-                                        {/* Score with animation */}
-                                        <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                                            <Typography 
-                                                variant="h6" 
-                                                color="primary" 
-                                                sx={{ 
-                                                    fontWeight: isWinner ? 'bold' : 'normal',
-                                                    fontSize: isWinner ? '1.5rem' : '1.25rem',
-                                                    transition: 'all 0.3s ease'
-                                                }}
-                                            >
-                                                {player.score}
-                                            </Typography>
-                                            
-                                            {/* Score gain animation */}
-                                            {scoreGain > 0 && (
-                                                <motion.div
-                                                    initial={{ y: 0, opacity: 1, scale: 0.5 }}
-                                                    animate={{ y: -30, opacity: 0, scale: 1.2 }}
-                                                    transition={{ duration: 1.5, ease: "easeOut" }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
-                                                        top: 0,
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        sx={{
-                                                            color: '#4caf50',
-                                                            fontWeight: 'bold',
-                                                            fontSize: '1.1rem',
-                                                            textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                                        }}
-                                                    >
-                                                        +{scoreGain}
-                                                    </Typography>
-                                                </motion.div>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                </motion.div>
-                            </Grid>
-                        );
-                    })}
-                </Grid>
-                {allPlayersAnswered && !hasAnswered && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                        <Chip
-                            icon={<CheckCircleIcon />}
-                            label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')}
-                            color="success"
-                            sx={{ fontWeight: 'bold' }}
-                        />
-                    </Box>
-                )}
-            </Paper>
+            <MultiplayerScoreBar
+                players={game.players}
+                playersAnswered={playersAnswered}
+                roundScoreGains={roundScoreGains}
+                roundWinners={roundWinners}
+                allPlayersAnswered={allPlayersAnswered}
+            />
 
             {/* Game content */}
             <Paper sx={{ p: 4 }}>
@@ -1211,10 +835,7 @@ const FindErrorMultiplayer: React.FC = () => {
                     sx={{ flexWrap: 'wrap', gap: 2, mb: 4 }}
                 >
                     {gameData.visibleWords.map((word, index) => {
-                        const isSelected = selectedWord === word;
-                        const isAnsweredWord = answerResult?.word === word;
-                        const isCorrect = isAnsweredWord && answerResult?.correct;
-                        const isIncorrect = isAnsweredWord && !answerResult?.correct;
+                        const isSelected = selectedWords.has(word);
                         
                         return (
                             <motion.div
@@ -1227,7 +848,7 @@ const FindErrorMultiplayer: React.FC = () => {
                             >
                                 <Button
                                     onClick={() => handleSelectWord(word)}
-                                    color={isCorrect ? 'success' : isIncorrect ? 'error' : isSelected ? 'primary' : 'secondary'}
+                                    color={isSelected ? 'primary' : 'secondary'}
                                     variant="contained"
                                     disabled={hasAnswered}
                                     sx={{
@@ -1237,28 +858,16 @@ const FindErrorMultiplayer: React.FC = () => {
                                         fontWeight: 'bold',
                                         borderRadius: 3,
                                         textTransform: 'none',
-                                        background: isCorrect
-                                            ? '#4caf50'
-                                            : isIncorrect
-                                            ? '#f44336'
-                                            : isSelected
+                                        background: isSelected
                                             ? 'linear-gradient(145deg, #2196f3, #1976d2)'
                                             : 'linear-gradient(145deg, #ffffff, #f5f5f5)',
-                                        boxShadow: !hasAnswered 
-                                            ? '0 4px 20px rgba(0,0,0,0.1)'
-                                            : isCorrect
-                                            ? '0 4px 20px rgba(76,175,80,0.5)'
-                                            : isIncorrect
-                                            ? '0 4px 20px rgba(244,67,54,0.5)'
-                                            : undefined,
-                                        border: isCorrect
-                                            ? '2px solid #4caf50'
-                                            : isIncorrect
-                                            ? '2px solid #f44336'
-                                            : isSelected
+                                        boxShadow: isSelected
+                                            ? '0 0 25px rgba(33,150,243,0.5)'
+                                            : '0 4px 20px rgba(0,0,0,0.1)',
+                                        border: isSelected
                                             ? '2px solid #1976d2'
                                             : '2px solid #e0e0e0',
-                                        color: (isCorrect || isIncorrect || isSelected) ? '#ffffff' : 'inherit',
+                                        color: isSelected ? '#ffffff' : 'inherit',
                                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                         '&:hover': {
                                             transform: !hasAnswered ? 'translateY(-2px)' : 'none',
@@ -1266,7 +875,7 @@ const FindErrorMultiplayer: React.FC = () => {
                                                 ? '0 6px 25px rgba(0,0,0,0.15)'
                                                 : undefined,
                                         },
-                                        ...(isSelected && !isAnsweredWord && {
+                                        ...(isSelected && {
                                             transform: 'scale(0.98)',
                                             boxShadow: '0 0 25px rgba(33,150,243,0.5)'
                                         })
@@ -1280,18 +889,26 @@ const FindErrorMultiplayer: React.FC = () => {
                 </Stack>
 
                 {/* Submit Button */}
-                {!hasAnswered && selectedWord && (
-                    <Box sx={{ textAlign: 'center' }}>
+                {!hasAnswered && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
                         <Button
                             variant="contained"
+                            color="primary"
                             size="large"
-                            onClick={handleAnswerSubmit}
-                            sx={{ minWidth: 200 }}
+                            onClick={handleSubmitSelection}
+                            disabled={selectedWords.size === 0}
+                            sx={{
+                                minWidth: 200,
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                py: 1.5
+                            }}
                         >
-                            {t('common.submit')}
+                            Submit ({selectedWords.size})
                         </Button>
                     </Box>
                 )}
+
             </Paper>
 
         </Box>

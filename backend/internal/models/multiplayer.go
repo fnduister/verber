@@ -106,6 +106,18 @@ type RoundData struct {
 	Verb          string   `json:"verb"`
 	Tense         string   `json:"tense"`
 	Options       []string `json:"options,omitempty"`
+	MatchItems    []MatchRoundItem   `json:"match_items,omitempty"`
+	Matches       map[string]string  `json:"matches,omitempty"`
+}
+
+// MatchRoundItem represents one conjugation option for matching rounds.
+type MatchRoundItem struct {
+	ID          string `json:"id"`
+	Tense       string `json:"tense"`
+	Verb        string `json:"verb"`
+	Conjugation string `json:"conjugation"`
+	Pronoun     string `json:"pronoun"`
+	PronounIndex int   `json:"pronoun_index"`
 }
 
 // Scan implements the sql.Scanner interface for RoundData

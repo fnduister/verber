@@ -25,7 +25,13 @@ export const GlobalMultiplayerListener: React.FC = () => {
     let stopped = false;
 
     const connect = () => {
-      const wsUrl = buildWsUrl(token);
+      // Always read the freshest token because axios may have refreshed it after a 401.
+      const latestToken = localStorage.getItem('token') || token;
+      if (!latestToken) {
+        return;
+      }
+
+      const wsUrl = buildWsUrl(latestToken);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 

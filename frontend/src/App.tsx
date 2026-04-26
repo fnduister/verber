@@ -35,6 +35,7 @@ const Participe = lazy(() => import('./pages/Games/Participe/Participe'));
 
 // Multiplayer games
 const FindErrorMultiplayer = lazy(() => import('./pages/Games/FindError/FindErrorMultiplayer'));
+const MatchMeMultiplayer = lazy(() => import('./pages/Games/MatchMe/MatchMeMultiplayer'));
 
 // Dev test component
 const ConjugationTestComponent = lazy(() => import('./components/ConjugationTestComponent'));
@@ -111,6 +112,7 @@ const App: React.FC = () => {
 
                         {/* Multiplayer game routes */}
                         <Route path="/games/multiplayer/find-error/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><FindErrorMultiplayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer/matching/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MatchMeMultiplayer /></ProtectedRoute>} />
 
                         {/* Legacy game room routes (kept for backward compatibility) */}
                         <Route path="/game-room/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><GameRoom /></ProtectedRoute>} />

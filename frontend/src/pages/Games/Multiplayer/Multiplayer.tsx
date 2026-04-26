@@ -1,7 +1,7 @@
 import {
-    Add, FiberManualRecord, FilterList,
+    Add, EmojiEvents, FiberManualRecord, FilterList,
     Group, PersonAdd, Refresh,
-    Search,
+    Search, Star, StarBorder,
     Timer
 } from '@mui/icons-material';
 import {
@@ -45,6 +45,8 @@ import { Invite, inviteAPI, userAPI } from '../../../services/api';
 import { multiplayerAPI, MultiplayerGame } from '../../../services/multiplayerApi';
 import { toastService } from '../../../services/toastService';
 import { RootState } from '../../../store/store';
+import { getFavoritePlayerIds, toggleFavoritePlayer } from '../../../utils/favoritePlayers';
+import { mapMultiplayerErrorMessage } from '../../../utils/multiplayerErrorMessages';
 
 interface Player {
     id: number;
@@ -70,6 +72,7 @@ const Multiplayer: React.FC = () => {
     const [sendingInvite, setSendingInvite] = useState<number | null>(null);
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [selectedRoomForInvite, setSelectedRoomForInvite] = useState<string | null>(null);
+    const [favoritePlayerIds, setFavoritePlayerIds] = useState<number[]>(() => getFavoritePlayerIds());
     
     // Filter state
     const [searchQuery, setSearchQuery] = useState('');
@@ -84,12 +87,14 @@ const Multiplayer: React.FC = () => {
     const [difficulty, setDifficulty] = useState('medium');
     const [duration, setDuration] = useState(10);
 
+    const hasCreatedGame = Boolean(currentUser && waitingRooms.some((game) => game.host?.id === currentUser.id));
+
     const fetchWaitingRooms = async () => {
         setIsLoading(true);
         try {
             const games = await multiplayerAPI.getWaitingRooms();
-            // Only show find-error games (other types not yet supported)
-            const supportedGames = (games || []).filter(game => game.game_type === 'find-error');
+            // Show currently supported multiplayer game types.
+            const supportedGames = (games || []).filter(game => game.game_type === 'find-error' || game.game_type === 'matching');
             setWaitingRooms(supportedGames);
         } catch (error: any) {
             if (error?.response?.status === 401) {
@@ -143,11 +148,18 @@ const Multiplayer: React.FC = () => {
         // Use the same base URL as API calls
         const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
         const wsBaseUrl = apiBaseUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace('/api', '');
-        const wsUrl = `${wsBaseUrl}/ws/multiplayer?token=${token}`;
         let reconnectAttempts = 0;
         let ws: WebSocket | null = null;
+        let stopped = false;
 
         const connectWS = () => {
+            // Use latest token on each reconnect attempt to avoid looping with an expired JWT.
+            const latestToken = localStorage.getItem('token');
+            if (!latestToken) {
+                return;
+            }
+
+            const wsUrl = `${wsBaseUrl}/ws/multiplayer?token=${latestToken}`;
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
@@ -185,6 +197,7 @@ const Multiplayer: React.FC = () => {
             };
 
             ws.onclose = () => {
+                if (stopped) return;
                 reconnectAttempts += 1;
                 const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempts));
                 setTimeout(connectWS, delay);
@@ -194,10 +207,19 @@ const Multiplayer: React.FC = () => {
         connectWS();
 
         return () => {
+            stopped = true;
             clearInterval(interval);
             if (ws) ws.close();
         };
     }, [currentUser]);
+
+    useEffect(() => {
+        if (!currentUser?.id) {
+            return;
+        }
+
+        setFavoritePlayerIds((prev) => prev.filter((playerId) => playerId !== currentUser.id));
+    }, [currentUser?.id]);
 
     useEffect(() => {
         // Apply filters
@@ -256,21 +278,35 @@ const Multiplayer: React.FC = () => {
             const game = waitingRooms.find(r => r.id === gameId);
             
             // Check if game type is supported for multiplayer
-            if (game?.game_type !== 'find-error') {
-                alert(`Multiplayer mode for "${game?.game_type}" is not yet available. Only "Find Error" is currently supported.`);
+            if (game?.game_type !== 'find-error' && game?.game_type !== 'matching') {
+                alert(t('games.multiplayer.modeNotAvailable', { game: game?.game_type }));
                 return;
             }
 
             await multiplayerAPI.joinGame(gameId);
             
-            // Navigate to multiplayer game room
-            navigate(`/games/multiplayer/find-error/${gameId}`);
-        } catch (error: any) {
-            if (error?.response?.status === 400 && error?.response?.data?.error?.includes('already in game')) {
-                // Player already joined, navigate to game
-                navigate(`/games/multiplayer/find-error/${gameId}`);
+            // Navigate to multiplayer game room by game type
+            if (game?.game_type === 'matching') {
+                navigate(`/games/multiplayer/matching/${gameId}`);
             } else {
-                alert('Failed to join game: ' + (error?.response?.data?.error || error.message || 'Unknown error'));
+                navigate(`/games/multiplayer/find-error/${gameId}`);
+            }
+        } catch (error: any) {
+            const backendError = error?.response?.data?.error;
+            const friendly = mapMultiplayerErrorMessage(backendError);
+
+            if (error?.response?.status === 400 && backendError?.includes('already in game')) {
+                // Player already joined, navigate to game
+                const game = waitingRooms.find(r => r.id === gameId);
+                if (game?.game_type === 'matching') {
+                    navigate(`/games/multiplayer/matching/${gameId}`);
+                } else {
+                    navigate(`/games/multiplayer/find-error/${gameId}`);
+                }
+            } else if (friendly) {
+                toastService.error(friendly);
+            } else {
+                toastService.error(t('games.multiplayer.failedToJoinGame') + ': ' + (backendError || error.message || t('common.error')));
             }
         }
     };
@@ -283,11 +319,22 @@ const Multiplayer: React.FC = () => {
         return GAME_TYPES.find(g => g.id === gameType);
     };
 
+    const handleToggleFavorite = (playerId: number) => {
+        setFavoritePlayerIds(toggleFavoritePlayer(playerId));
+    };
+
+    const visibleOnlinePlayers = onlinePlayers.filter((player) => player.id !== currentUser?.id);
+    const visibleOfflinePlayers = offlinePlayers.filter((player) => player.id !== currentUser?.id);
+    const favoriteOnlinePlayers = visibleOnlinePlayers.filter((player) => favoritePlayerIds.includes(player.id));
+    const otherOnlinePlayers = visibleOnlinePlayers.filter((player) => !favoritePlayerIds.includes(player.id));
+    const favoriteOfflinePlayers = visibleOfflinePlayers.filter((player) => favoritePlayerIds.includes(player.id));
+    const otherOfflinePlayers = visibleOfflinePlayers.filter((player) => !favoritePlayerIds.includes(player.id));
+
     const handleInvitePlayer = async (playerId: number, gameId?: string) => {
         const targetGameId = gameId || selectedRoomForInvite || waitingRooms[0]?.id;
         
         if (!targetGameId) {
-            alert('Create or join a game first before inviting players');
+            alert(t('games.multiplayer.createOrJoinFirst'));
             return;
         }
 
@@ -295,7 +342,7 @@ const Multiplayer: React.FC = () => {
         const game = waitingRooms.find(r => r.id === targetGameId);
         const isPlayerInGame = game?.players?.some(p => p.user_id === playerId);
         if (isPlayerInGame) {
-            alert('This player is already in the game!');
+            alert(t('games.multiplayer.playerAlreadyInGame'));
             return;
         }
 
@@ -304,9 +351,9 @@ const Multiplayer: React.FC = () => {
             await inviteAPI.sendInvite(playerId, targetGameId);
             // Find player name for success message
             const player = onlinePlayers.find(p => p.id === playerId);
-            toastService.success(`Invite sent to ${player?.username || 'Player'}!`);
+            toastService.success(t('games.multiplayer.inviteSentTo', { name: player?.username || t('games.multiplayer.player') }));
         } catch (error: any) {
-            toastService.error(error.response?.data?.error || 'Failed to send invite');
+            toastService.error(error.response?.data?.error || t('games.multiplayer.failedToSendInvite'));
         } finally {
             setSendingInvite(null);
         }
@@ -326,7 +373,9 @@ const Multiplayer: React.FC = () => {
                 await handleJoinRoom(invite.game_id);
             }
         } catch (error: any) {
-            alert(error.response?.data?.error || 'Failed to accept invite');
+            const backendError = error?.response?.data?.error;
+            const friendly = mapMultiplayerErrorMessage(backendError);
+            toastService.error(friendly || backendError || t('games.multiplayer.failedToAcceptInvite'));
         }
     };
 
@@ -405,7 +454,7 @@ const Multiplayer: React.FC = () => {
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                             <FiberManualRecord sx={{ mr: 1, color: '#4ade80', fontSize: 16 }} />
                                             <Typography variant="h6" sx={{ fontWeight: 'bold', flexGrow: 1, fontSize: '1rem' }}>
-                                                {t('games.multiplayer.onlinePlayers')} ({onlinePlayers.length})
+                                                {t('games.multiplayer.onlinePlayers')} ({visibleOnlinePlayers.length})
                                             </Typography>
                                             <IconButton size="small" onClick={fetchRecentPlayers}>
                                                 <Refresh fontSize="small" />
@@ -413,13 +462,88 @@ const Multiplayer: React.FC = () => {
                                         </Box>
                                         <Divider sx={{ mb: 2 }} />
                                         
-                                        {onlinePlayers.length === 0 ? (
+                                        {visibleOnlinePlayers.length === 0 ? (
                                             <Typography variant="body2" color="text.secondary" textAlign="center">
                                                 {t('games.multiplayer.noOnlinePlayers')}
                                             </Typography>
                                         ) : (
                                             <List dense>
-                                                {onlinePlayers.map((player) => (
+                                                {favoriteOnlinePlayers.length > 0 && (
+                                                    <>
+                                                        <ListItem sx={{ px: 0, pb: 0.5 }}>
+                                                            <Chip
+                                                                icon={<Star sx={{ color: '#f59e0b !important' }} />}
+                                                                label={`${t('games.multiplayer.favorites')} (${favoriteOnlinePlayers.length})`}
+                                                                size="small"
+                                                                sx={{ fontWeight: 'bold' }}
+                                                            />
+                                                        </ListItem>
+                                                        {favoriteOnlinePlayers.map((player) => (
+                                                            <ListItem key={player.id} sx={{ px: 0 }}>
+                                                                <ListItemAvatar>
+                                                                    <Badge
+                                                                        overlap="circular"
+                                                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                                                        badgeContent={
+                                                                            <FiberManualRecord 
+                                                                                sx={{ 
+                                                                                    color: '#4ade80',
+                                                                                    fontSize: 12,
+                                                                                    border: '2px solid white',
+                                                                                    borderRadius: '50%'
+                                                                                }} 
+                                                                            />
+                                                                        }
+                                                                    >
+                                                                        <Avatar 
+                                                                            src={player.avatar} 
+                                                                            sx={{ width: 36, height: 36 }}
+                                                                        >
+                                                                            {player.username[0].toUpperCase()}
+                                                                        </Avatar>
+                                                                    </Badge>
+                                                                </ListItemAvatar>
+                                                                <ListItemText
+                                                                    primary={player.username}
+                                                                    secondary={t('games.multiplayer.level', { level: player.level })}
+                                                                    primaryTypographyProps={{ 
+                                                                        variant: 'body2',
+                                                                        fontWeight: 600 
+                                                                    }}
+                                                                    secondaryTypographyProps={{ 
+                                                                        variant: 'caption' 
+                                                                    }}
+                                                                />
+                                                                <Tooltip title={t('games.multiplayer.removeFavorite')}>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={() => handleToggleFavorite(player.id)}
+                                                                        sx={{ color: '#f59e0b' }}
+                                                                    >
+                                                                        <Star fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                                {currentUser && player.id !== currentUser.id && (
+                                                                    <Tooltip title={t('games.multiplayer.inviteToGame')}>
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            onClick={() => handleInvitePlayer(player.id)}
+                                                                            disabled={sendingInvite === player.id}
+                                                                            sx={{
+                                                                                color: 'primary.main',
+                                                                                '&:hover': { bgcolor: 'primary.light' }
+                                                                            }}
+                                                                        >
+                                                                            <PersonAdd fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                )}
+                                                            </ListItem>
+                                                        ))}
+                                                        {otherOnlinePlayers.length > 0 && <Divider sx={{ my: 1 }} />}
+                                                    </>
+                                                )}
+                                                {otherOnlinePlayers.map((player) => (
                                                     <ListItem key={player.id} sx={{ px: 0 }}>
                                                         <ListItemAvatar>
                                                             <Badge
@@ -455,8 +579,17 @@ const Multiplayer: React.FC = () => {
                                                                 variant: 'caption' 
                                                             }}
                                                         />
+                                                        <Tooltip title={favoritePlayerIds.includes(player.id) ? t('games.multiplayer.removeFavorite') : t('games.multiplayer.addFavorite')}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleToggleFavorite(player.id)}
+                                                                sx={{ color: favoritePlayerIds.includes(player.id) ? '#f59e0b' : 'text.secondary' }}
+                                                            >
+                                                                {favoritePlayerIds.includes(player.id) ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
+                                                            </IconButton>
+                                                        </Tooltip>
                                                         {currentUser && player.id !== currentUser.id && (
-                                                            <Tooltip title="Invite to game">
+                                                            <Tooltip title={t('games.multiplayer.inviteToGame')}>
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={() => handleInvitePlayer(player.id)}
@@ -492,13 +625,64 @@ const Multiplayer: React.FC = () => {
                                         </Box>
                                         <Divider sx={{ mb: 2 }} />
                                         
-                                        {offlinePlayers.length === 0 ? (
+                                        {visibleOfflinePlayers.length === 0 ? (
                                             <Typography variant="body2" color="text.secondary" textAlign="center">
                                                 {t('games.multiplayer.noOfflinePlayers')}
                                             </Typography>
                                         ) : (
                                             <List dense>
-                                                {offlinePlayers.map((player) => (
+                                                {favoriteOfflinePlayers.length > 0 && (
+                                                    <>
+                                                        <ListItem sx={{ px: 0, pb: 0.5 }}>
+                                                            <Chip
+                                                                icon={<Star sx={{ color: '#f59e0b !important' }} />}
+                                                                label={`${t('games.multiplayer.favorites')} (${favoriteOfflinePlayers.length})`}
+                                                                size="small"
+                                                                sx={{ fontWeight: 'bold' }}
+                                                            />
+                                                        </ListItem>
+                                                        {favoriteOfflinePlayers.map((player) => (
+                                                            <ListItem key={player.id} sx={{ px: 0 }}>
+                                                                <ListItemAvatar>
+                                                                    <Avatar 
+                                                                        src={player.avatar} 
+                                                                        sx={{ 
+                                                                            width: 36, 
+                                                                            height: 36,
+                                                                            opacity: 0.75 
+                                                                        }}
+                                                                    >
+                                                                        {player.username[0].toUpperCase()}
+                                                                    </Avatar>
+                                                                </ListItemAvatar>
+                                                                <ListItemText
+                                                                    primary={player.username}
+                                                                    secondary={t('games.multiplayer.level', { level: player.level })}
+                                                                    primaryTypographyProps={{ 
+                                                                        variant: 'body2',
+                                                                        fontWeight: 600,
+                                                                        sx: { opacity: 0.85 }
+                                                                    }}
+                                                                    secondaryTypographyProps={{ 
+                                                                        variant: 'caption',
+                                                                        sx: { opacity: 0.65 }
+                                                                    }}
+                                                                />
+                                                                <Tooltip title={t('games.multiplayer.removeFavorite')}>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={() => handleToggleFavorite(player.id)}
+                                                                        sx={{ color: '#f59e0b' }}
+                                                                    >
+                                                                        <Star fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            </ListItem>
+                                                        ))}
+                                                        {otherOfflinePlayers.length > 0 && <Divider sx={{ my: 1 }} />}
+                                                    </>
+                                                )}
+                                                {otherOfflinePlayers.map((player) => (
                                                     <ListItem key={player.id} sx={{ px: 0 }}>
                                                         <ListItemAvatar>
                                                             <Avatar 
@@ -525,6 +709,15 @@ const Multiplayer: React.FC = () => {
                                                                 sx: { opacity: 0.6 }
                                                             }}
                                                         />
+                                                        <Tooltip title={favoritePlayerIds.includes(player.id) ? t('games.multiplayer.removeFavorite') : t('games.multiplayer.addFavorite')}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleToggleFavorite(player.id)}
+                                                                sx={{ color: favoritePlayerIds.includes(player.id) ? '#f59e0b' : 'text.secondary' }}
+                                                            >
+                                                                {favoritePlayerIds.includes(player.id) ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
+                                                            </IconButton>
+                                                        </Tooltip>
                                                     </ListItem>
                                                 ))}
                                             </List>
@@ -560,6 +753,7 @@ const Multiplayer: React.FC = () => {
                                                 variant="contained"
                                                 startIcon={<Add />}
                                                 onClick={() => setOpenCreateDialog(true)}
+                                                disabled={hasCreatedGame}
                                                 sx={{ 
                                                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                                     '&:hover': {
@@ -599,10 +793,10 @@ const Multiplayer: React.FC = () => {
                                             </Grid>
                                             <Grid item xs={12} sm={4} md={2}>
                                                 <FormControl fullWidth size="small">
-                                                    <InputLabel>Game Type</InputLabel>
+                                                    <InputLabel>{t('games.multiplayer.gameType')}</InputLabel>
                                                     <Select
                                                         value={filterGameType}
-                                                        label="Game Type"
+                                                        label={t('games.multiplayer.gameType')}
                                                         onChange={(e) => setFilterGameType(e.target.value)}
                                                     >
                                                         <MenuItem value="all">{t('games.multiplayer.allTypes')}</MenuItem>
@@ -616,10 +810,10 @@ const Multiplayer: React.FC = () => {
                                             </Grid>
                                             <Grid item xs={12} sm={4} md={2}>
                                                 <FormControl fullWidth size="small">
-                                                    <InputLabel>Players</InputLabel>
+                                                    <InputLabel>{t('games.multiplayer.players')}</InputLabel>
                                                     <Select
                                                         value={filterPlayers}
-                                                        label="Players"
+                                                        label={t('games.multiplayer.players')}
                                                         onChange={(e) => setFilterPlayers(e.target.value)}
                                                     >
                                                         <MenuItem value="all">{t('games.multiplayer.allGames')}</MenuItem>
@@ -630,10 +824,10 @@ const Multiplayer: React.FC = () => {
                                             </Grid>
                                             <Grid item xs={12} sm={4} md={2}>
                                                 <FormControl fullWidth size="small">
-                                                    <InputLabel>Difficulty</InputLabel>
+                                                    <InputLabel>{t('games.difficulty.label')}</InputLabel>
                                                     <Select
                                                         value={filterDifficulty}
-                                                        label="Difficulty"
+                                                        label={t('games.difficulty.label')}
                                                         onChange={(e) => setFilterDifficulty(e.target.value)}
                                                     >
                                                         <MenuItem value="all">{t('games.multiplayer.allLevels')}</MenuItem>
@@ -704,48 +898,92 @@ const Multiplayer: React.FC = () => {
                                                     )}
                                                 </Box>
                                             ) : (
-                                                <Grid container spacing={2}>
+                                                <Grid container spacing={2.5}>
                                                     {filteredRooms.map((room) => {
                                                         const gameInfo = getGameInfo(room.game_type);
                                                         return (
-                                                            <Grid item xs={12} sm={6} md={4} lg={2} key={room.id}>
+                                                            <Grid item xs={12} sm={6} md={6} lg={4} key={room.id}>
                                                                 <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                                                    <CardContent sx={{ flexGrow: 1 }}>
-                                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                                                                            <Box sx={{ flexGrow: 1 }}>
-                                                                                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                                                                    {room.title}
-                                                                                </Typography>
-                                                                                <Typography variant="body2" color="text.secondary">
-                                                                                    {t('games.multiplayer.hostedBy', { name: room.host.username })}
-                                                                                </Typography>
-                                                                            </Box>
+                                                                    <CardContent sx={{ flexGrow: 1, pb: 1.5 }}>
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2.5 }}>
                                                                             {gameInfo && (
-                                                                                <Box sx={{ color: gameInfo.color, fontSize: 32 }}>
+                                                                                <Box
+                                                                                    sx={{
+                                                                                        color: gameInfo.color,
+                                                                                        fontSize: 22,
+                                                                                        p: 0.75,
+                                                                                        borderRadius: 2,
+                                                                                        backgroundColor: `${gameInfo.color}14`,
+                                                                                        display: 'flex',
+                                                                                        alignItems: 'center',
+                                                                                        justifyContent: 'center',
+                                                                                        flexShrink: 0,
+                                                                                    }}
+                                                                                >
                                                                                     {gameInfo.icon}
                                                                                 </Box>
                                                                             )}
+                                                                            <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
+                                                                                {room.title}
+                                                                            </Typography>
                                                                         </Box>
-                                                                        
-                                                                        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                                                                            <Chip 
-                                                                                icon={<Group />}
-                                                                                label={`${room.players.length}/${room.max_players}`}
-                                                                                size="small"
-                                                                                color={room.players.length === room.max_players ? 'error' : 'primary'}
-                                                                            />
-                                                                            <Chip 
-                                                                                label={t(`games.difficulty.${room.difficulty.toLowerCase()}`)}
-                                                                                size="small"
-                                                                                color={getDifficultyColor(room.difficulty) as any}
-                                                                            />
-                                                                            <Chip 
-                                                                                icon={<Timer />}
-                                                                                label={`${Math.floor(room.config.max_time / 60)} min`}
-                                                                                size="small"
-                                                                                variant="outlined"
-                                                                            />
-                                                                        </Stack>
+
+                                                                        <Box sx={{ mb: 2.25 }}>
+                                                                            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 1.25 }}>
+                                                                                <Chip
+                                                                                    icon={<Group />}
+                                                                                    label={`${room.players.length}/${room.max_players}`}
+                                                                                    size="small"
+                                                                                    color="primary"
+                                                                                    variant="outlined"
+                                                                                />
+                                                                            </Stack>
+                                                                            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                                                                                {room.players.length > 0 ? (
+                                                                                    room.players.map((player) => (
+                                                                                        <Chip
+                                                                                            key={player.user_id}
+                                                                                            avatar={<Avatar src={player.user.avatar}>{player.user.username[0].toUpperCase()}</Avatar>}
+                                                                                            icon={player.user_id === room.host.id ? <EmojiEvents sx={{ fontSize: 16 }} /> : undefined}
+                                                                                            label={player.user.username}
+                                                                                            size="small"
+                                                                                            color={player.user_id === room.host.id ? 'primary' : 'default'}
+                                                                                            variant={player.user_id === room.host.id ? 'filled' : 'outlined'}
+                                                                                            sx={{
+                                                                                                '& .MuiChip-label': { fontWeight: player.user_id === room.host.id ? 700 : 500 },
+                                                                                            }}
+                                                                                        />
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <Typography variant="caption" color="text.secondary">
+                                                                                        {t('games.multiplayer.noPlayersYet')}
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </Stack>
+                                                                        </Box>
+
+                                                                        <Divider sx={{ mb: 2, borderColor: 'rgba(0,0,0,0.08)' }} />
+
+                                                                        <Box>
+                                                                            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                                                                                <Chip
+                                                                                    label={t(`games.difficulty.${room.difficulty.toLowerCase()}`)}
+                                                                                    size="small"
+                                                                                    color={getDifficultyColor(room.difficulty) as any}
+                                                                                />
+                                                                                <Chip
+                                                                                    icon={<Timer />}
+                                                                                    label={`${room.config.max_time}s / ${t('games.common.question').toLowerCase()}`}
+                                                                                    size="small"
+                                                                                    variant="outlined"
+                                                                                />
+                                                                                <Chip
+                                                                                    label={`${room.max_steps} ${t('gameRoom.questions')}`}
+                                                                                    size="small"
+                                                                                    variant="outlined"
+                                                                                />
+                                                                            </Stack>
+                                                                        </Box>
                                                                     </CardContent>
                                                                     <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
                                                                         {currentUser && room.host.id === currentUser.id ? (
@@ -756,7 +994,7 @@ const Multiplayer: React.FC = () => {
                                                                                     onClick={() => handleOpenInviteDialog(room.id)}
                                                                                     startIcon={<PersonAdd />}
                                                                                 >
-                                                                                    Invite
+                                                                                    {t('games.multiplayer.invite')}
                                                                                 </Button>
                                                                                 <Button
                                                                                     variant="contained"
@@ -770,7 +1008,7 @@ const Multiplayer: React.FC = () => {
                                                                                         }
                                                                                     }}
                                                                                 >
-                                                                                    Enter
+                                                                                    {t('games.multiplayer.joinRoom')}
                                                                                 </Button>
                                                                             </>
                                                                         ) : (
@@ -824,6 +1062,11 @@ const Multiplayer: React.FC = () => {
                 </DialogTitle>
                 <DialogContent sx={{ mt: 3 }}>
                     <Stack spacing={3}>
+                        {hasCreatedGame && (
+                            <Typography variant="body2" color="warning.main">
+                                You already created a game. Leave or finish it before creating another one.
+                            </Typography>
+                        )}
                         <TextField
                             fullWidth
                             label={t('games.multiplayer.gameTitle')}
@@ -840,7 +1083,7 @@ const Multiplayer: React.FC = () => {
                                 onChange={(e) => setSelectedGameType(e.target.value)}
                             >
                                 {GAME_TYPES
-                                    .filter(game => game.id === 'find-error') // Only show supported game types
+                                    .filter(game => game.id === 'find-error' || game.id === 'matching')
                                     .map((game) => (
                                         <MenuItem key={game.id} value={game.id}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -904,7 +1147,7 @@ const Multiplayer: React.FC = () => {
                     <Button
                         variant="contained"
                         onClick={handleCreateGame}
-                        disabled={!newGameTitle.trim() || !selectedGameType}
+                        disabled={!newGameTitle.trim() || !selectedGameType || hasCreatedGame}
                         sx={{ 
                             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                             '&:hover': {

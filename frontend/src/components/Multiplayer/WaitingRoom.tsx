@@ -274,7 +274,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                                             >
                                                 {player.is_host && (
                                                     <Chip 
-                                                        label="Host"
+                                                        label={t('games.multiplayer.host')}
                                                         size="small"
                                                         sx={{ 
                                                             position: 'absolute',
@@ -296,10 +296,10 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                                                     <Box sx={{ flexGrow: 1 }}>
                                                         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                                                             {player.user.username}
-                                                            {player.user_id === currentUserId && ' (You)'}
+                                                            {player.user_id === currentUserId && ` (${t('games.multiplayer.you')})`}
                                                         </Typography>
                                                         <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                            Level {player.user.level}
+                                                            {t('games.multiplayer.level', { level: player.user.level })}
                                                         </Typography>
                                                     </Box>
                                                     {player.is_ready ? (
@@ -345,11 +345,11 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                                                             {pendingInvite.receiver.username}
                                                         </Typography>
                                                         <Typography variant="caption" color="text.secondary">
-                                                            Level {pendingInvite.receiver.level}
+                                                            {t('games.multiplayer.level', { level: pendingInvite.receiver.level })}
                                                         </Typography>
                                                         <Box mt={0.5}>
                                                             <Chip 
-                                                                label="Invite Pending" 
+                                                                label={t('games.multiplayer.invitePending')}
                                                                 size="small"
                                                                 color="warning"
                                                                 sx={{ fontSize: '0.7rem' }}
@@ -374,7 +374,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                                                     }}
                                                 >
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Waiting for player...
+                                                        {t('games.multiplayer.waitingForPlayer')}
                                                     </Typography>
                                                     <Button
                                                         variant="contained"
@@ -407,7 +407,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
                                                             }
                                                         }}
                                                     >
-                                                        Invite ({onlinePlayers.length})
+                                                        {t('games.multiplayer.invite')} ({onlinePlayers.length})
                                                     </Button>
                                                 </Paper>
                                             )}

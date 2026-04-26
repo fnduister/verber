@@ -57,6 +57,15 @@ export interface GameRound {
         verb: string;
         tense: string;
         options?: string[];
+        match_items?: Array<{
+            id: string;
+            tense: string;
+            verb: string;
+            conjugation: string;
+            pronoun: string;
+            pronoun_index: number;
+        }>;
+        matches?: Record<string, string>;
     };
     started_at: string;
     finished_at?: string;
@@ -66,6 +75,7 @@ export interface CreateGameRequest {
     game_type: string;
     title: string;
     max_players: number;
+    max_steps: number;
     difficulty: string;
     duration: number;
     config: {

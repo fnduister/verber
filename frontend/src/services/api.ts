@@ -90,6 +90,7 @@ export const userAPI = {
     getOnlineUsers: () =>
         api.get('/users/online'),
     presencePing: () => api.post('/presence/ping'),
+    presenceOffline: () => api.post('/presence/offline'),
 };
 
 // Invite API

@@ -24,10 +24,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Invite, inviteAPI } from '../../services/api';
+import { Invite, inviteAPI, userAPI } from '../../services/api';
 import { toastService } from '../../services/toastService';
 import { logout } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
+import { mapMultiplayerErrorMessage } from '../../utils/multiplayerErrorMessages';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 
 const Header: React.FC = () => {
@@ -101,13 +102,23 @@ const Header: React.FC = () => {
         setInviteAnchorEl(null);
     };
 
-    const handleAcceptInvite = async (inviteId: number, gameId: string) => {
+    const handleAcceptInvite = async (inviteId: number, gameId: string, gameType?: string) => {
         try {
             await inviteAPI.acceptInvite(inviteId);
-            // Navigate to multiplayer page (game joining will be handled there)
-            navigate(`/games/multiplayer?join=${gameId}`);
+            // Route directly to the game room; the generic multiplayer page does not consume ?join=.
+            if (!gameType || gameType === 'find-error') {
+                navigate(`/games/multiplayer/find-error/${gameId}`);
+            } else if (gameType === 'matching') {
+                navigate(`/games/multiplayer/matching/${gameId}`);
+            } else {
+                navigate('/games/multiplayer');
+                toastService.info(`Invite accepted for ${gameType}. Open games to join this mode.`);
+            }
             handleInvitePanelClose();
-        } catch (error) {
+        } catch (error: any) {
+            const backendError = error?.response?.data?.error;
+            const friendly = mapMultiplayerErrorMessage(backendError);
+            toastService.error(friendly || backendError || 'Failed to accept invite');
             console.error('Failed to accept invite:', error);
         }
     };
@@ -126,6 +137,8 @@ const Header: React.FC = () => {
     };
 
     const handleLogout = () => {
+        // Tell the server we're offline immediately before clearing the token
+        userAPI.presenceOffline().catch(() => {});
         dispatch(logout());
         handleMenuClose();
         navigate('/');
@@ -331,7 +344,7 @@ const Header: React.FC = () => {
                                                 variant="contained"
                                                 color="success"
                                                 startIcon={<CheckIcon />}
-                                                onClick={() => handleAcceptInvite(invite.id, invite.game_id)}
+                                                onClick={() => handleAcceptInvite(invite.id, invite.game_id, invite.game?.game_type)}
                                                 fullWidth
                                             >
                                                 Accept

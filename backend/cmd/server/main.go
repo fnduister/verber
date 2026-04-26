@@ -101,6 +101,10 @@ func main() {
 	h.SetHub(multiplayerHub) // Set hub for real-time invite notifications
 	multiplayerHandler := handlers.NewMultiplayerHandler(h.GetMultiplayerService(), multiplayerHub)
 
+	// When a user's last WebSocket connection drops, delete their Redis presence key
+	// and broadcast an offline presence update to all connected clients.
+	multiplayerHub.OnUserOffline = h.DeletePresenceKey
+
 	// Public routes
 	public := router.Group("/api")
 	{
@@ -220,6 +224,7 @@ func main() {
 
 		// Exercise routes
 		protected.POST("/presence/ping", h.PresencePing)
+		protected.POST("/presence/offline", h.PresenceOffline)
 		protected.GET("/exercises", h.GetExercises)
 		protected.POST("/exercises/complete", h.CompleteExercise)
 

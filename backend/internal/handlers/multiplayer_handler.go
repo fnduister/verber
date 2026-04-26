@@ -135,6 +135,7 @@ func (mh *MultiplayerHandler) CreateGame(c *gin.Context) {
 		GameType   string            `json:"game_type" binding:"required"`
 		Title      string            `json:"title" binding:"required"`
 		MaxPlayers int               `json:"max_players" binding:"required,min=2,max=8"`
+		MaxSteps   int               `json:"max_steps" binding:"omitempty,oneof=5 10 15 20"`
 		Difficulty string            `json:"difficulty"`
 		Duration   int               `json:"duration"`
 		Config     models.GameConfig `json:"config"`
@@ -150,6 +151,7 @@ func (mh *MultiplayerHandler) CreateGame(c *gin.Context) {
 		req.GameType,
 		req.Title,
 		req.MaxPlayers,
+		req.MaxSteps,
 		req.Difficulty,
 		req.Duration,
 		req.Config,
