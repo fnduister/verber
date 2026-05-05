@@ -36,6 +36,11 @@ const Participe = lazy(() => import('./pages/Games/Participe/Participe'));
 // Multiplayer games
 const FindErrorMultiplayer = lazy(() => import('./pages/Games/FindError/FindErrorMultiplayer'));
 const MatchMeMultiplayer = lazy(() => import('./pages/Games/MatchMe/MatchMeMultiplayer'));
+const WriteMeMultiplayer = lazy(() => import('./pages/Games/WriteMe/WriteMeMultiplayer'));
+const RaceMultiplayer = lazy(() => import('./pages/Games/Race/RaceMultiplayer'));
+const RandomVerbMultiplayer = lazy(() => import('./pages/Games/RandomVerb/RandomVerbMultiplayer'));
+const SentenceMultiplayer = lazy(() => import('./pages/Games/Sentence/SentenceMultiplayer'));
+const ParticipeMultiplayer = lazy(() => import('./pages/Games/Participe/ParticipeMultiplayer'));
 
 // Dev test component
 const ConjugationTestComponent = lazy(() => import('./components/ConjugationTestComponent'));
@@ -113,6 +118,11 @@ const App: React.FC = () => {
                         {/* Multiplayer game routes */}
                         <Route path="/games/multiplayer/find-error/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><FindErrorMultiplayer /></ProtectedRoute>} />
                         <Route path="/games/multiplayer/matching/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MatchMeMultiplayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer/write-me/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><WriteMeMultiplayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer/race/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><RaceMultiplayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer/random-verb/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><RandomVerbMultiplayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer/sentence/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><SentenceMultiplayer /></ProtectedRoute>} />
+                        <Route path="/games/multiplayer/participe/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ParticipeMultiplayer /></ProtectedRoute>} />
 
                         {/* Legacy game room routes (kept for backward compatibility) */}
                         <Route path="/game-room/:gameId" element={<ProtectedRoute isAuthenticated={isAuthenticated}><GameRoom /></ProtectedRoute>} />

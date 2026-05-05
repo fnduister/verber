@@ -105,9 +105,17 @@ type RoundData struct {
 	CorrectWord   string   `json:"correct_word"`
 	Verb          string   `json:"verb"`
 	Tense         string   `json:"tense"`
-	Options       []string `json:"options,omitempty"`
-	MatchItems    []MatchRoundItem   `json:"match_items,omitempty"`
-	Matches       map[string]string  `json:"matches,omitempty"`
+	Pronoun       string           `json:"pronoun,omitempty"`
+	PronounIndex  int              `json:"pronoun_index,omitempty"`
+	DisplayedWord string           `json:"displayed_word,omitempty"`
+	CorrectTense  string           `json:"correct_tense,omitempty"`
+	VisibleTenses []string         `json:"visible_tenses,omitempty"`
+	Pronouns      []string         `json:"pronouns,omitempty"`
+	CorrectAnswers []string        `json:"correct_answers,omitempty"`
+	ExpectedCount int              `json:"expected_count,omitempty"`
+	Options       []string         `json:"options,omitempty"`
+	MatchItems    []MatchRoundItem `json:"match_items,omitempty"`
+	Matches       map[string]string `json:"matches,omitempty"`
 }
 
 // MatchRoundItem represents one conjugation option for matching rounds.

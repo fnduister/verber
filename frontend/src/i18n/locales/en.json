@@ -12,6 +12,9 @@
     "profile": "Profile",
     "settings": "Settings"
   },
+  "nav": {
+    "leaderboard": "Leaderboard"
+  },
   "header": {
     "appName": "🎯 Verber",
     "myProfile": "My Profile",
@@ -126,6 +129,7 @@
     "subtitle": "Choose a game to test your skills",
     "playNow": "Play Now",
     "startGame": "Start Game",
+    "points": "points",
     "round": "Round",
     "singlePlayer": {
       "title": "Single Player",
@@ -209,7 +213,8 @@
       "failedToJoinGame": "Failed to join game",
       "modeNotAvailable": "Multiplayer mode for \"{{game}}\" is not yet available.",
       "player": "Player",
-      "noPlayersYet": "No players yet"
+      "noPlayersYet": "No players yet",
+      "leaderboard": "Leaderboard"
     },
     "find-error": {
       "title": "🎯 Find Error",

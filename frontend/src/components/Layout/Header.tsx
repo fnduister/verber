@@ -31,6 +31,16 @@ import { AppDispatch, RootState } from '../../store/store';
 import { mapMultiplayerErrorMessage } from '../../utils/multiplayerErrorMessages';
 import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 
+const MULTIPLAYER_ROUTE_BY_GAME_TYPE: Record<string, string> = {
+    'find-error': 'find-error',
+    matching: 'matching',
+    'write-me': 'write-me',
+    race: 'race',
+    'random-verb': 'random-verb',
+    sentence: 'sentence',
+    participe: 'participe',
+};
+
 const Header: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -106,10 +116,9 @@ const Header: React.FC = () => {
         try {
             await inviteAPI.acceptInvite(inviteId);
             // Route directly to the game room; the generic multiplayer page does not consume ?join=.
-            if (!gameType || gameType === 'find-error') {
-                navigate(`/games/multiplayer/find-error/${gameId}`);
-            } else if (gameType === 'matching') {
-                navigate(`/games/multiplayer/matching/${gameId}`);
+            const routeGameType = MULTIPLAYER_ROUTE_BY_GAME_TYPE[gameType || 'find-error'];
+            if (routeGameType) {
+                navigate(`/games/multiplayer/${routeGameType}/${gameId}`);
             } else {
                 navigate('/games/multiplayer');
                 toastService.info(`Invite accepted for ${gameType}. Open games to join this mode.`);

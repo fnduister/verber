@@ -241,6 +241,7 @@ func main() {
 		protected.POST("/multiplayer/games/create", multiplayerHandler.CreateGame)
 		protected.GET("/multiplayer/games/waiting", multiplayerHandler.GetWaitingRooms)
 		protected.GET("/multiplayer/games/:gameId", multiplayerHandler.GetGame)
+		protected.GET("/multiplayer/games/:gameId/rounds/latest", multiplayerHandler.GetLatestRound)
 		protected.POST("/multiplayer/games/:gameId/join", multiplayerHandler.JoinGame)
 		protected.POST("/multiplayer/games/:gameId/leave", multiplayerHandler.LeaveGame)
 		protected.POST("/multiplayer/games/:gameId/ready", multiplayerHandler.SetReady)

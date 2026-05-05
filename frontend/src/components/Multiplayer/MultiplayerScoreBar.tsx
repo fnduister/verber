@@ -22,6 +22,7 @@ export interface MultiplayerScoreBarProps {
     roundWinners: number[];
     allPlayersAnswered: boolean;
     gameMode?: 'find-error' | 'matching';
+    sticky?: boolean;
 }
 
 const MultiplayerScoreBar: React.FC<MultiplayerScoreBarProps> = ({
@@ -30,13 +31,27 @@ const MultiplayerScoreBar: React.FC<MultiplayerScoreBarProps> = ({
     roundScoreGains,
     roundWinners,
     allPlayersAnswered,
-    gameMode = 'find-error',
+    sticky = false,
 }) => {
     const currentUser = useSelector((state: RootState) => state.auth.user);
     const { t } = useTranslation();
 
     return (
-        <Paper sx={{ p: 2, mb: 3 }}>
+        <Paper
+            sx={{
+                p: 2,
+                mb: 3,
+                ...(sticky
+                    ? {
+                          position: 'sticky',
+                          top: { xs: 8, md: 16 },
+                          zIndex: 20,
+                          backdropFilter: 'blur(6px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      }
+                    : {}),
+            }}
+        >
             <Grid container spacing={2} alignItems="center">
                 {players.map((player) => {
                     const noOneWon = roundWinners.includes(-1);

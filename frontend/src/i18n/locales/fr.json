@@ -12,6 +12,9 @@
     "profile": "Profil",
     "settings": "Paramètres"
   },
+  "nav": {
+    "leaderboard": "Classement"
+  },
   "header": {
     "appName": "🎯 Verber",
     "myProfile": "Mon Profil",
@@ -126,6 +129,7 @@
     "subtitle": "Choisissez un jeu pour tester vos compétences",
     "playNow": "Jouer Maintenant",
     "startGame": "Commencer le Jeu",
+    "points": "points",
     "round": "Tour",
     "singlePlayer": {
       "title": "Solo",
@@ -209,7 +213,8 @@
       "failedToJoinGame": "Échec de la connexion à la partie",
       "modeNotAvailable": "Le mode multijoueur pour \"{{game}}\" n'est pas encore disponible.",
       "player": "Joueur",
-      "noPlayersYet": "Aucun joueur pour le moment"
+      "noPlayersYet": "Aucun joueur pour le moment",
+      "leaderboard": "Classement"
     },
     "find-error": {
       "title": "🎯 Trouver l'erreur",

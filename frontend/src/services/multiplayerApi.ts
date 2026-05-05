@@ -56,6 +56,14 @@ export interface GameRound {
         correct_word: string;
         verb: string;
         tense: string;
+        pronoun?: string;
+        pronoun_index?: number;
+        displayed_word?: string;
+        correct_tense?: string;
+        visible_tenses?: string[];
+        pronouns?: string[];
+        correct_answers?: string[];
+        expected_count?: number;
         options?: string[];
         match_items?: Array<{
             id: string;
@@ -180,6 +188,12 @@ export const multiplayerAPI = {
             round_number: roundNumber,
             round_data: roundData,
         });
+        return response.data.round;
+    },
+
+    // Get latest round for recovery when round_start event is missed
+    getLatestRound: async (gameId: string): Promise<GameRound> => {
+        const response = await apiClient.get(`/multiplayer/games/${gameId}/rounds/latest`);
         return response.data.round;
     },
 

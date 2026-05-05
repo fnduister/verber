@@ -56,6 +56,18 @@ interface Player {
     is_online: boolean;
 }
 
+const MULTIPLAYER_ROUTE_BY_GAME_TYPE: Record<string, string> = {
+    'find-error': 'find-error',
+    matching: 'matching',
+    'write-me': 'write-me',
+    race: 'race',
+    'random-verb': 'random-verb',
+    sentence: 'sentence',
+    participe: 'participe',
+};
+
+const SUPPORTED_MULTIPLAYER_GAMES = GAME_TYPES.filter((game) => Boolean(MULTIPLAYER_ROUTE_BY_GAME_TYPE[game.id]));
+
 const Multiplayer: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -94,7 +106,7 @@ const Multiplayer: React.FC = () => {
         try {
             const games = await multiplayerAPI.getWaitingRooms();
             // Show currently supported multiplayer game types.
-            const supportedGames = (games || []).filter(game => game.game_type === 'find-error' || game.game_type === 'matching');
+            const supportedGames = (games || []).filter((game) => Boolean(MULTIPLAYER_ROUTE_BY_GAME_TYPE[game.game_type]));
             setWaitingRooms(supportedGames);
         } catch (error: any) {
             if (error?.response?.status === 401) {
@@ -276,9 +288,10 @@ const Multiplayer: React.FC = () => {
     const handleJoinRoom = async (gameId: string) => {
         try {
             const game = waitingRooms.find(r => r.id === gameId);
+            const routeGameType = game?.game_type ? MULTIPLAYER_ROUTE_BY_GAME_TYPE[game.game_type] : undefined;
             
             // Check if game type is supported for multiplayer
-            if (game?.game_type !== 'find-error' && game?.game_type !== 'matching') {
+            if (!routeGameType) {
                 alert(t('games.multiplayer.modeNotAvailable', { game: game?.game_type }));
                 return;
             }
@@ -286,11 +299,7 @@ const Multiplayer: React.FC = () => {
             await multiplayerAPI.joinGame(gameId);
             
             // Navigate to multiplayer game room by game type
-            if (game?.game_type === 'matching') {
-                navigate(`/games/multiplayer/matching/${gameId}`);
-            } else {
-                navigate(`/games/multiplayer/find-error/${gameId}`);
-            }
+            navigate(`/games/multiplayer/${routeGameType}/${gameId}`);
         } catch (error: any) {
             const backendError = error?.response?.data?.error;
             const friendly = mapMultiplayerErrorMessage(backendError);
@@ -298,10 +307,9 @@ const Multiplayer: React.FC = () => {
             if (error?.response?.status === 400 && backendError?.includes('already in game')) {
                 // Player already joined, navigate to game
                 const game = waitingRooms.find(r => r.id === gameId);
-                if (game?.game_type === 'matching') {
-                    navigate(`/games/multiplayer/matching/${gameId}`);
-                } else {
-                    navigate(`/games/multiplayer/find-error/${gameId}`);
+                const joinedRouteGameType = game?.game_type ? MULTIPLAYER_ROUTE_BY_GAME_TYPE[game.game_type] : undefined;
+                if (joinedRouteGameType) {
+                    navigate(`/games/multiplayer/${joinedRouteGameType}/${gameId}`);
                 }
             } else if (friendly) {
                 toastService.error(friendly);
@@ -800,7 +808,7 @@ const Multiplayer: React.FC = () => {
                                                         onChange={(e) => setFilterGameType(e.target.value)}
                                                     >
                                                         <MenuItem value="all">{t('games.multiplayer.allTypes')}</MenuItem>
-                                                        {GAME_TYPES.map((game) => (
+                                                        {SUPPORTED_MULTIPLAYER_GAMES.map((game) => (
                                                             <MenuItem key={game.id} value={game.id}>
                                                                 {t(`games.${game.id}.title`)}
                                                             </MenuItem>
@@ -1082,9 +1090,7 @@ const Multiplayer: React.FC = () => {
                                 label={t('games.multiplayer.selectGame')}
                                 onChange={(e) => setSelectedGameType(e.target.value)}
                             >
-                                {GAME_TYPES
-                                    .filter(game => game.id === 'find-error' || game.id === 'matching')
-                                    .map((game) => (
+                                {SUPPORTED_MULTIPLAYER_GAMES.map((game) => (
                                         <MenuItem key={game.id} value={game.id}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <Box sx={{ color: game.color }}>{game.icon}</Box>
@@ -1093,9 +1099,6 @@ const Multiplayer: React.FC = () => {
                                         </MenuItem>
                                     ))}
                             </Select>
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                                {t('games.multiplayer.moreComing') || 'More game types coming soon!'}
-                            </Typography>
                         </FormControl>
 
                         <FormControl fullWidth>

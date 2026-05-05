@@ -29,12 +29,27 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
     const topPlayer = sortedPlayers[0];
 
+    const getPlayerUsername = (player: FinalResultsPlayer): string => {
+        const fallback = (player as unknown as { username?: string }).username;
+        return player.user?.username || fallback || `Player ${player.user_id}`;
+    };
+
+    const getPlayerAvatar = (player: FinalResultsPlayer): string | undefined => {
+        const fallback = (player as unknown as { avatar?: string }).avatar;
+        return player.user?.avatar || fallback;
+    };
+
+    const getPlayerLevel = (player: FinalResultsPlayer): number => {
+        const fallback = (player as unknown as { level?: number }).level;
+        return player.user?.level ?? fallback ?? 1;
+    };
+
     return (
         <Box
             sx={{
                 minHeight: '100vh',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                py: 6,
+                py: 3,
                 px: 2,
             }}
         >
@@ -46,7 +61,7 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                 >
                     <Paper
                         sx={{
-                            p: 4,
+                            p: { xs: 2.5, md: 3 },
                             textAlign: 'center',
                             background: 'linear-gradient(145deg, #ffffff, #f5f5f5)',
                             borderRadius: 4,
@@ -68,7 +83,7 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                             >
                                 <EmojiEventsIcon
                                     sx={{
-                                        fontSize: 100,
+                                        fontSize: { xs: 72, md: 84 },
                                         color: '#FFD700',
                                         filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
                                     }}
@@ -76,7 +91,16 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                             </motion.div>
                         </Box>
 
-                        <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#764ba2' }}>
+                        <Typography
+                            variant="h2"
+                            gutterBottom
+                            sx={{
+                                fontWeight: 'bold',
+                                color: '#764ba2',
+                                fontSize: { xs: '2.2rem', md: '3.1rem' },
+                                lineHeight: 1.1,
+                            }}
+                        >
                             {t('games.multiplayer.gameFinished')}
                         </Typography>
 
@@ -86,27 +110,34 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <Box sx={{ mb: 4, mt: 3 }}>
+                                <Box sx={{ mb: 3, mt: 2 }}>
                                     <Typography variant="h5" color="text.secondary" gutterBottom>
                                         🎊 {t('games.multiplayer.winner', 'Winner')} 🎊
                                     </Typography>
                                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
                                         <Avatar
-                                            src={topPlayer.user?.avatar}
+                                            src={getPlayerAvatar(topPlayer)}
                                             sx={{
-                                                width: 80,
-                                                height: 80,
+                                                width: { xs: 64, md: 72 },
+                                                height: { xs: 64, md: 72 },
                                                 border: '4px solid #FFD700',
                                                 boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
                                             }}
                                         >
-                                            {topPlayer.user.username[0].toUpperCase()}
+                                            {getPlayerUsername(topPlayer)[0].toUpperCase()}
                                         </Avatar>
                                         <Box>
-                                            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#764ba2' }}>
-                                                {topPlayer.user.username}
+                                            <Typography
+                                                variant="h4"
+                                                sx={{
+                                                    fontWeight: 'bold',
+                                                    color: '#764ba2',
+                                                    fontSize: { xs: '2rem', md: '2.4rem' },
+                                                }}
+                                            >
+                                                {getPlayerUsername(topPlayer)}
                                             </Typography>
-                                            <Typography variant="h6" color="text.secondary">
+                                            <Typography variant="h6" color="text.secondary" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                                                 {topPlayer.score} {t('games.points')}
                                             </Typography>
                                         </Box>
@@ -116,13 +147,13 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                         )}
 
                         {/* Leaderboard */}
-                        <Divider sx={{ my: 4 }}>
+                        <Divider sx={{ my: 3 }}>
                             <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#764ba2' }}>
                                 {t('games.multiplayer.leaderboard')}
                             </Typography>
                         </Divider>
 
-                        <Box sx={{ mb: 4 }}>
+                        <Box sx={{ mb: 3 }}>
                             {sortedPlayers.map((player, index) => (
                                 <motion.div
                                     key={player.user_id}
@@ -133,8 +164,8 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                                     <Paper
                                         elevation={index === 0 ? 8 : 2}
                                         sx={{
-                                            p: 2,
-                                            mb: 2,
+                                            p: { xs: 1.5, md: 2 },
+                                            mb: 1.5,
                                             background:
                                                 index === 0
                                                     ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
@@ -151,32 +182,35 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                                     >
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                             <Typography
-                                                variant="h4"
+                                                variant="h5"
                                                 sx={{
                                                     fontWeight: 'bold',
-                                                    minWidth: 40,
+                                                    minWidth: 34,
                                                     opacity: 0.8,
                                                 }}
                                             >
                                                 #{index + 1}
                                             </Typography>
                                             <Avatar
-                                                src={player.user?.avatar}
+                                                src={getPlayerAvatar(player)}
                                                 sx={{
-                                                    width: 60,
-                                                    height: 60,
+                                                    width: { xs: 48, md: 54 },
+                                                    height: { xs: 48, md: 54 },
                                                     bgcolor: index < 3 ? 'rgba(255,255,255,0.3)' : '#667eea',
                                                     border: index < 3 ? '3px solid rgba(255,255,255,0.5)' : 'none',
                                                 }}
                                             >
-                                                {player.user.username[0].toUpperCase()}
+                                                {getPlayerUsername(player)[0].toUpperCase()}
                                             </Avatar>
                                             <Box sx={{ flexGrow: 1 }}>
-                                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                                    {player.user.username}
+                                                <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
+                                                    {getPlayerUsername(player)}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                                    {t('games.multiplayer.level', { level: player.user.level, defaultValue: `Level ${player.user.level}` })}
+                                                    {t('games.multiplayer.level', {
+                                                        level: getPlayerLevel(player),
+                                                        defaultValue: `Level ${getPlayerLevel(player)}`,
+                                                    })}
                                                 </Typography>
                                             </Box>
                                             <Box sx={{ textAlign: 'right', minWidth: 110 }}>
@@ -192,7 +226,7 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                                                         }}
                                                     />
                                                 )}
-                                                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                                                <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: { xs: '1.8rem', md: '2.1rem' } }}>
                                                     {player.score}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
@@ -206,13 +240,13 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                         </Box>
 
                         {/* Action Buttons */}
-                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
                             <Button
                                 variant="contained"
-                                size="large"
+                                size="medium"
                                 onClick={() => navigate('/games/multiplayer')}
                                 sx={{
-                                    minWidth: 200,
+                                    minWidth: 170,
                                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                     '&:hover': {
                                         background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
@@ -221,7 +255,7 @@ const MultiplayerGameResults: React.FC<MultiplayerGameResultsProps> = ({ players
                             >
                                 {t('games.multiplayer.backToLobby')}
                             </Button>
-                            <Button variant="outlined" size="large" onClick={() => navigate('/leaderboard')} sx={{ minWidth: 200 }}>
+                            <Button variant="outlined" size="medium" onClick={() => navigate('/leaderboard')} sx={{ minWidth: 170 }}>
                                 {t('nav.leaderboard')}
                             </Button>
                         </Box>

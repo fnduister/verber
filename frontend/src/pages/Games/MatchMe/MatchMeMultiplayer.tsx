@@ -1,6 +1,5 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
-    Alert,
     Box,
     Button,
     Card,
@@ -8,7 +7,6 @@ import {
     Chip,
     CircularProgress,
     Grid,
-    LinearProgress,
     Paper,
     Typography
 } from '@mui/material';
@@ -18,27 +16,17 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import InvitePopup from '../../../components/Invites/InvitePopup';
-import MultiplayerGameResults from '../../../components/Multiplayer/MultiplayerGameResults';
+import { useParams } from 'react-router-dom';
+import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
+import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
 import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
-import WaitingRoom from '../../../components/Multiplayer/WaitingRoom';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
+import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
+import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
+import { useMultiplayerRoundState } from '../../../hooks/useMultiplayerRoundState';
 import { useMultiplayerWebSocket } from '../../../hooks/useMultiplayerWebSocket';
-import { Invite, inviteAPI, userAPI } from '../../../services/api';
-import { GameRound, multiplayerAPI, MultiplayerGame } from '../../../services/multiplayerApi';
-import { toastService } from '../../../services/toastService';
+import { GameRound, multiplayerAPI } from '../../../services/multiplayerApi';
 import { RootState } from '../../../store/store';
-
-type FinalResultsPlayer = {
-    user_id: number;
-    score: number;
-    user: {
-        username: string;
-        avatar?: string;
-        level: number;
-    };
-};
 
 type MatchRoundItem = {
     id: string;
@@ -242,41 +230,83 @@ const PoolDropZone: React.FC<{
 
 const MatchMeMultiplayer: React.FC = () => {
     const { gameId } = useParams<{ gameId: string }>();
-    const navigate = useNavigate();
     const { t } = useTranslation();
     const currentUser = useSelector((state: RootState) => state.auth.user);
 
-    const [game, setGame] = useState<MultiplayerGame | null>(null);
     const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
     const [roundItems, setRoundItems] = useState<MatchRoundItem[]>([]);
     const [correctMatches, setCorrectMatches] = useState<Record<string, string>>({});
     const [userMatches, setUserMatches] = useState<Record<string, string>>({});
-    const [hasAnswered, setHasAnswered] = useState(false);
-    const [timeLeft, setTimeLeft] = useState<number>(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showFinalResults, setShowFinalResults] = useState(false);
     const [finalResults, setFinalResults] = useState<unknown>(null);
     const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
-    const [allPlayersAnswered, setAllPlayersAnswered] = useState(false);
     const [roundWinners, setRoundWinners] = useState<number[]>([]);
     const [roundScoreGains, setRoundScoreGains] = useState<{ [userId: number]: number }>({});
-    const [playersAnswered, setPlayersAnswered] = useState<Set<number>>(new Set());
-    const [previousScores, setPreviousScores] = useState<{ [userId: number]: number }>({});
 
-    // Invite functionality state
-    const [onlinePlayers, setOnlinePlayers] = useState<Array<{ id: number; username: string; avatar: string; level: number; is_online: boolean }>>([]);
-    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-    const [pendingInvites, setPendingInvites] = useState<Array<{ id: number; inviteId?: number; receiver: NonNullable<Invite['receiver']> }>>([]);
-    const [currentInvite, setCurrentInvite] = useState<Invite | null>(null);
-    const [invitePopupOpen, setInvitePopupOpen] = useState(false);
+    const {
+        game,
+        setGame,
+        loading,
+        error,
+        setError,
+        onlinePlayers,
+        inviteDialogOpen,
+        openInviteDialog,
+        closeInviteDialog,
+        pendingInvites,
+        currentInvite,
+        invitePopupOpen,
+        closeInvitePopup,
+        handleInviteEvent,
+        handleConnectionError,
+        joinGame,
+        setReady,
+        startGame,
+        leaveGame,
+        sendInvite,
+        acceptInvite,
+        declineInvite,
+    } = useMultiplayerGameSession({
+        gameId,
+        currentUserId: currentUser?.id,
+    });
 
-    const isSubmittingRef = useRef(false);
-    const timerStartedRef = useRef(false);
-    const autoSubmittedRef = useRef(false);
-    const isAutoSubmittingRef = useRef(false);
-    const isPageVisible = useRef(true);
-    const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
+    const submitMatchesRef = useRef<(() => void) | null>(null);
+
+    const {
+        hasAnswered,
+        timeLeft,
+        setTimeLeft,
+        allPlayersAnswered,
+        setAllPlayersAnswered,
+        playersAnswered,
+        previousScores,
+        markPlayerAnswered,
+        beginSubmission,
+        handleSubmissionError,
+        finishSubmission,
+        resetForNewRound,
+    } = useMultiplayerRoundState({
+        currentRound,
+        maxTime: game?.config.max_time || 30,
+        currentUserId: currentUser?.id,
+        onAutoSubmit: () => {
+            submitMatchesRef.current?.();
+        },
+    });
+
+    const { onPlayerJoined, onPlayerLeft, onPlayerReady, onRoundEnd } = useMultiplayerGameEventHandlers({
+        game,
+        setGame,
+        currentUserId: currentUser?.id,
+        previousScores,
+        setRoundScoreGains,
+        setRoundWinners,
+        setAllPlayersAnswered,
+        setFinalResults,
+        setShowFinalResults,
+        deriveRoundWinners: (_scoreGains, payload) => payload.round_winners || [],
+    });
 
     const tenseEntries = useMemo(() => Object.keys(correctMatches).sort(), [correctMatches]);
 
@@ -325,18 +355,16 @@ const MatchMeMultiplayer: React.FC = () => {
         });
     };
 
-    const handleSubmitMatches = async (matchesToSubmit?: Record<string, string>, forcedTimeout?: boolean) => {
-        if (!gameId || !currentRound || hasAnswered || isSubmittingRef.current) {
+    const handleSubmitMatches = async (matchesToSubmit?: Record<string, string>, _forcedTimeout?: boolean) => {
+        if (!gameId || !currentRound) {
+            return;
+        }
+
+        if (!beginSubmission()) {
             return;
         }
 
         const activeMatches = matchesToSubmit || userMatches;
-        isSubmittingRef.current = true;
-        setHasAnswered(true);
-
-        if (currentUser?.id) {
-            setPlayersAnswered((prev) => new Set(prev).add(currentUser.id));
-        }
 
         try {
             const total = tenseEntries.length;
@@ -363,14 +391,9 @@ const MatchMeMultiplayer: React.FC = () => {
         } catch (err: unknown) {
             const errMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
             setError(errMsg || t('games.multiplayer.failedToSubmitAnswer'));
-            if (isAutoSubmittingRef.current) {
-                setHasAnswered(true);
-            } else {
-                setHasAnswered(false);
-            }
-            isSubmittingRef.current = false;
+            handleSubmissionError();
         } finally {
-            isAutoSubmittingRef.current = false;
+            finishSubmission();
         }
     };
 
@@ -393,55 +416,20 @@ const MatchMeMultiplayer: React.FC = () => {
         },
         onAnswerSubmitted: (data) => {
             if (data.user_id) {
-                setPlayersAnswered((prev) => new Set(prev).add(data.user_id));
+                markPlayerAnswered(data.user_id);
             }
         },
-        onPlayerJoined: (data) => {
-            const joinedPlayer = (data as unknown as { player?: MultiplayerGame['players'][number] }).player ?? (data as unknown as MultiplayerGame['players'][number]);
-            if (game && joinedPlayer && !game.players.find((p) => p.user_id === joinedPlayer.user_id)) {
-                setGame({
-                    ...game,
-                    players: [...game.players, joinedPlayer],
-                });
-            }
-        },
-        onPlayerLeft: (data) => {
-            const leftPlayer = game?.players.find((p) => p.user_id === data.user_id);
-            const playerName = data.username || leftPlayer?.user?.username || 'A player';
-
-            if (leftPlayer && leftPlayer.user_id !== currentUser?.id) {
-                toastService.info(`${playerName} left the game`);
-            }
-
-            setGame((prevGame) => {
-                if (!prevGame) return null;
-                return {
-                    ...prevGame,
-                    players: prevGame.players.filter((p) => p.user_id !== data.user_id),
-                };
-            });
-
-            if (data.game_ended) {
-                if (data.final_results) {
-                    setFinalResults(data.final_results);
-                }
-                setShowFinalResults(true);
-            }
-        },
-        onPlayerReady: (data) => {
-            if (game) {
-                setGame({
-                    ...game,
-                    players: game.players.map((p) =>
-                        p.user_id === data.user_id ? { ...p, is_ready: data.is_ready } : p
-                    ),
-                });
-            }
-        },
+        onPlayerJoined,
+        onPlayerLeft,
+        onPlayerReady,
         onRoundStart: (data) => {
             const round = (data as unknown as { round?: GameRound }).round ?? (data as unknown as GameRound);
             if (!round || !round.round_data) {
                 setError(t('games.multiplayer.failedToLoadGame'));
+                return;
+            }
+
+            if (!game) {
                 return;
             }
 
@@ -458,430 +446,55 @@ const MatchMeMultiplayer: React.FC = () => {
                 return;
             }
 
-            setHasAnswered(false);
             setUserMatches({});
-            setAllPlayersAnswered(false);
             setRoundWinners([]);
             setRoundScoreGains({});
-            setPlayersAnswered(new Set());
-
-            if (game) {
-                const scores: { [userId: number]: number } = {};
-                game.players.forEach((p) => {
-                    scores[p.user_id] = p.score;
-                });
-                setPreviousScores(scores);
-            }
+            resetForNewRound(game.players, game?.config.max_time || 30);
 
             setCurrentRound(round);
             setRoundItems(roundData.match_items);
             setCorrectMatches(roundData.matches);
-            setTimeLeft(game?.config.max_time || 30);
-
-            isSubmittingRef.current = false;
-            timerStartedRef.current = false;
-            autoSubmittedRef.current = false;
-            isAutoSubmittingRef.current = false;
         },
-        onRoundEnd: (data) => {
-            const roundEnd = data as unknown as { players?: Array<{ user_id: number; score: number }>; round_winners?: number[] };
-            if (game && roundEnd.players && Array.isArray(roundEnd.players)) {
-                const scoreGains: { [userId: number]: number } = {};
-                const updatedPlayers = game.players.map((p) => {
-                    const updatedPlayer = roundEnd.players?.find((player) => player.user_id === p.user_id);
-                    if (updatedPlayer) {
-                        const previousScore = previousScores[p.user_id] || 0;
-                        const gain = updatedPlayer.score - previousScore;
-                        scoreGains[p.user_id] = gain;
-                        return { ...p, score: updatedPlayer.score };
-                    }
-                    return p;
-                });
-                setGame({ ...game, players: updatedPlayers });
-                setRoundScoreGains(scoreGains);
-                if (roundEnd.round_winners && Array.isArray(roundEnd.round_winners)) {
-                    setRoundWinners(roundEnd.round_winners);
-                }
-            }
-            setAllPlayersAnswered(true);
-        },
+        onRoundEnd,
         onGameFinished: (data) => {
             setFinalResults(data);
             setShowFinalResults(true);
             setCurrentRound(null);
         },
-        onInviteEvent: (type, data) => {
-            const invite = data as Invite;
-            const receiver = invite?.receiver;
-            const receiverName = receiver?.username || 'player';
-
-            if (type === 'invite_sent') {
-                if (receiver) {
-                    setPendingInvites((prev) => {
-                        const existingIndex = prev.findIndex((p) => p?.inviteId === invite.id || p?.receiver?.id === receiver.id);
-                        if (existingIndex >= 0) {
-                            const updated = [...prev];
-                            updated[existingIndex] = {
-                                ...updated[existingIndex],
-                                id: invite.id,
-                                inviteId: invite.id,
-                                receiver,
-                            };
-                            return updated;
-                        }
-                        return [
-                            ...prev,
-                            {
-                                id: invite.id,
-                                inviteId: invite.id,
-                                receiver,
-                            },
-                        ];
-                    });
-                }
-                const senderName = invite?.sender?.username;
-                toastService.info(senderName ? `${senderName} invited ${receiverName}` : `Invite sent to ${receiverName}`);
-                return;
-            }
-
-            if (type === 'invite_accepted') {
-                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id && (!receiver || p?.receiver?.id !== receiver.id)));
-                toastService.success(`${receiverName} accepted the invite`);
-                return;
-            }
-
-            if (type === 'invite_declined') {
-                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id && (!receiver || p?.receiver?.id !== receiver.id)));
-                toastService.info(`${receiverName} declined the invite`);
-                return;
-            }
-
-            if (type === 'invite_expired') {
-                setPendingInvites((prev) => prev.filter((p) => (p?.inviteId ?? p?.id) !== invite.id && (!receiver || p?.receiver?.id !== receiver.id)));
-                toastService.warning(`Invite to ${receiverName} expired`);
-            }
-        },
-        onError: () => {
-            setError(t('games.multiplayer.connectionError'));
-        },
+        onInviteEvent: handleInviteEvent,
+        onError: handleConnectionError,
     });
 
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            isPageVisible.current = !document.hidden;
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!gameId || !game || game.status !== 'in_progress') {
-            return;
-        }
-
-        const sendHeartbeat = async () => {
-            if (isPageVisible.current) {
-                try {
-                    await multiplayerAPI.sendHeartbeat(gameId);
-                } catch {
-                    // silent
-                }
-            }
-        };
-
-        sendHeartbeat();
-        heartbeatInterval.current = setInterval(sendHeartbeat, 5000);
-
-        return () => {
-            if (heartbeatInterval.current) {
-                clearInterval(heartbeatInterval.current);
-                heartbeatInterval.current = null;
-            }
-        };
-    }, [gameId, game?.status]);
-
-    useEffect(() => {
-        const initLobby = async () => {
-            if (!gameId) {
-                setError(t('games.multiplayer.gameNotFound'));
-                setLoading(false);
-                return;
-            }
-            try {
-                const fetched = await multiplayerAPI.getGame(gameId);
-                if (!fetched.players) {
-                    fetched.players = [];
-                }
-                const alreadyPlayer = !!fetched.players.find((p) => p.user_id === currentUser?.id);
-                if (fetched.status === 'waiting' && !alreadyPlayer && fetched.players.length < fetched.max_players) {
-                    try {
-                        const newPlayer = await multiplayerAPI.joinGame(gameId);
-                        fetched.players.push(newPlayer);
-                    } catch {
-                        // silent
-                    }
-                }
-                setGame(fetched);
-            } catch {
-                setError(t('games.multiplayer.failedToLoadGame'));
-            } finally {
-                setLoading(false);
-            }
-        };
-        initLobby();
-    }, [gameId, currentUser?.id, t]);
-
-    useEffect(() => {
-        if (!currentRound) {
-            return;
-        }
-
-        const calculateTimeLeft = () => {
-            const roundStartTime = new Date(currentRound.started_at).getTime();
-            const now = Date.now();
-            const elapsedSeconds = Math.floor((now - roundStartTime) / 1000);
-            const maxTime = game?.config.max_time || 30;
-            return Math.max(0, maxTime - elapsedSeconds);
-        };
-
-        const updateTimer = () => {
-            const remaining = calculateTimeLeft();
-            setTimeLeft(remaining);
-            if (remaining <= 0) {
-                return;
-            }
-        };
-
-        if (!timerStartedRef.current) {
-            timerStartedRef.current = true;
-        }
-
-        updateTimer();
-        const timer = setInterval(updateTimer, 50);
-        return () => clearInterval(timer);
-    }, [currentRound, hasAnswered, game?.config.max_time]);
-
-    useEffect(() => {
-        if (
-            timeLeft === 0 &&
-            currentRound &&
-            !hasAnswered &&
-            timerStartedRef.current &&
-            !isSubmittingRef.current &&
-            !autoSubmittedRef.current
-        ) {
-            autoSubmittedRef.current = true;
-            isAutoSubmittingRef.current = true;
-            void handleSubmitMatches(userMatches, true);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [timeLeft, currentRound, hasAnswered]);
-
-    useEffect(() => {
-        if (game?.status !== 'waiting') return;
-
-        const fetchOnlinePlayers = async () => {
-            try {
-                const response = await userAPI.getOnlineUsers();
-                const gamePlayerIds = game.players.map((p) => p.user_id);
-                const filtered = response.data.online.filter((p: { id: number }) => !gamePlayerIds.includes(p.id) && p.id !== currentUser?.id);
-                setOnlinePlayers(
-                    filtered.map((p: { id: number; username: string; avatar: string; level: number } & Partial<{ is_online: boolean }>) => ({
-                        ...p,
-                        is_online: p.is_online ?? true,
-                    }))
-                );
-            } catch {
-                // silent
-            }
-        };
-
-        fetchOnlinePlayers();
-        const interval = setInterval(fetchOnlinePlayers, 30000);
-        return () => clearInterval(interval);
-    }, [game?.status, game?.players, currentUser?.id]);
-
-    const handleLeaveGame = async () => {
-        if (!gameId) return;
-        try {
-            await multiplayerAPI.leaveGame(gameId);
-            navigate('/games/multiplayer');
-        } catch {
-            navigate('/games/multiplayer');
-        }
+    submitMatchesRef.current = () => {
+        void handleSubmitMatches(userMatches, true);
     };
 
-    const handleSendInvite = async (playerId: number) => {
-        if (!gameId) {
-            return;
-        }
-        try {
-            await inviteAPI.sendInvite(playerId, gameId);
-            const player = onlinePlayers.find((p) => p.id === playerId);
-            if (player) {
-                setPendingInvites((prev) => {
-                    const exists = prev.some((p) => p?.receiver?.id === playerId);
-                    if (exists) {
-                        return prev;
-                    }
-                    return [
-                        ...prev,
-                        {
-                            id: Date.now(),
-                            receiver: player,
-                        },
-                    ];
-                });
-                toastService.success(`Invite sent to ${player.username}!`);
-            }
-        } catch (error: unknown) {
-            const errMsg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
-            toastService.error(errMsg || 'Failed to send invite');
-        }
-    };
+    const activeGame = game!;
 
-    const handleAcceptInvite = async (inviteId: number) => {
-        try {
-            await inviteAPI.acceptInvite(inviteId);
-            setInvitePopupOpen(false);
-            setCurrentInvite(null);
-            toastService.success('Invite accepted! Joining game...');
-        } catch (error: unknown) {
-            const errMsg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
-            toastService.error(errMsg || 'Failed to accept invite');
-        }
-    };
-
-    const handleDeclineInvite = async (inviteId: number) => {
-        try {
-            await inviteAPI.declineInvite(inviteId);
-            setInvitePopupOpen(false);
-            setCurrentInvite(null);
-            toastService.info('Invite declined');
-        } catch {
-            toastService.error('Failed to decline invite');
-        }
-    };
-
-    if (loading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    if (error || !game) {
-        return (
-            <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="80vh" gap={2}>
-                <Alert severity="error">{error || t('games.multiplayer.gameNotFound')}</Alert>
-                <Button variant="contained" onClick={() => navigate('/games/multiplayer')}>
-                    {t('common.back')}
-                </Button>
-            </Box>
-        );
-    }
-
-    if (game.status === 'waiting') {
-        return (
-            <>
-                <WaitingRoom
-                    game={game}
-                    currentUserId={currentUser?.id}
-                    gameStartCountdown={gameStartCountdown}
-                    isConnected={isConnected}
-                    onJoinGame={async () => {
-                        if (!gameId) return;
-                        try {
-                            await multiplayerAPI.joinGame(gameId);
-                        } catch {
-                            // silent
-                        }
-                    }}
-                    onReady={async () => {
-                        if (!gameId) return;
-                        try {
-                            await multiplayerAPI.setReady(gameId, true);
-                        } catch {
-                            // silent
-                        }
-                    }}
-                    onStartGame={async () => {
-                        if (!gameId) return;
-                        try {
-                            await multiplayerAPI.startGame(gameId);
-                        } catch {
-                            // silent
-                        }
-                    }}
-                    onLeaveGame={handleLeaveGame}
-                    inviteDialogOpen={inviteDialogOpen}
-                    onInviteDialogClose={() => setInviteDialogOpen(false)}
-                    onInviteDialogOpen={() => setInviteDialogOpen(true)}
-                    onlinePlayers={onlinePlayers}
-                    pendingInvites={pendingInvites}
-                    onSendInvite={handleSendInvite}
-                />
-
-                <InvitePopup
-                    invite={currentInvite}
-                    open={invitePopupOpen}
-                    onClose={() => setInvitePopupOpen(false)}
-                    onAccept={handleAcceptInvite}
-                    onDecline={handleDeclineInvite}
-                />
-            </>
-        );
-    }
-
-    if (showFinalResults && finalResults) {
-        const results = finalResults as { players?: Array<{ user_id: number; score: number; user: { username: string; avatar?: string; level: number } }> };
-        return <MultiplayerGameResults players={results.players || []} />;
-    }
-
-    if (!currentRound || roundItems.length === 0 || tenseEntries.length === 0) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    return (
+    const activeContent = !currentRound || roundItems.length === 0 || tenseEntries.length === 0 ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+            <CircularProgress />
+        </Box>
+    ) : (
         <DndProvider backend={HTML5Backend}>
         <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
             <MultiplayerScoreBar
-                players={game.players}
+                players={activeGame.players}
                 playersAnswered={playersAnswered}
                 roundScoreGains={roundScoreGains}
                 roundWinners={roundWinners}
                 allPlayersAnswered={allPlayersAnswered}
+                sticky
             />
 
             <Paper sx={{ p: 4 }}>
-                <Box sx={{ mb: 4, textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom>
-                        {t('games.round')} {currentRound.round_number} / {game.max_steps}
-                    </Typography>
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                        Match the conjugations to the correct tense
-                    </Typography>
-
-                    <Box sx={{ mt: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2">{t('timeLeft')}: {timeLeft}s</Typography>
-                            <Typography variant="body2">{Math.min(100, ((timeLeft / (game.config.max_time || 30)) * 100)).toFixed(0)}%</Typography>
-                        </Box>
-                        <LinearProgress
-                            variant="determinate"
-                            value={Math.min(100, (timeLeft / (game.config.max_time || 30)) * 100)}
-                            color={timeLeft < 10 ? 'error' : 'primary'}
-                            sx={{ height: 8, borderRadius: 4 }}
-                        />
-                    </Box>
-                </Box>
+                <MultiplayerRoundHeader
+                    roundNumber={currentRound.round_number}
+                    maxSteps={activeGame.max_steps}
+                    subtitle="Match the conjugations to the correct tense"
+                    timeLeft={timeLeft}
+                    maxTime={activeGame.config.max_time || 30}
+                />
 
                 <Card sx={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
@@ -978,6 +591,36 @@ const MatchMeMultiplayer: React.FC = () => {
             </Paper>
         </Box>
         </DndProvider>
+    );
+
+    return (
+        <MultiplayerGamePhase
+            loading={loading}
+            error={error}
+            game={game}
+            gameStartCountdown={gameStartCountdown}
+            isConnected={isConnected}
+            currentUserId={currentUser?.id}
+            showFinalResults={showFinalResults}
+            finalResults={finalResults}
+            inviteDialogOpen={inviteDialogOpen}
+            onlinePlayers={onlinePlayers}
+            pendingInvites={pendingInvites}
+            currentInvite={currentInvite}
+            invitePopupOpen={invitePopupOpen}
+            onJoinGame={joinGame}
+            onReady={setReady}
+            onStartGame={startGame}
+            onLeaveGame={leaveGame}
+            onInviteDialogClose={closeInviteDialog}
+            onInviteDialogOpen={openInviteDialog}
+            onSendInvite={sendInvite}
+            onInvitePopupClose={closeInvitePopup}
+            onAcceptInvite={acceptInvite}
+            onDeclineInvite={declineInvite}
+        >
+            {activeContent}
+        </MultiplayerGamePhase>
     );
 };
 

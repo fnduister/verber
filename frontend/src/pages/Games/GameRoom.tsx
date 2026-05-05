@@ -51,6 +51,16 @@ import { fetchTenses, fetchVerbs } from '../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../store/store';
 import { mapMultiplayerErrorMessage } from '../../utils/multiplayerErrorMessages';
 
+const MULTIPLAYER_ROUTE_BY_GAME_TYPE: Record<string, string> = {
+    'find-error': 'find-error',
+    matching: 'matching',
+    'write-me': 'write-me',
+    race: 'race',
+    'random-verb': 'random-verb',
+    sentence: 'sentence',
+    participe: 'participe',
+};
+
 const GameRoom = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch<AppDispatch>();
@@ -239,9 +249,10 @@ const GameRoom = () => {
         if (canAdvance()) return;
 
         if (isMultiplayer) {
-            // Multiplayer currently supported for Find Error and MatchMe
-            if (gameType !== 'find-error' && gameType !== 'matching') {
-                alert('Multiplayer mode is currently available for "Find Error" and "MatchMe" only.');
+            const routeGameType = MULTIPLAYER_ROUTE_BY_GAME_TYPE[gameType];
+
+            if (!routeGameType) {
+                alert('Multiplayer mode is currently available for Find Error, MatchMe, Fill in the Blank, and Conjugation Race only.');
                 navigate('/games/multiplayer');
                 return;
             }
@@ -302,10 +313,9 @@ const GameRoom = () => {
                 sessionStorage.removeItem('multiplayerGameData');
 
                 // Navigate directly to waiting room where invites are handled
-                if (gameData.game_type === 'matching') {
-                    navigate(`/games/multiplayer/matching/${game.id}`);
-                } else {
-                    navigate(`/games/multiplayer/find-error/${game.id}`);
+                const createdGameRoute = MULTIPLAYER_ROUTE_BY_GAME_TYPE[gameData.game_type];
+                if (createdGameRoute) {
+                    navigate(`/games/multiplayer/${createdGameRoute}/${game.id}`);
                 }
             } catch (error: any) {
                 console.error('Failed to create multiplayer game:', error);
@@ -819,7 +829,8 @@ const GameRoom = () => {
             )}
 
             {/* Action Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+
                 <Button
                     disabled={canAdvance()}
                     sx={{ minWidth: 150 }}
@@ -830,6 +841,17 @@ const GameRoom = () => {
                 >
                     {isMultiplayer ? t('gameRoom.createGame') : t('gameRoom.start')}
                 </Button>
+                {isMultiplayer && (
+                    <Button
+                        sx={{ minWidth: 150 }}
+                        size="large"
+                        onClick={() => navigate('/games/multiplayer')}
+                        variant="outlined"
+                        color="inherit"
+                    >
+                        {t('common.cancel')}
+                    </Button>
+                )}
             </Box>
         </Container>
     );

@@ -114,6 +114,9 @@ export const useMultiplayerWebSocket = ({
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const reconnectAttemptsRef = useRef<number>(0);
+    const fallbackRoundFetchRef = useRef<NodeJS.Timeout | null>(null);
+    const awaitingRoundStartRef = useRef(false);
+    const lastRoundIdRef = useRef<number | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [hasFatalError, setHasFatalError] = useState(false);
     const maxReconnectAttempts = 5;
@@ -190,11 +193,37 @@ export const useMultiplayerWebSocket = ({
                             callbacksRef.current.onGameStarting?.(message.data as GameStartingData);
                             break;
                         case 'game_started':
-                            // Optional: add callback if needed
+                            awaitingRoundStartRef.current = true;
+                            if (fallbackRoundFetchRef.current) {
+                                clearTimeout(fallbackRoundFetchRef.current);
+                            }
+                            fallbackRoundFetchRef.current = setTimeout(async () => {
+                                if (!awaitingRoundStartRef.current) {
+                                    return;
+                                }
+                                try {
+                                    const latestRound = await multiplayerAPI.getLatestRound(gameId);
+                                    if (latestRound && latestRound.id !== lastRoundIdRef.current) {
+                                        lastRoundIdRef.current = latestRound.id;
+                                        callbacksRef.current.onRoundStart?.({ round: latestRound });
+                                    }
+                                } catch {
+                                    // If no round exists yet, keep waiting for normal websocket event.
+                                }
+                            }, 1500);
                             break;
                         case 'round_start':
                             // Backend sends round object directly, wrap it in expected format
-                            callbacksRef.current.onRoundStart?.({ round: message.data as GameRound });
+                            {
+                                const round = message.data as GameRound;
+                                awaitingRoundStartRef.current = false;
+                                lastRoundIdRef.current = round.id;
+                                if (fallbackRoundFetchRef.current) {
+                                    clearTimeout(fallbackRoundFetchRef.current);
+                                    fallbackRoundFetchRef.current = null;
+                                }
+                                callbacksRef.current.onRoundStart?.({ round });
+                            }
                             break;
                         case 'round_end':
                             callbacksRef.current.onRoundEnd?.(message.data as RoundEndData);
@@ -277,6 +306,12 @@ export const useMultiplayerWebSocket = ({
             wsRef.current = null;
         }
 
+        if (fallbackRoundFetchRef.current) {
+            clearTimeout(fallbackRoundFetchRef.current);
+            fallbackRoundFetchRef.current = null;
+        }
+        awaitingRoundStartRef.current = false;
+
         setIsConnected(false);
         reconnectAttemptsRef.current = 0;
         setHasFatalError(false);
@@ -306,6 +341,11 @@ export const useMultiplayerWebSocket = ({
             if (wsRef.current) {
                 wsRef.current.close(1000, 'User disconnected');
                 wsRef.current = null;
+            }
+
+            if (fallbackRoundFetchRef.current) {
+                clearTimeout(fallbackRoundFetchRef.current);
+                fallbackRoundFetchRef.current = null;
             }
         };
     }, [connect]);

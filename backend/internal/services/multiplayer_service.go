@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"regexp"
+	"strings"
 	"time"
 	"verber-backend/internal/models"
 
@@ -26,6 +28,8 @@ var activeLobbyStatuses = []models.MultiplayerGameStatus{
 	models.GameStatusWaiting,
 	models.GameStatusStarting,
 }
+
+var multiplayerPronouns = []string{"je/j' ", "tu ", "il/elle ", "nous ", "vous ", "ils/elles "}
 
 func NewMultiplayerService(db *gorm.DB) *MultiplayerService {
 	return &MultiplayerService{
@@ -630,12 +634,115 @@ func getConjugation(conjugations *models.VerbConjugation, tense string, person i
 
 // GenerateRoundData generates round data based on game type.
 func (ms *MultiplayerService) GenerateRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if game.GameType == "write-me" {
+		return ms.generateWriteMeRoundData(game)
+	}
+
+	if game.GameType == "race" {
+		return ms.generateRaceRoundData(game)
+	}
+
 	if game.GameType == "matching" {
 		return ms.generateMatchingRoundData(game)
 	}
 
+	if game.GameType == "random-verb" {
+		return ms.generateRandomVerbRoundData(game)
+	}
+
+	if game.GameType == "sentence" {
+		return ms.generateSentenceRoundData(game)
+	}
+
+	if game.GameType == "participe" {
+		return ms.generateParticipeRoundData(game)
+	}
+
 	// Default to find-error generation.
 	return ms.generateFindErrorRoundData(game)
+}
+
+// generateWriteMeRoundData generates round data for write-me game type.
+func (ms *MultiplayerService) generateWriteMeRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if len(game.Config.Verbs) == 0 || len(game.Config.Tenses) == 0 {
+		return models.RoundData{}, errors.New("game config missing verbs or tenses")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	stepVerb := game.Config.Verbs[rand.Intn(len(game.Config.Verbs))]
+	stepTense := game.Config.Tenses[rand.Intn(len(game.Config.Tenses))]
+
+	var verb models.Verb
+	if err := ms.db.Where("infinitive = ?", stepVerb).Preload("Conjugations").First(&verb).Error; err != nil {
+		return models.RoundData{}, fmt.Errorf("verb not found: %s", stepVerb)
+	}
+
+	if verb.Conjugations == nil {
+		return models.RoundData{}, fmt.Errorf("no conjugations found for verb: %s", stepVerb)
+	}
+
+	correctAnswers := make([]string, 0, len(multiplayerPronouns))
+	for person := 1; person <= len(multiplayerPronouns); person++ {
+		conjugation := getConjugation(verb.Conjugations, stepTense, person)
+		if conjugation == "" {
+			return models.RoundData{}, fmt.Errorf("could not find conjugation for verb %s in tense %s for person %d", stepVerb, stepTense, person)
+		}
+		correctAnswers = append(correctAnswers, conjugation)
+	}
+
+	return models.RoundData{
+		Verb:           stepVerb,
+		Tense:          stepTense,
+		Pronouns:       append([]string{}, multiplayerPronouns...),
+		CorrectAnswers: correctAnswers,
+		ExpectedCount:  len(correctAnswers),
+	}, nil
+}
+
+// generateRaceRoundData generates round data for race game type.
+func (ms *MultiplayerService) generateRaceRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if len(game.Config.Verbs) == 0 || len(game.Config.Tenses) < 3 {
+		return models.RoundData{}, errors.New("race game config requires at least one verb and three tenses")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	stepVerb := game.Config.Verbs[rand.Intn(len(game.Config.Verbs))]
+
+	var verb models.Verb
+	if err := ms.db.Where("infinitive = ?", stepVerb).Preload("Conjugations").First(&verb).Error; err != nil {
+		return models.RoundData{}, fmt.Errorf("verb not found: %s", stepVerb)
+	}
+
+	if verb.Conjugations == nil {
+		return models.RoundData{}, fmt.Errorf("no conjugations found for verb: %s", stepVerb)
+	}
+
+	availableTenses := append([]string{}, game.Config.Tenses...)
+	rand.Shuffle(len(availableTenses), func(i, j int) {
+		availableTenses[i], availableTenses[j] = availableTenses[j], availableTenses[i]
+	})
+
+	visibleTenses := availableTenses[:3]
+	correctTense := visibleTenses[rand.Intn(len(visibleTenses))]
+	pronounIndex := rand.Intn(len(multiplayerPronouns)) + 1
+	displayedWord := getConjugation(verb.Conjugations, correctTense, pronounIndex)
+	if displayedWord == "" {
+		return models.RoundData{}, fmt.Errorf("could not find conjugation for verb %s in tense %s for person %d", stepVerb, correctTense, pronounIndex)
+	}
+
+	rand.Shuffle(len(visibleTenses), func(i, j int) {
+		visibleTenses[i], visibleTenses[j] = visibleTenses[j], visibleTenses[i]
+	})
+
+	return models.RoundData{
+		Verb:          stepVerb,
+		Tense:         correctTense,
+		Pronoun:       multiplayerPronouns[pronounIndex-1],
+		PronounIndex:  pronounIndex,
+		DisplayedWord: displayedWord,
+		CorrectTense:  correctTense,
+		VisibleTenses: visibleTenses,
+	}, nil
 }
 
 // generateFindErrorRoundData generates round data for find-error game type.
@@ -679,8 +786,7 @@ func (ms *MultiplayerService) generateFindErrorRoundData(game *models.Multiplaye
 		return models.RoundData{}, fmt.Errorf("could not find conjugation for error word (verb: %s, tense: %s, person: %d)", stepVerb, wrongTense, pronounIndex)
 	}
 
-	pronouns := []string{"je/j' ", "tu ", "il/elle ", "nous ", "vous ", "ils/elles "}
-	errorWord := pronouns[pronounIndex-1] + errorConjugation
+	errorWord := multiplayerPronouns[pronounIndex-1] + errorConjugation
 
 	// Generate 3 correct words with correct tense
 	correctWords := []string{}
@@ -713,7 +819,7 @@ func (ms *MultiplayerService) generateFindErrorRoundData(game *models.Multiplaye
 			continue
 		}
 
-		word := pronouns[pIndex-1] + correctConjugation
+		word := multiplayerPronouns[pIndex-1] + correctConjugation
 		if word == errorWord {
 			continue
 		}
@@ -775,7 +881,6 @@ func (ms *MultiplayerService) generateMatchingRoundData(game *models.Multiplayer
 		selectedTenses = selectedTenses[:3]
 	}
 
-	pronouns := []string{"je/j' ", "tu ", "il/elle ", "nous ", "vous ", "ils/elles "}
 	matchItems := make([]models.MatchRoundItem, 0, len(selectedTenses))
 	matches := make(map[string]string)
 
@@ -806,7 +911,7 @@ func (ms *MultiplayerService) generateMatchingRoundData(game *models.Multiplayer
 				Tense:        tense,
 				Verb:         verbInfinitive,
 				Conjugation:  conjugation,
-				Pronoun:      pronouns[pronounIndex-1],
+				Pronoun:      multiplayerPronouns[pronounIndex-1],
 				PronounIndex: pronounIndex,
 			})
 			matches[tenseID] = conjugationID
@@ -826,6 +931,324 @@ func (ms *MultiplayerService) generateMatchingRoundData(game *models.Multiplayer
 		MatchItems: matchItems,
 		Matches:    matches,
 		Tense:      "matching",
+	}, nil
+}
+
+// generateRandomVerbRoundData generates round data for random-verb game type.
+func (ms *MultiplayerService) generateRandomVerbRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if len(game.Config.Tenses) == 0 {
+		return models.RoundData{}, errors.New("game config missing tenses")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+
+	configVerbs := game.Config.Verbs
+	if len(configVerbs) == 0 {
+		// No verbs configured — pick a random verb from the DB.
+		var randomVerb models.Verb
+		if err := ms.db.Order("RANDOM()").Preload("Conjugations").First(&randomVerb).Error; err != nil {
+			return models.RoundData{}, fmt.Errorf("failed to pick random verb from DB: %w", err)
+		}
+		configVerbs = []string{randomVerb.Infinitive}
+	}
+
+	stepVerb := configVerbs[rand.Intn(len(configVerbs))]
+	stepTense := game.Config.Tenses[rand.Intn(len(game.Config.Tenses))]
+
+	var verb models.Verb
+	if err := ms.db.Where("infinitive = ?", stepVerb).Preload("Conjugations").First(&verb).Error; err != nil {
+		return models.RoundData{}, fmt.Errorf("verb not found: %s", stepVerb)
+	}
+
+	if verb.Conjugations == nil {
+		return models.RoundData{}, fmt.Errorf("no conjugations found for verb: %s", stepVerb)
+	}
+
+	correctAnswers := make([]string, 0, len(multiplayerPronouns))
+	for person := 1; person <= len(multiplayerPronouns); person++ {
+		conjugation := getConjugation(verb.Conjugations, stepTense, person)
+		if conjugation == "" {
+			return models.RoundData{}, fmt.Errorf("could not find conjugation for verb %s in tense %s for person %d", stepVerb, stepTense, person)
+		}
+		correctAnswers = append(correctAnswers, conjugation)
+	}
+
+	return models.RoundData{
+		Verb:           stepVerb,
+		Tense:          stepTense,
+		Pronouns:       append([]string{}, multiplayerPronouns...),
+		CorrectAnswers: correctAnswers,
+		ExpectedCount:  len(correctAnswers),
+	}, nil
+}
+
+// generateSentenceRoundData generates round data for sentence game type.
+func (ms *MultiplayerService) generateSentenceRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	if len(game.Config.Tenses) == 0 {
+		return models.RoundData{}, errors.New("game config missing tenses")
+	}
+	// If no verbs are configured, accept any verb that appears in the sentences.
+	useAnyVerb := len(game.Config.Verbs) == 0
+
+	var sentences []models.Sentence
+	if err := ms.db.Order("RANDOM()").Limit(250).Find(&sentences).Error; err != nil {
+		return models.RoundData{}, fmt.Errorf("failed to load sentence candidates: %w", err)
+	}
+
+	if len(sentences) == 0 {
+		return models.RoundData{}, errors.New("no sentences available for sentence mode")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	verbCache := make(map[string]models.Verb)
+
+	for attempt := 0; attempt < 300; attempt++ {
+		sentence := sentences[rand.Intn(len(sentences))]
+		if len(sentence.Verbs) == 0 {
+			continue
+		}
+
+		matchingVerbs := make([]models.SentenceVerb, 0, len(sentence.Verbs))
+		for _, sentenceVerb := range sentence.Verbs {
+			if useAnyVerb || stringInSlice(sentenceVerb.Infinitive, game.Config.Verbs) {
+				matchingVerbs = append(matchingVerbs, sentenceVerb)
+			}
+		}
+
+		if len(matchingVerbs) == 0 {
+			continue
+		}
+
+		stepVerbData := matchingVerbs[rand.Intn(len(matchingVerbs))]
+		compatibleTenses := intersectStrings(sentence.Tenses, game.Config.Tenses)
+		if len(compatibleTenses) == 0 {
+			continue
+		}
+
+		stepTense := compatibleTenses[rand.Intn(len(compatibleTenses))]
+
+		verb, found := verbCache[stepVerbData.Infinitive]
+		if !found {
+			if err := ms.db.Where("infinitive = ?", stepVerbData.Infinitive).Preload("Conjugations").First(&verb).Error; err != nil {
+				continue
+			}
+			verbCache[stepVerbData.Infinitive] = verb
+		}
+
+		if verb.Conjugations == nil {
+			continue
+		}
+
+		pronounIndex := inferPronounIndex(stepVerbData.Subject)
+		conjugation := getConjugation(verb.Conjugations, stepTense, pronounIndex)
+		if conjugation == "" {
+			for person := 1; person <= len(multiplayerPronouns); person++ {
+				conjugation = getConjugation(verb.Conjugations, stepTense, person)
+				if conjugation != "" {
+					pronounIndex = person
+					break
+				}
+			}
+		}
+		if conjugation == "" {
+			continue
+		}
+
+		sentenceText := renderSentenceWithSingleBlank(sentence.Text, stepVerbData.Infinitive)
+
+		return models.RoundData{
+			Sentence:       sentenceText,
+			Verb:           stepVerbData.Infinitive,
+			Tense:          stepTense,
+			Pronoun:        multiplayerPronouns[pronounIndex-1],
+			PronounIndex:   pronounIndex,
+			CorrectAnswers: []string{conjugation},
+			ExpectedCount:  1,
+		}, nil
+	}
+
+	// Fallback to a generic sentence so the game can always progress.
+	verbsToTry := game.Config.Verbs
+	if len(verbsToTry) == 0 {
+		// No verbs configured — fetch a random one from the DB.
+		var randomVerbs []models.Verb
+		if err := ms.db.Order("RANDOM()").Limit(5).Preload("Conjugations").Find(&randomVerbs).Error; err == nil {
+			for _, v := range randomVerbs {
+				verbsToTry = append(verbsToTry, v.Infinitive)
+			}
+		}
+	}
+
+	for _, stepVerb := range verbsToTry {
+		var verb models.Verb
+		if err := ms.db.Where("infinitive = ?", stepVerb).Preload("Conjugations").First(&verb).Error; err != nil {
+			continue
+		}
+		if verb.Conjugations == nil {
+			continue
+		}
+
+		for _, stepTense := range game.Config.Tenses {
+			for person := 1; person <= len(multiplayerPronouns); person++ {
+				conjugation := getConjugation(verb.Conjugations, stepTense, person)
+				if conjugation == "" {
+					continue
+				}
+
+				pronoun := normalizePronounForSentence(multiplayerPronouns[person-1])
+				return models.RoundData{
+					Sentence:       fmt.Sprintf("%s ___ souvent.", pronoun),
+					Verb:           stepVerb,
+					Tense:          stepTense,
+					Pronoun:        multiplayerPronouns[person-1],
+					PronounIndex:   person,
+					CorrectAnswers: []string{conjugation},
+					ExpectedCount:  1,
+				}, nil
+			}
+		}
+	}
+
+	return models.RoundData{}, errors.New("could not generate sentence round from game config")
+}
+
+func renderSentenceWithSingleBlank(template string, targetVerb string) string {
+	placeholderRegex := regexp.MustCompile(`\(([^)]+)\)`)
+	targetReplaced := false
+
+	rendered := placeholderRegex.ReplaceAllStringFunc(template, func(match string) string {
+		inner := strings.TrimSuffix(strings.TrimPrefix(match, "("), ")")
+		if strings.EqualFold(inner, targetVerb) && !targetReplaced {
+			targetReplaced = true
+			return "___"
+		}
+		return inner
+	})
+
+	if targetReplaced {
+		return rendered
+	}
+
+	// Last resort: replace first case-insensitive target placeholder.
+	targetRegex := regexp.MustCompile(`(?i)\(` + regexp.QuoteMeta(targetVerb) + `\)`)
+	if targetRegex.MatchString(rendered) {
+		return targetRegex.ReplaceAllString(rendered, "___")
+	}
+
+	return rendered
+}
+
+func normalizePronounForSentence(pronoun string) string {
+	cleaned := strings.TrimSpace(pronoun)
+	if strings.Contains(cleaned, "/") {
+		parts := strings.Split(cleaned, "/")
+		if len(parts) > 0 {
+			cleaned = strings.TrimSpace(parts[0])
+		}
+	}
+	return cleaned
+}
+
+func stringInSlice(value string, values []string) bool {
+	for _, candidate := range values {
+		if candidate == value {
+			return true
+		}
+	}
+
+	return false
+}
+
+func intersectStrings(a, b []string) []string {
+	set := make(map[string]struct{}, len(a))
+	for _, value := range a {
+		set[value] = struct{}{}
+	}
+
+	intersection := make([]string, 0)
+	for _, value := range b {
+		if _, ok := set[value]; ok {
+			intersection = append(intersection, value)
+		}
+	}
+
+	return intersection
+}
+
+func inferPronounIndex(subject string) int {
+	lowerSubject := strings.ToLower(subject)
+
+	if strings.Contains(lowerSubject, "tu ") || strings.HasPrefix(lowerSubject, "tu") {
+		return 2
+	}
+
+	if strings.Contains(lowerSubject, "nous ") || strings.HasPrefix(lowerSubject, "nous") {
+		return 4
+	}
+
+	if strings.Contains(lowerSubject, "vous ") || strings.HasPrefix(lowerSubject, "vous") {
+		return 5
+	}
+
+	if strings.Contains(lowerSubject, "ils ") || strings.Contains(lowerSubject, "elles ") || strings.HasPrefix(lowerSubject, "les ") {
+		return 6
+	}
+
+	if strings.Contains(lowerSubject, "il ") ||
+		strings.Contains(lowerSubject, "elle ") ||
+		strings.Contains(lowerSubject, "on ") ||
+		strings.HasPrefix(lowerSubject, "le ") ||
+		strings.HasPrefix(lowerSubject, "la ") ||
+		strings.HasPrefix(lowerSubject, "l'") ||
+		strings.HasPrefix(lowerSubject, "cet ") ||
+		strings.HasPrefix(lowerSubject, "cette ") {
+		return 3
+	}
+
+	return 1
+}
+
+// generateParticipeRoundData generates round data for participe game type.
+func (ms *MultiplayerService) generateParticipeRoundData(game *models.MultiplayerGame) (models.RoundData, error) {
+	rand.Seed(time.Now().UnixNano())
+
+	configVerbs := game.Config.Verbs
+	if len(configVerbs) == 0 {
+		// No verbs configured — pick a random verb from the DB.
+		var randomVerb models.Verb
+		if err := ms.db.Order("RANDOM()").First(&randomVerb).Error; err != nil {
+			return models.RoundData{}, fmt.Errorf("failed to pick random verb from DB: %w", err)
+		}
+		configVerbs = []string{randomVerb.Infinitive}
+	}
+
+	stepVerb := configVerbs[rand.Intn(len(configVerbs))]
+
+	var verb models.Verb
+	if err := ms.db.Where("infinitive = ?", stepVerb).First(&verb).Error; err != nil {
+		return models.RoundData{}, fmt.Errorf("verb not found: %s", stepVerb)
+	}
+
+	// Randomly choose between past and present participle
+	participeTypes := []string{"past", "present"}
+	participeType := participeTypes[rand.Intn(len(participeTypes))]
+
+	var participle string
+	if participeType == "past" {
+		participle = verb.PastParticiple
+	} else {
+		participle = verb.PresentParticiple
+	}
+
+	if participle == "" {
+		return models.RoundData{}, fmt.Errorf("no %s participle found for verb: %s", participeType, stepVerb)
+	}
+
+	return models.RoundData{
+		Verb:          stepVerb,
+		Tense:         participeType,
+		CorrectAnswers: []string{participle},
+		ExpectedCount: 1,
 	}, nil
 }
 
@@ -917,6 +1340,70 @@ func (ms *MultiplayerService) FinishRound(roundID uint) error {
 		Update("finished_at", now).Error
 }
 
+// FinishRoundIfOpen marks a round as finished only if it has not already been closed.
+func (ms *MultiplayerService) FinishRoundIfOpen(roundID uint) (bool, error) {
+	now := time.Now()
+	result := ms.db.Model(&models.MultiplayerGameRound{}).
+		Where("id = ? AND finished_at IS NULL", roundID).
+		Update("finished_at", now)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return result.RowsAffected > 0, nil
+}
+
+// CompleteMissingAnswers inserts zero-point answers for active players that did not submit.
+func (ms *MultiplayerService) CompleteMissingAnswers(roundID uint) error {
+	var round models.MultiplayerGameRound
+	if err := ms.db.First(&round, roundID).Error; err != nil {
+		return err
+	}
+
+	var players []models.MultiplayerGamePlayer
+	if err := ms.db.
+		Where("game_id = ? AND left_at IS NULL", round.GameID).
+		Find(&players).Error; err != nil {
+		return err
+	}
+
+	var answers []models.PlayerAnswer
+	if err := ms.db.
+		Where("round_id = ?", roundID).
+		Find(&answers).Error; err != nil {
+		return err
+	}
+
+	hasAnswer := make(map[uint]bool, len(answers))
+	for _, answer := range answers {
+		hasAnswer[answer.PlayerID] = true
+	}
+
+	missing := make([]models.PlayerAnswer, 0)
+	for _, player := range players {
+		if hasAnswer[player.ID] {
+			continue
+		}
+
+		missing = append(missing, models.PlayerAnswer{
+			RoundID:     roundID,
+			PlayerID:    player.ID,
+			Answer:      "",
+			IsCorrect:   false,
+			Points:      0,
+			TimeSpent:   0,
+			SubmittedAt: time.Now(),
+		})
+	}
+
+	if len(missing) == 0 {
+		return nil
+	}
+
+	return ms.db.Create(&missing).Error
+}
+
 // GetRoundWinners returns the user IDs of players with the highest points in a specific round
 func (ms *MultiplayerService) GetRoundWinners(roundID uint) ([]uint, error) {
 	// Get all answers for this round, ordered by points descending
@@ -971,6 +1458,21 @@ func (ms *MultiplayerService) GetGamePlayers(gameID string) ([]models.Multiplaye
 		Find(&players).Error
 
 	return players, err
+}
+
+// GetLatestRound returns the most recent round for a game.
+func (ms *MultiplayerService) GetLatestRound(gameID string) (*models.MultiplayerGameRound, error) {
+	var round models.MultiplayerGameRound
+
+	err := ms.db.
+		Where("game_id = ?", gameID).
+		Order("round_number DESC").
+		First(&round).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &round, nil
 }
 
 // GetGameResults builds a simple final results payload for broadcasting

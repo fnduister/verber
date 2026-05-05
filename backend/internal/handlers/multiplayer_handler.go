@@ -37,6 +37,88 @@ func (mh *MultiplayerHandler) GetHub() *ws.MultiplayerHub {
 	return mh.hub
 }
 
+func (mh *MultiplayerHandler) scheduleRoundTimeout(gameID string, roundID uint, durationSeconds int) {
+	if durationSeconds <= 0 {
+		durationSeconds = 30
+	}
+
+	go func() {
+		time.Sleep(time.Duration(durationSeconds+1) * time.Second)
+		mh.completeRoundAndAdvance(gameID, roundID)
+	}()
+}
+
+func (mh *MultiplayerHandler) completeRoundAndAdvance(gameID string, roundID uint) {
+	if err := mh.multiplayerService.CompleteMissingAnswers(roundID); err != nil {
+		log.Printf("completeRoundAndAdvance: failed to complete missing answers for round %d: %v", roundID, err)
+		return
+	}
+
+	finishedNow, err := mh.multiplayerService.FinishRoundIfOpen(roundID)
+	if err != nil {
+		log.Printf("completeRoundAndAdvance: failed to finish round %d: %v", roundID, err)
+		return
+	}
+
+	if !finishedNow {
+		return
+	}
+
+	game, err := mh.multiplayerService.GetGame(gameID)
+	if err != nil {
+		log.Printf("completeRoundAndAdvance: failed to get game %s: %v", gameID, err)
+		return
+	}
+
+	players, _ := mh.multiplayerService.GetGamePlayers(gameID)
+	roundWinners, _ := mh.multiplayerService.GetRoundWinners(roundID)
+
+	mh.hub.BroadcastToGame(gameID, ws.TypeRoundEnd, gin.H{
+		"players":       players,
+		"round_winners": roundWinners,
+		"message":       "Round finished! Next round starting soon...",
+	})
+
+	if game.CurrentStep < game.MaxSteps {
+		go func(currentStep int) {
+			for i := 3; i > 0; i-- {
+				mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("Next round in %d...", i)})
+				time.Sleep(1 * time.Second)
+			}
+
+			nextStep := currentStep + 1
+
+			roundData, err := mh.multiplayerService.GenerateRoundData(game)
+			if err != nil {
+				log.Printf("Error generating round data: %v", err)
+				return
+			}
+
+			round, err := mh.multiplayerService.CreateRound(gameID, nextStep, roundData)
+			if err != nil {
+				log.Printf("Error creating round: %v", err)
+				return
+			}
+
+			mh.multiplayerService.UpdateGameStep(gameID, nextStep)
+
+			mh.hub.BroadcastToGame(gameID, ws.TypeRoundStart, round)
+			mh.scheduleRoundTimeout(gameID, round.ID, game.Config.MaxTime)
+		}(game.CurrentStep)
+		return
+	}
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		mh.multiplayerService.FinishGame(gameID)
+		finalPlayers, _ := mh.multiplayerService.GetGamePlayers(gameID)
+		mh.hub.BroadcastToGame(gameID, ws.TypeGameFinished, gin.H{
+			"players": finalPlayers,
+			"message": "Game finished!",
+		})
+	}()
+}
+
 // handlePlayerDisconnect is called when a player disconnects from an ongoing game
 func (mh *MultiplayerHandler) handlePlayerDisconnect(gameID string, userID uint) {
 	log.Printf("🔴 Player %d disconnected from game %s", userID, gameID)
@@ -192,6 +274,19 @@ func (mh *MultiplayerHandler) GetGame(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"game": game})
 }
 
+// GetLatestRound returns the most recent round for a game.
+func (mh *MultiplayerHandler) GetLatestRound(c *gin.Context) {
+	gameID := c.Param("gameId")
+
+	round, err := mh.multiplayerService.GetLatestRound(gameID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Round not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"round": round})
+}
+
 // JoinGame allows a player to join a game
 func (mh *MultiplayerHandler) JoinGame(c *gin.Context) {
 	userID := c.GetUint("userID")
@@ -298,6 +393,7 @@ func (mh *MultiplayerHandler) StartGame(c *gin.Context) {
 
 	// Broadcast countdown before game starts
 	go func() {
+		log.Printf("StartGame goroutine: beginning countdown for game %s", gameID)
 		// Countdown from 3 to 1
 		for i := 3; i > 0; i-- {
 			mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("Starting in %d...", i)})
@@ -305,21 +401,37 @@ func (mh *MultiplayerHandler) StartGame(c *gin.Context) {
 		}
 
 		// Start the game
-		if err := mh.multiplayerService.StartGame(gameID); err == nil {
-			mh.hub.BroadcastToGame(gameID, ws.TypeGameStarted, gin.H{"message": "Game started!"})
-
-			// Generate and broadcast first round
-			game, err := mh.multiplayerService.GetGame(gameID)
-			if err == nil {
-				roundData, err := mh.multiplayerService.GenerateRoundData(game)
-				if err == nil {
-					round, err := mh.multiplayerService.CreateRound(gameID, 1, roundData)
-					if err == nil {
-						mh.hub.BroadcastToGame(gameID, ws.TypeRoundStart, round)
-					}
-				}
-			}
+		log.Printf("StartGame goroutine: calling StartGame for %s", gameID)
+		if err := mh.multiplayerService.StartGame(gameID); err != nil {
+			log.Printf("StartGame goroutine: StartGame failed for %s: %v", gameID, err)
+			return
 		}
+
+		mh.hub.BroadcastToGame(gameID, ws.TypeGameStarted, gin.H{"message": "Game started!"})
+		log.Printf("StartGame goroutine: game_started broadcast sent for %s", gameID)
+
+		// Generate and broadcast first round
+		game, err := mh.multiplayerService.GetGame(gameID)
+		if err != nil {
+			log.Printf("StartGame goroutine: GetGame failed for %s: %v", gameID, err)
+			return
+		}
+
+		roundData, err := mh.multiplayerService.GenerateRoundData(game)
+		if err != nil {
+			log.Printf("StartGame goroutine: GenerateRoundData failed for %s: %v", gameID, err)
+			return
+		}
+
+		round, err := mh.multiplayerService.CreateRound(gameID, 1, roundData)
+		if err != nil {
+			log.Printf("StartGame goroutine: CreateRound failed for %s: %v", gameID, err)
+			return
+		}
+
+		log.Printf("StartGame goroutine: broadcasting round_start round=%d for game %s", round.ID, gameID)
+		mh.hub.BroadcastToGame(gameID, ws.TypeRoundStart, round)
+		mh.scheduleRoundTimeout(gameID, round.ID, game.Config.MaxTime)
 	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Starting game..."})
@@ -357,6 +469,7 @@ func (mh *MultiplayerHandler) SetReady(c *gin.Context) {
 		log.Printf("SetReady: AUTO-STARTING game %s", gameID)
 		// Start countdown in goroutine
 		go func() {
+			log.Printf("AutoStart goroutine: beginning countdown for game %s", gameID)
 			// Countdown from 3 to 1
 			for i := 3; i > 0; i-- {
 				mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("All ready! Starting in %d...", i)})
@@ -364,21 +477,37 @@ func (mh *MultiplayerHandler) SetReady(c *gin.Context) {
 			}
 
 			// Start the game
-			if err := mh.multiplayerService.StartGame(gameID); err == nil {
-				mh.hub.BroadcastToGame(gameID, ws.TypeGameStarted, gin.H{"message": "Game started!"})
-
-				// Generate and broadcast first round
-				game, err := mh.multiplayerService.GetGame(gameID)
-				if err == nil {
-					roundData, err := mh.multiplayerService.GenerateRoundData(game)
-					if err == nil {
-						round, err := mh.multiplayerService.CreateRound(gameID, 1, roundData)
-						if err == nil {
-							mh.hub.BroadcastToGame(gameID, ws.TypeRoundStart, round)
-						}
-					}
-				}
+			log.Printf("AutoStart goroutine: calling StartGame for %s", gameID)
+			if err := mh.multiplayerService.StartGame(gameID); err != nil {
+				log.Printf("AutoStart goroutine: StartGame failed for %s: %v", gameID, err)
+				return
 			}
+
+			mh.hub.BroadcastToGame(gameID, ws.TypeGameStarted, gin.H{"message": "Game started!"})
+			log.Printf("AutoStart goroutine: game_started broadcast sent for %s", gameID)
+
+			// Generate and broadcast first round
+			game, err := mh.multiplayerService.GetGame(gameID)
+			if err != nil {
+				log.Printf("AutoStart goroutine: GetGame failed for %s: %v", gameID, err)
+				return
+			}
+
+			roundData, err := mh.multiplayerService.GenerateRoundData(game)
+			if err != nil {
+				log.Printf("AutoStart goroutine: GenerateRoundData failed for %s: %v", gameID, err)
+				return
+			}
+
+			round, err := mh.multiplayerService.CreateRound(gameID, 1, roundData)
+			if err != nil {
+				log.Printf("AutoStart goroutine: CreateRound failed for %s: %v", gameID, err)
+				return
+			}
+
+			log.Printf("AutoStart goroutine: broadcasting round_start round=%d for game %s", round.ID, gameID)
+			mh.hub.BroadcastToGame(gameID, ws.TypeRoundStart, round)
+			mh.scheduleRoundTimeout(gameID, round.ID, game.Config.MaxTime)
 		}()
 	}
 
@@ -465,67 +594,7 @@ func (mh *MultiplayerHandler) SubmitAnswer(c *gin.Context) {
 	// Check if all answers are submitted
 	allSubmitted, err := mh.multiplayerService.CheckAllAnswersSubmitted(uint(roundID))
 	if err == nil && allSubmitted {
-		// Finish round
-		mh.multiplayerService.FinishRound(uint(roundID))
-
-		// Get game to check if we should start next round
-		game, err := mh.multiplayerService.GetGame(gameID)
-		if err == nil {
-			// Get updated players with scores
-			players, _ := mh.multiplayerService.GetGamePlayers(gameID)
-
-			// Get round winners (players with highest points in this round)
-			roundWinners, _ := mh.multiplayerService.GetRoundWinners(uint(roundID))
-
-			// Broadcast round end
-			mh.hub.BroadcastToGame(gameID, ws.TypeRoundEnd, gin.H{
-				"players":       players,
-				"round_winners": roundWinners,
-				"message":       "Round finished! Next round starting soon...",
-			})
-
-			// Check if there are more rounds to play
-			if game.CurrentStep < game.MaxSteps {
-				// Auto-start next round with countdown
-				go func() {
-					// Countdown from 3 to 1
-					for i := 3; i > 0; i-- {
-						mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("Next round in %d...", i)})
-						time.Sleep(1 * time.Second)
-					}
-
-					// Generate and create next round
-					game.CurrentStep++
-					mh.multiplayerService.UpdateGameStep(gameID, game.CurrentStep)
-
-					roundData, err := mh.multiplayerService.GenerateRoundData(game)
-					if err != nil {
-						log.Printf("Error generating round data: %v", err)
-						return
-					}
-
-					round, err := mh.multiplayerService.CreateRound(gameID, game.CurrentStep, roundData)
-					if err != nil {
-						log.Printf("Error creating round: %v", err)
-						return
-					}
-
-					// Broadcast round start
-					mh.hub.BroadcastToGame(gameID, ws.TypeRoundStart, round)
-				}()
-			} else {
-				// Game is finished, broadcast game end
-				go func() {
-					time.Sleep(3 * time.Second)
-					mh.multiplayerService.FinishGame(gameID)
-					finalPlayers, _ := mh.multiplayerService.GetGamePlayers(gameID)
-					mh.hub.BroadcastToGame(gameID, ws.TypeGameFinished, gin.H{
-						"players": finalPlayers,
-						"message": "Game finished!",
-					})
-				}()
-			}
-		}
+		mh.completeRoundAndAdvance(gameID, uint(roundID))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Answer submitted"})
