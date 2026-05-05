@@ -1,8 +1,19 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+type RuntimeEnv = {
+    REACT_APP_API_URL?: string;
+    REACT_APP_WS_URL?: string;
+    REACT_APP_ENVIRONMENT?: string;
+};
+
+const runtimeEnv = ((globalThis as typeof globalThis & { _env_?: RuntimeEnv })._env_ || {});
+const runtimeApiUrl = runtimeEnv.REACT_APP_API_URL?.trim();
+const buildTimeApiUrl = process.env.REACT_APP_API_URL?.trim();
+
+const API_BASE_URL = runtimeApiUrl || buildTimeApiUrl || 'http://localhost:8080/api';
 
 console.log('🔧 API Configuration:', {
+    runtimeApiUrl,
     REACT_APP_API_URL: process.env.REACT_APP_API_URL,
     API_BASE_URL,
     allEnvVars: Object.keys(process.env).filter(key => key.startsWith('REACT_APP_'))

@@ -61,7 +61,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-verber_user}:${POSTGRES_PASSWORD:-verber_password}@postgres:5432/${POSTGRES_DB:-verber_db}?sslmode=disable
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET}
-      - FRONTEND_URL=${FRONTEND_URL:-https://verber.sicole.com}
+      - FRONTEND_URL=${FRONTEND_URL:-https://verber.ca}
       - ENVIRONMENT=production
       - PORT=8080
     depends_on:
@@ -81,12 +81,16 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-https://verber.sicole.com/api}
-        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-wss://verber.sicole.com}
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-https://verber.ca/api}
+        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-wss://verber.ca}
         - REACT_APP_ENVIRONMENT=production
         - NODE_ENV=production
     container_name: verber-frontend-prod
     restart: always
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-https://verber.ca/api}
+      - REACT_APP_WS_URL=${REACT_APP_WS_URL:-wss://verber.ca}
+      - REACT_APP_ENVIRONMENT=${REACT_APP_ENVIRONMENT:-production}
     # Map to port 3001 for nginx proxy
     ports:
       - "3000:80"

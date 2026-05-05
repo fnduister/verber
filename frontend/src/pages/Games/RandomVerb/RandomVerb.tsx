@@ -636,6 +636,12 @@ const RandomVerb: React.FC = () => {
                                                         onKeyPress={(e) => handleKeyPress(e, index)}
                                                         disabled={showAnswers || isProcessingAnswer}
                                                         error={showAnswers && correctnessStatus[index] === false}
+                                                        inputProps={{
+                                                            autoComplete: 'off',
+                                                            autoCorrect: 'off',
+                                                            autoCapitalize: 'off',
+                                                            spellCheck: 'false'
+                                                        }}
                                                         sx={{
                                                             flexGrow: 1,
                                                             '& .MuiOutlinedInput-root': {

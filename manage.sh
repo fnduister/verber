@@ -184,9 +184,21 @@ update_app() {
     echo "Pulling latest code..."
     git pull
     
-    # Rebuild containers
-    echo "Rebuilding containers..."
-    docker-compose -f $COMPOSE_FILE up -d --build
+    # Stop services to avoid serving outdated assets while rebuilding
+    echo "Stopping services..."
+    docker-compose -f $COMPOSE_FILE down
+
+    # Remove old images so Docker can't reuse stale layers
+    echo "Removing cached images..."
+    docker rmi verber-frontend verber-backend 2>/dev/null || true
+
+    # Rebuild everything from scratch with the latest code
+    echo "Rebuilding containers with fresh cache..."
+    docker-compose -f $COMPOSE_FILE build --no-cache
+
+    # Start services with rebuilt images
+    echo "Starting services..."
+    docker-compose -f $COMPOSE_FILE up -d
     
     # Wait and check
     echo "Waiting for services..."
