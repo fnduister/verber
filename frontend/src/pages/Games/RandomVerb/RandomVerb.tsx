@@ -636,11 +636,13 @@ const RandomVerb: React.FC = () => {
                                                         onKeyPress={(e) => handleKeyPress(e, index)}
                                                         disabled={showAnswers || isProcessingAnswer}
                                                         error={showAnswers && correctnessStatus[index] === false}
+                                                        autoComplete="off"
+                                                        autoCorrect="off"
+                                                        autoCapitalize="off"
+                                                        spellCheck={false}
                                                         inputProps={{
-                                                            autoComplete: 'off',
-                                                            autoCorrect: 'off',
-                                                            autoCapitalize: 'off',
-                                                            spellCheck: 'false'
+                                                            'data-form-type': 'other',
+                                                            'data-lpignore': 'true'
                                                         }}
                                                         sx={{
                                                             flexGrow: 1,

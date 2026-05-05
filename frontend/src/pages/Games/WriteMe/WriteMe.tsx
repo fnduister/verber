@@ -538,6 +538,14 @@ const WriteMe: React.FC = () => {
                                                 onKeyPress={(e) => handleKeyPress(e, index)}
                                                 disabled={showAnswers || isProcessingAnswer}
                                                 error={showAnswers && correctnessStatus[index] === false}
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                autoCapitalize="off"
+                                                spellCheck={false}
+                                                inputProps={{
+                                                    'data-form-type': 'other',
+                                                    'data-lpignore': 'true'
+                                                }}
                                                 sx={{
                                                     flexGrow: 1,
                                                     '& .MuiOutlinedInput-root': {

@@ -1,191 +1,203 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "🚀 Start Development (All Services)",
-      "type": "shell",
-      "command": "docker-compose up -d",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🛑 Stop All Services",
-      "type": "shell",
-      "command": "docker-compose down",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "📊 View All Logs",
-      "type": "shell",
-      "command": "docker-compose logs -f",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🔧 Backend Only - Logs",
-      "type": "shell",
-      "command": "docker-compose logs -f backend",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🎨 Frontend Only - Logs",
-      "type": "shell",
-      "command": "docker-compose logs -f frontend",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🔄 Rebuild Backend",
-      "type": "shell",
-      "command": "docker-compose build --no-cache backend && docker-compose up -d backend",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🔄 Rebuild Frontend",
-      "type": "shell",
-      "command": "docker-compose build --no-cache frontend && docker-compose up -d frontend",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🔄 Quick Restart Backend",
-      "type": "shell",
-      "command": "docker-compose restart backend",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🔄 Quick Restart Frontend",
-      "type": "shell",
-      "command": "docker-compose restart frontend",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🗄️ Database Shell",
-      "type": "shell",
-      "command": "docker-compose exec postgres psql -U verber_user -d verber_db",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "📦 Install Frontend Dependencies",
-      "type": "shell",
-      "command": "cd frontend && npm install",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "🧹 Go Mod Tidy",
-      "type": "shell",
-      "command": "cd backend && go mod tidy",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "npm: start - frontend",
-      "type": "npm",
-      "script": "start",
-      "path": "frontend/",
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "custom",
-        "pattern": {
-          "regexp": "^$"
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": ".*(Compiled successfully|webpack compiled|Local:.*http://localhost:3000).*"
-        }
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": false
-      }
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "🚀 Start Development (All Services)",
+			"type": "shell",
+			"command": "docker-compose up -d",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🛑 Stop All Services",
+			"type": "shell",
+			"command": "docker-compose down",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "📊 View All Logs",
+			"type": "shell",
+			"command": "docker-compose logs -f",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🔧 Backend Only - Logs",
+			"type": "shell",
+			"command": "docker-compose logs -f backend",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🎨 Frontend Only - Logs",
+			"type": "shell",
+			"command": "docker-compose logs -f frontend",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🔄 Rebuild Backend",
+			"type": "shell",
+			"command": "docker-compose build --no-cache backend && docker-compose up -d backend",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🔄 Rebuild Frontend",
+			"type": "shell",
+			"command": "docker-compose build --no-cache frontend && docker-compose up -d frontend",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🔄 Quick Restart Backend",
+			"type": "shell",
+			"command": "docker-compose restart backend",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🔄 Quick Restart Frontend",
+			"type": "shell",
+			"command": "docker-compose restart frontend",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🗄️ Database Shell",
+			"type": "shell",
+			"command": "docker-compose exec postgres psql -U verber_user -d verber_db",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "📦 Install Frontend Dependencies",
+			"type": "shell",
+			"command": "cd frontend && npm install",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🧹 Go Mod Tidy",
+			"type": "shell",
+			"command": "cd backend && go mod tidy",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "npm: start - frontend",
+			"type": "npm",
+			"script": "start",
+			"path": "frontend/",
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".*",
+					"endsPattern": ".*(Compiled successfully|webpack compiled|Local:.*http://localhost:3000).*"
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		{
+			"label": "🔄 Rebuild Backend",
+			"type": "shell",
+			"command": "docker-compose build --no-cache backend && docker-compose up -d backend",
+			"group": "build"
+		},
+		{
+			"label": "🔄 Rebuild Backend (PowerShell)",
+			"type": "shell",
+			"command": "docker-compose build --no-cache backend; docker-compose up -d backend",
+			"group": "build"
+		}
+	]
 }

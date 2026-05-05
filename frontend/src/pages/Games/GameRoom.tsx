@@ -1,30 +1,26 @@
 import { Add, Close, Refresh } from '@mui/icons-material';
 import {
     Alert,
-    Autocomplete,
-    Box,
+    Autocomplete, Box,
     Button,
     Checkbox,
     Chip,
     CircularProgress,
-    Container,
-    Divider,
+    Container, Divider,
     FormControl,
     FormControlLabel,
     IconButton,
-    InputLabel,
-    MenuItem,
+    InputLabel, MenuItem,
     Paper,
     Select,
-    SelectChangeEvent,
-    Stack,
+    SelectChangeEvent, Stack,
     TextField,
     Typography
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AudioSettings } from '../../components/AudioSettings';
 import { TENSE_MAP } from '../../constants';
 import {
@@ -38,6 +34,8 @@ import {
     PRESET_VERB_GROUPS,
     SPECIAL_TENSES
 } from '../../constants/gameConstants';
+import { multiplayerAPI } from '../../services/multiplayerApi';
+import { toastService } from '../../services/toastService';
 import {
     addCustomTenseGroup,
     addCustomVerbGroup,
@@ -51,12 +49,17 @@ import {
 } from '../../store/slices/gameSlice';
 import { fetchTenses, fetchVerbs } from '../../store/slices/verbSlice';
 import { AppDispatch, RootState } from '../../store/store';
+import { mapMultiplayerErrorMessage } from '../../utils/multiplayerErrorMessages';
 
 const GameRoom = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const { gameId } = useParams<{ gameId: string }>();
+    const [searchParams] = useSearchParams();
+    const isMultiplayer = searchParams.get('mode') === 'multiplayer';
 
+    const { user, isAuthenticated, token } = useSelector((state: RootState) => state.auth);
     const currentVerbs = useSelector((state: RootState) => state.game.currentVerbs);
     const currentTenses = useSelector((state: RootState) => state.game.currentTenses);
     const currentParticipeTypes = useSelector((state: RootState) => state.game.currentParticipeTypes);
@@ -113,8 +116,10 @@ const GameRoom = () => {
             console.log('GameRoom - Dispatching fetchTenses...');
             dispatch(fetchTenses());
         }
-    }, [dispatch, allVerbs.length, allTenses.length]); useEffect(() => {
-        if (![5, 10, 15].includes(ongoingGameInfo.maxStep)) {
+    }, [dispatch, allVerbs.length, allTenses.length]);
+
+    useEffect(() => {
+        if (![5, 10, 15, 20].includes(ongoingGameInfo.maxStep)) {
             dispatch(setOngoingGameInfo({ maxStep: 5 }));
         }
     }, [dispatch, ongoingGameInfo.maxStep]);
@@ -137,7 +142,6 @@ const GameRoom = () => {
 
     const handleSelectVerb = (verbs: string[], isSelected: boolean) => {
         if (!isSelected) {
-            debugger;
             const newVerbs = verbs.filter((v) => !currentVerbs.includes(v));
             dispatch(setCurrentVerbs([...currentVerbs, ...newVerbs]));
         } else {
@@ -225,10 +229,99 @@ const GameRoom = () => {
         
         // For games that don't require verbs (minVerbs === 0), only check tenses
         if (prerequisiteStatus.minVerbs === 0) {
-            return !prerequisiteStatus.tensesMet;
+            return currentTenses.length === 0 || !prerequisiteStatus.tensesMet;
         }
-        // For other games, check both verbs and tenses
+        
         return currentVerbs.length === 0 || currentTenses.length === 0 || !prerequisiteStatus.verbsMet || !prerequisiteStatus.tensesMet;
+    };
+
+    const handleStartGame = async () => {
+        if (canAdvance()) return;
+
+        if (isMultiplayer) {
+            // Multiplayer currently supported for Find Error and MatchMe
+            if (gameType !== 'find-error' && gameType !== 'matching') {
+                alert('Multiplayer mode is currently available for "Find Error" and "MatchMe" only.');
+                navigate('/games/multiplayer');
+                return;
+            }
+
+            // Check authentication
+            if (!isAuthenticated || !token) {
+                console.error('User not authenticated. Redirecting to login...');
+                alert('Please log in to create a multiplayer game');
+                navigate('/login');
+                return;
+            }
+
+            // Debug: Check token in localStorage
+            const storedToken = localStorage.getItem('token');
+            console.log('Auth check:', {
+                isAuthenticated,
+                hasToken: !!token,
+                storedToken: storedToken?.substring(0, 20) + '...',
+                user: user?.username
+            });
+
+            // Get multiplayer game data from session storage
+            const multiplayerData = sessionStorage.getItem('multiplayerGameData');
+            if (!multiplayerData) {
+                console.error('No multiplayer game data found');
+                return;
+            }
+
+            const gameData = JSON.parse(multiplayerData);
+            
+            try {
+                console.log('Creating multiplayer game with data:', {
+                    title: gameData.title,
+                    game_type: gameData.game_type,
+                    max_players: gameData.max_players,
+                    verbs: currentVerbs,
+                    tenses: currentTenses
+                });
+
+                // Create multiplayer game with configured verbs and tenses
+                const game = await multiplayerAPI.createGame({
+                    title: gameData.title,
+                    game_type: gameData.game_type,
+                    max_players: gameData.max_players,
+                    max_steps: ongoingGameInfo.maxStep,
+                    difficulty: gameData.difficulty,
+                    duration: gameData.duration,
+                    config: {
+                        verbs: currentVerbs,
+                        tenses: currentTenses,
+                        max_time: ongoingGameInfo.maxTime,
+                    },
+                });
+
+                console.log('Multiplayer game created successfully:', game);
+
+                // Clear session storage
+                sessionStorage.removeItem('multiplayerGameData');
+
+                // Navigate directly to waiting room where invites are handled
+                if (gameData.game_type === 'matching') {
+                    navigate(`/games/multiplayer/matching/${game.id}`);
+                } else {
+                    navigate(`/games/multiplayer/find-error/${game.id}`);
+                }
+            } catch (error: any) {
+                console.error('Failed to create multiplayer game:', error);
+                if (error.response?.status === 401) {
+                    alert('Session expired. Please log in again.');
+                    navigate('/login');
+                } else {
+                    const backendError = error.response?.data?.error;
+                    const friendly = mapMultiplayerErrorMessage(backendError);
+                    toastService.error(friendly || ('Failed to create game: ' + (backendError || error.message)));
+                }
+            }
+        } else {
+            // Single player - navigate to game
+            navigate('/games/' + currentGame.url);
+        }
     };
 
     const handleStepsChange = (event: SelectChangeEvent) => {
@@ -337,13 +430,17 @@ const GameRoom = () => {
                         }
                         renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseVerbs')} placeholder={t('gameRoom.verbsPlaceholder')} />}
                         renderTags={(value, getTagProps) =>
-                            value.map((option, index) => (
-                                <Chip
-                                    label={option}
-                                    {...getTagProps({ index })}
-                                    onDelete={() => handleDeleteVerb(option)}
-                                />
-                            ))
+                            value.map((option, index) => {
+                                const { key, ...tagProps } = getTagProps({ index });
+                                return (
+                                    <Chip
+                                        key={key}
+                                        label={option}
+                                        {...tagProps}
+                                        onDelete={() => handleDeleteVerb(option)}
+                                    />
+                                );
+                            })
                         }
                     />
 
@@ -397,14 +494,14 @@ const GameRoom = () => {
                         <Paper sx={{ p: 2 }}>
                             <Stack direction="row" spacing={2} alignItems="center">
                                 <TextField
-                                    label="Nom du groupe"
+                                    label={t('gameRoom.groupName')}
                                     value={newGroupName}
                                     onChange={(e) => setNewGroupName(e.target.value)}
                                     size="small"
                                     fullWidth
                                 />
                                 <Button variant="contained" onClick={handleAddVerbGroup} disabled={!newGroupName || currentVerbs.length === 0}>
-                                    Ajouter
+                                    {t('gameRoom.add')}
                                 </Button>
                                 <IconButton onClick={() => setAddVerbMode(false)}>
                                     <Close />
@@ -521,13 +618,17 @@ const GameRoom = () => {
                         renderInput={(params) => <TextField {...params} label={t('gameRoom.chooseTenses')} placeholder={t('gameRoom.tensesPlaceholder')} />}
                         getOptionLabel={(option) => TENSE_MAP[option]?.displayName || option}
                         renderTags={(value, getTagProps) =>
-                            value.map((option, index) => (
-                                <Chip
-                                    label={TENSE_MAP[option]?.displayName || option}
-                                    {...getTagProps({ index })}
-                                    onDelete={() => handleDeleteTense(option)}
-                                />
-                            ))
+                            value.map((option, index) => {
+                                const { key, ...tagProps } = getTagProps({ index });
+                                return (
+                                    <Chip
+                                        key={key}
+                                        label={TENSE_MAP[option]?.displayName || option}
+                                        {...tagProps}
+                                        onDelete={() => handleDeleteTense(option)}
+                                    />
+                                );
+                            })
                         }
                     />
 
@@ -535,7 +636,7 @@ const GameRoom = () => {
                     {customTenseGroups.length > 0 && (
                         <Box>
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                Groupes personnalisés
+                                {t('gameRoom.customGroups')}
                             </Typography>
                             <Stack direction="row" spacing={1} flexWrap="wrap">
                                 {customTenseGroups.map((group) => {
@@ -558,7 +659,7 @@ const GameRoom = () => {
                     {/* Preset Tense Groups */}
                     <Box>
                         <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            Groupes prédéfinis
+                            {t('gameRoom.presetGroups')}
                         </Typography>
                         <Stack direction="row" spacing={1} flexWrap="wrap">
                             {PRESET_TENSE_GROUPS.map((group) => {
@@ -581,14 +682,14 @@ const GameRoom = () => {
                         <Paper sx={{ p: 2 }}>
                             <Stack direction="row" spacing={2} alignItems="center">
                                 <TextField
-                                    label="Nom du groupe"
+                                    label={t('gameRoom.groupName')}
                                     value={newGroupName}
                                     onChange={(e) => setNewGroupName(e.target.value)}
                                     size="small"
                                     fullWidth
                                 />
                                 <Button variant="contained" onClick={handleAddTenseGroup} disabled={!newGroupName || currentTenses.length === 0}>
-                                    Ajouter
+                                    {t('gameRoom.add')}
                                 </Button>
                                 <IconButton onClick={() => setAddTenseMode(false)}>
                                     <Close />
@@ -613,14 +714,15 @@ const GameRoom = () => {
                     <FormControl variant="filled" sx={{ minWidth: 200 }}>
                         <InputLabel>{t('gameRoom.numberOfQuestions')}</InputLabel>
                         <Select value={ongoingGameInfo.maxStep.toString()} onChange={handleStepsChange}>
-                            <MenuItem value="5">5 questions</MenuItem>
-                            <MenuItem value="10">10 questions</MenuItem>
-                            <MenuItem value="15">15 questions</MenuItem>
+                            <MenuItem value="5">5 {t('gameRoom.questions')}</MenuItem>
+                            <MenuItem value="10">10 {t('gameRoom.questions')}</MenuItem>
+                            <MenuItem value="15">15 {t('gameRoom.questions')}</MenuItem>
+                            <MenuItem value="20">20 {t('gameRoom.questions')}</MenuItem>
                         </Select>
                     </FormControl>
 
                     <FormControl variant="filled" sx={{ minWidth: 200 }}>
-                        <InputLabel>Vitesse</InputLabel>
+                        <InputLabel>{t('gameRoom.timePerQuestion')}</InputLabel>
                         <Select value={ongoingGameInfo.maxTime.toString()} onChange={handleSpeedChange}>
                             {GAME_SPEEDS.map((speed) => (
                                 <MenuItem key={speed.value} value={speed.value}>
@@ -722,12 +824,11 @@ const GameRoom = () => {
                     disabled={canAdvance()}
                     sx={{ minWidth: 150 }}
                     size="large"
-                    component={Link}
-                    to={'/games/' + currentGame.url}
+                    onClick={handleStartGame}
                     variant="contained"
                     color="warning"
                 >
-                    {t('gameRoom.start')}
+                    {isMultiplayer ? t('gameRoom.createGame') : t('gameRoom.start')}
                 </Button>
             </Box>
         </Container>

@@ -1,115 +1,148 @@
 import {
+    EmojiEvents,
+    Group,
+    Person
+} from '@mui/icons-material';
+import {
     Box,
     Button,
     Card,
-    CardActions,
     CardContent,
-    Chip,
     Container,
     Grid,
+    Stack,
     Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { DIFFICULTY_COLORS, GAME_TYPES } from '../../constants/gameConstants';
 
 const Games: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
-    const handleStartGame = (gameType: string) => {
-        navigate(`/game-room/${gameType}`);
-    };
-
-    const getDifficultyColor = (difficulty: string) => {
-        return DIFFICULTY_COLORS[difficulty] || 'default';
-    };
+    const gamesModes = [
+        {
+            id: 'singleplayer',
+            title: t('games.singlePlayer.title'),
+            description: t('games.singlePlayer.description'),
+            icon: <Person sx={{ fontSize: 80 }} />,
+            color: '#fbbf24',
+            gradient: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+            path: '/games/singleplayer'
+        },
+        {
+            id: 'multiplayer',
+            title: t('games.multiplayer.title'),
+            description: t('games.multiplayer.description'),
+            icon: <Group sx={{ fontSize: 80 }} />,
+            color: '#667eea',
+            gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            path: '/games/multiplayer'
+        }
+    ];
 
     return (
         <Box sx={{ 
             flexGrow: 1, 
             minHeight: '100vh', 
-            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
+            background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)'
         }}>
             <Container maxWidth="lg">
-                <Box sx={{ py: 6 }}>
+                <Box sx={{ py: 8 }}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <Typography variant="h2" component="h1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                            🎮 {t('games.title')}
-                        </Typography>
-                        <Typography variant="h5" component="p" sx={{ mb: 6, color: 'text.secondary', textAlign: 'center' }}>
-                            {t('games.subtitle')}
-                        </Typography>
+                        <Stack alignItems="center" spacing={2} sx={{ mb: 8 }}>
+                            <EmojiEvents sx={{ fontSize: 80, color: '#f59e0b' }} />
+                            <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+                                🎮 {t('games.title')}
+                            </Typography>
+                            <Typography variant="h5" component="p" sx={{ color: 'text.secondary', textAlign: 'center', maxWidth: 600 }}>
+                                {t('games.subtitle')}
+                            </Typography>
+                        </Stack>
                     </motion.div>
 
-                    <Grid container spacing={3}>
-                        {GAME_TYPES.map((game, index) => (
-                            <Grid item xs={12} md={6} key={game.id}>
+                    <Grid container spacing={4} justifyContent="center">
+                        {gamesModes.map((mode, index) => (
+                            <Grid item xs={12} md={5} key={mode.id}>
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                                    transition={{ duration: 0.6, delay: index * 0.2 }}
+                                    whileHover={{ scale: 1.02 }}
                                 >
                                     <Card 
                                         sx={{ 
                                             height: '100%',
+                                            minHeight: 400,
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            transition: 'transform 0.2s, box-shadow 0.2s',
-                                            backgroundColor: 'white',
+                                            background: mode.gradient,
+                                            color: mode.id === 'multiplayer' ? 'white' : 'inherit',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: 3,
                                             '&:hover': {
-                                                transform: 'translateY(-4px)',
-                                                boxShadow: 4,
+                                                boxShadow: 8,
+                                                transform: 'translateY(-8px)',
                                             }
                                         }}
+                                        onClick={() => navigate(mode.path)}
                                     >
-                                        <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <Box sx={{ color: game.color, mr: 2 }}>
-                                                    {game.icon}
-                                                </Box>
-                                                <Box sx={{ flexGrow: 1 }}>
-                                                    <Typography variant="h5" component="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                                        {t(`games.${game.id}.title`)}
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                                        <Chip 
-                                                            label={t(`games.difficulty.${game.difficulty.toLowerCase()}`)} 
-                                                            size="small" 
-                                                            color={getDifficultyColor(game.difficulty) as any}
-                                                        />
-                                                        <Chip label={game.duration} size="small" variant="outlined" />
-                                                        <Chip label={game.players} size="small" variant="outlined" />
-                                                    </Box>
-                                                </Box>
+                                        <CardContent sx={{ 
+                                            flexGrow: 1, 
+                                            display: 'flex', 
+                                            flexDirection: 'column', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            p: 5,
+                                            textAlign: 'center'
+                                        }}>
+                                            <Box sx={{ 
+                                                mb: 3,
+                                                color: mode.id === 'multiplayer' ? 'rgba(255,255,255,0.9)' : mode.color
+                                            }}>
+                                                {mode.icon}
                                             </Box>
-                                            <Typography variant="body1" color="text.secondary">
-                                                {t(`games.${game.id}.description`)}
+                                            <Typography variant="h3" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                                {mode.title}
                                             </Typography>
-                                        </CardContent>
-                                        <CardActions sx={{ p: 3, pt: 0 }}>
-                                            <Button 
-                                                variant="contained" 
-                                                fullWidth
-                                                size="large"
-                                                onClick={() => handleStartGame(game.id)}
+                                            <Typography 
+                                                variant="h6" 
                                                 sx={{ 
-                                                    backgroundColor: game.color,
-                                                    '&:hover': {
-                                                        backgroundColor: game.color,
-                                                        filter: 'brightness(0.9)',
-                                                    }
+                                                    mb: 4,
+                                                    opacity: mode.id === 'multiplayer' ? 0.9 : 0.7
                                                 }}
                                             >
-                                                {t('games.startGame')}
+                                                {mode.description}
+                                            </Typography>
+                                            <Button
+                                                variant="contained"
+                                                size="large"
+                                                sx={{ 
+                                                    px: 6,
+                                                    py: 2,
+                                                    fontSize: '1.1rem',
+                                                    backgroundColor: mode.id === 'multiplayer' ? 'white' : mode.color,
+                                                    color: mode.id === 'multiplayer' ? mode.color : 'white',
+                                                    '&:hover': {
+                                                        backgroundColor: mode.id === 'multiplayer' ? 'rgba(255,255,255,0.9)' : mode.color,
+                                                        filter: mode.id === 'multiplayer' ? 'none' : 'brightness(0.9)',
+                                                    }
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(mode.path);
+                                                }}
+                                            >
+                                                {t('games.playNow')}
                                             </Button>
-                                        </CardActions>
+                                        </CardContent>
                                     </Card>
                                 </motion.div>
                             </Grid>

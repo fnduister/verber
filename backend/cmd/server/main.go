@@ -4,11 +4,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	"verber-backend/internal/config"
 	"verber-backend/internal/database"
 	"verber-backend/internal/handlers"
 	"verber-backend/internal/middleware"
+	"verber-backend/internal/services"
 	"verber-backend/internal/websocket"
 
 	"github.com/gin-contrib/cors"
@@ -41,9 +45,27 @@ func main() {
 	// Initialize Redis
 	redis := database.InitRedis(cfg.RedisURL)
 
-	// Initialize WebSocket hub
-	hub := websocket.NewHub()
-	go hub.Run()
+	// Initialize multiplayer hub
+	multiplayerHub := websocket.NewMultiplayerHub()
+	go multiplayerHub.Run()
+
+	// Periodically expire old invites (TTL = 3 minutes) and broadcast updates
+	go func() {
+		inviteSvc := services.NewInviteService(db)
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			expired, err := inviteSvc.ExpireOldInvitesReturning(services.InviteTTL)
+			if err != nil {
+				continue
+			}
+			for _, inv := range expired {
+				_ = multiplayerHub.BroadcastToGame(inv.GameID, websocket.TypeInviteExpired, inv)
+				_ = multiplayerHub.SendToUser(inv.SenderID, websocket.TypeInviteExpired, inv)
+				_ = multiplayerHub.SendToUser(inv.ReceiverID, websocket.TypeInviteExpired, inv)
+			}
+		}
+	}()
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -75,7 +97,13 @@ func main() {
 	router.Use(cors.New(corsConfig))
 
 	// Initialize handlers
-	h := handlers.NewHandler(db, redis, hub)
+	h := handlers.NewHandler(db, redis)
+	h.SetHub(multiplayerHub) // Set hub for real-time invite notifications
+	multiplayerHandler := handlers.NewMultiplayerHandler(h.GetMultiplayerService(), multiplayerHub)
+
+	// When a user's last WebSocket connection drops, delete their Redis presence key
+	// and broadcast an offline presence update to all connected clients.
+	multiplayerHub.OnUserOffline = h.DeletePresenceKey
 
 	// Public routes
 	public := router.Group("/api")
@@ -94,6 +122,88 @@ func main() {
 		public.GET("/verbs", h.GetVerbs)
 		public.GET("/sentences", h.GetSentences)
 		public.GET("/leaderboard", h.GetLeaderboard)
+		public.GET("/users/recent", func(c *gin.Context) {
+			// Combine game-based online users with presence pings
+			gameOnline := multiplayerHub.GetOnlineUserIDs()
+			presenceOnline := h.CollectPresenceUserIDsForRoute() // wrapper for collectPresenceUserIDs
+			// Merge sets
+			combinedMap := make(map[uint]bool)
+			for _, id := range gameOnline {
+				combinedMap[id] = true
+			}
+			for _, id := range presenceOnline {
+				combinedMap[id] = true
+			}
+			combined := make([]uint, 0, len(combinedMap))
+			for id := range combinedMap {
+				combined = append(combined, id)
+			}
+			h.GetRecentPlayersWithStatus(c, combined)
+		})
+		public.GET("/users/online", func(c *gin.Context) {
+			// Return all currently online users from hub + presence
+			gameOnline := multiplayerHub.GetOnlineUserIDs()
+			presenceOnline := h.CollectPresenceUserIDsForRoute()
+			combinedMap := make(map[uint]bool)
+			for _, id := range gameOnline {
+				combinedMap[id] = true
+			}
+			for _, id := range presenceOnline {
+				combinedMap[id] = true
+			}
+			combined := make([]uint, 0, len(combinedMap))
+			for id := range combinedMap {
+				combined = append(combined, id)
+			}
+			h.GetOnlineUsers(c, combined)
+		})
+	}
+
+	// Development-only debug & dev utilities routes
+	if cfg.Environment == "development" {
+		adminIDsEnv := os.Getenv("DEV_ADMIN_USER_IDS")
+		adminSet := make(map[uint]struct{})
+		if adminIDsEnv != "" {
+			for _, part := range strings.Split(adminIDsEnv, ",") {
+				p := strings.TrimSpace(part)
+				if p == "" {
+					continue
+				}
+				if id64, err := strconv.ParseUint(p, 10, 64); err == nil {
+					adminSet[uint(id64)] = struct{}{}
+				}
+			}
+		}
+		dev := router.Group("/api/dev")
+		// Auth middleware always; admin gating only if list provided
+		dev.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		if len(adminSet) > 0 {
+			dev.Use(func(c *gin.Context) {
+				uid := c.GetUint("userID")
+				if _, ok := adminSet[uid]; !ok {
+					c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+					c.Abort()
+					return
+				}
+				c.Next()
+			})
+		}
+		dev.GET("/debug/online-users", func(c *gin.Context) {
+			gameOnline := multiplayerHub.GetOnlineUserIDs()
+			presenceOnline := h.CollectPresenceUserIDsForRoute()
+			combinedMap := make(map[uint]struct{})
+			for _, id := range gameOnline {
+				combinedMap[id] = struct{}{}
+			}
+			for _, id := range presenceOnline {
+				combinedMap[id] = struct{}{}
+			}
+			combined := make([]uint, 0, len(combinedMap))
+			for id := range combinedMap {
+				combined = append(combined, id)
+			}
+			c.JSON(http.StatusOK, gin.H{"gameOnline": gameOnline, "presenceOnline": presenceOnline, "combined": combined})
+		})
 	}
 
 	// Protected routes
@@ -113,14 +223,39 @@ func main() {
 		protected.POST("/games/results", h.SaveGameResults)
 
 		// Exercise routes
+		protected.POST("/presence/ping", h.PresencePing)
+		protected.POST("/presence/offline", h.PresenceOffline)
 		protected.GET("/exercises", h.GetExercises)
 		protected.POST("/exercises/complete", h.CompleteExercise)
+
+		// Invite routes
+		protected.POST("/invites/send", h.SendInvite)
+		protected.GET("/invites", h.GetInvites)
+		protected.GET("/invites/sent", h.GetSentInvites)
+		protected.GET("/invites/unread-count", h.GetUnreadInviteCount)
+		protected.POST("/invites/:id/accept", h.AcceptInvite)
+		protected.POST("/invites/:id/decline", h.DeclineInvite)
+		protected.POST("/invites/:id/read", h.MarkInviteAsRead)
+
+		// Multiplayer routes
+		protected.POST("/multiplayer/games/create", multiplayerHandler.CreateGame)
+		protected.GET("/multiplayer/games/waiting", multiplayerHandler.GetWaitingRooms)
+		protected.GET("/multiplayer/games/:gameId", multiplayerHandler.GetGame)
+		protected.POST("/multiplayer/games/:gameId/join", multiplayerHandler.JoinGame)
+		protected.POST("/multiplayer/games/:gameId/leave", multiplayerHandler.LeaveGame)
+		protected.POST("/multiplayer/games/:gameId/ready", multiplayerHandler.SetReady)
+		protected.POST("/multiplayer/games/:gameId/start", multiplayerHandler.StartGame)
+		protected.POST("/multiplayer/games/:gameId/heartbeat", multiplayerHandler.SendHeartbeat)
+		protected.POST("/multiplayer/games/:gameId/rounds", multiplayerHandler.StartRound)
+		protected.POST("/multiplayer/games/:gameId/rounds/:roundId/answers", multiplayerHandler.SubmitAnswer)
+		protected.POST("/multiplayer/games/:gameId/finish", multiplayerHandler.FinishGame)
 	}
 
-	// WebSocket endpoint
-	router.GET("/ws", middleware.WSAuthMiddleware(cfg.JWTSecret), func(c *gin.Context) {
-		websocket.HandleWebSocket(hub, c)
-	})
+	// Multiplayer WebSocket (use query token, not Authorization header)
+	router.GET("/api/multiplayer/games/:gameId/ws", middleware.WSAuthMiddleware(cfg.JWTSecret), multiplayerHandler.WebSocketConnection)
+
+	// Lobby WebSocket for presence updates (no game required)
+	router.GET("/ws/multiplayer", middleware.WSAuthMiddleware(cfg.JWTSecret), multiplayerHandler.LobbyWebSocketConnection)
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {

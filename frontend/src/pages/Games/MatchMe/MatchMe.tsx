@@ -493,7 +493,7 @@ const MatchMe: React.FC = () => {
     };
 
     const handleQuit = () => {
-        navigate('/game-room/' + GAME_METADATA['match-me'].url);
+        navigate('/game-room/' + GAME_METADATA['matching'].url);
     };
 
     // Timer logic (similar to WriteMe)
@@ -580,7 +580,7 @@ const MatchMe: React.FC = () => {
             <GameErrorDisplay
                 hasValidConfig={currentVerbs.length > 0 && currentTenses.length > 0}
                 onRetry={handlePlayAgain}
-                onConfigure={() => navigate('/game-room/'+ GAME_METADATA["find-error"].url)}
+                onConfigure={() => navigate('/game-room/' + GAME_METADATA['matching'].url)}
                 errorMessage={errorMessage}
             />
         );

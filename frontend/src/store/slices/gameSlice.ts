@@ -65,7 +65,7 @@ const initialState: GameState = {
     currentCustomTenseGroups: [],
     ongoingGameInfo: {
         maxStep: 5,
-        maxTime: 10,
+        maxTime: 30,
         isOn: false,
     },
     randomVerbsEnabled: false,

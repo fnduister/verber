@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"os"
 	"time"
 
 	"verber-backend/internal/models"
@@ -30,11 +31,23 @@ func NewAuthService(db *gorm.DB, redis *redis.Client) *AuthService {
 	}
 }
 
-func (as *AuthService) Register(username, email, password string, age int, grade string) (*models.User, string, error) {
-	// Check if user exists
+func (as *AuthService) Register(username, email, password, userType string, age int, grade string, isAdultConfirmed bool) (*models.User, string, error) {
+	// Validate user type
+	if userType != "student" && userType != "parent" {
+		return nil, "", errors.New("invalid user type")
+	}
+
+	// Check if user exists by username
 	var existingUser models.User
-	if err := as.db.Where("username = ? OR email = ?", username, email).First(&existingUser).Error; err == nil {
-		return nil, "", errors.New("user already exists")
+	if err := as.db.Where("username = ?", username).First(&existingUser).Error; err == nil {
+		return nil, "", errors.New("username already exists")
+	}
+
+	// Check email uniqueness only if provided (email is optional for both types now)
+	if email != "" {
+		if err := as.db.Where("email = ?", email).First(&existingUser).Error; err == nil {
+			return nil, "", errors.New("email already exists")
+		}
 	}
 
 	// Hash password
@@ -45,13 +58,22 @@ func (as *AuthService) Register(username, email, password string, age int, grade
 
 	// Create user
 	user := &models.User{
-		Username: username,
-		Email:    email,
-		Password: string(hashedPassword),
-		Age:      age,
-		Grade:    grade,
-		Level:    1,
-		XP:       0,
+		Username:         username,
+		Email:            email,
+		Password:         string(hashedPassword),
+		UserType:         userType,
+		Age:              age,
+		Grade:            grade,
+		Level:            1,
+		XP:               0,
+		IsAdultConfirmed: isAdultConfirmed,
+	}
+
+	// For parents, age/grade/level are not required
+	if userType == "parent" {
+		user.Age = 0
+		user.Grade = ""
+		user.Level = 0
 	}
 
 	if err := as.db.Create(user).Error; err != nil {
@@ -137,9 +159,18 @@ func (as *AuthService) generateJWT(userID uint) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// TODO: Get secret from config
-	secret := "your-secret-key-change-this"
+	// Get secret from environment (must match config.JWTSecret)
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		// Fallback to same default used in config.Load so validation matches
+		secret = "your-secret-key-change-this"
+	}
 	return token.SignedString([]byte(secret))
+}
+
+// GenerateTokenForUser generates a JWT token for a given user ID (public method for dev use)
+func (as *AuthService) GenerateTokenForUser(userID uint) (string, error) {
+	return as.generateJWT(userID)
 }
 
 func (as *AuthService) StoreSession(ctx context.Context, userID uint, token string) error {
