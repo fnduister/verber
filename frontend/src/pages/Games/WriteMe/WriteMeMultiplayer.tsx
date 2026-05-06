@@ -7,17 +7,15 @@ import {
     Chip,
     CircularProgress,
     Grid,
-    Paper,
     TextField,
-    Typography,
+    Typography
 } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { PRONOUNS } from '../../../constants/gameConstants';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
@@ -170,7 +168,7 @@ const WriteMeMultiplayer: React.FC = () => {
                 answer: JSON.stringify(answersToSubmit),
                 is_correct: correctCount === roundData.correctAnswers.length,
                 points,
-                time_spent: timeSpent * 1000,
+                time_spent: Math.max(0, Math.round(timeSpent * 1000)),
             });
         } catch (err: unknown) {
             const errMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -265,26 +263,21 @@ const WriteMeMultiplayer: React.FC = () => {
             <CircularProgress />
         </Box>
     ) : (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            <MultiplayerScoreBar
-                players={activeGame.players}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
-
-            <Paper sx={{ p: 4 }}>
-                <MultiplayerRoundHeader
-                    roundNumber={currentRound.round_number}
-                    maxSteps={activeGame.max_steps}
-                    subtitle={`${roundData.verb} • ${TENSE_KEY_TO_DISPLAY_NAMES[roundData.tense] || roundData.tense}`}
-                    timeLeft={timeLeft}
-                    maxTime={activeGame.config.max_time || 30}
-                />
-
-                <Card sx={{ mb: 4, background: 'linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%)' }}>
+        <MultiplayerGameScaffold
+            gameTitle={t('games.writeMe.title', 'Write Me')}
+            gameTypeColor="#ea580c"
+            roundNumber={currentRound.round_number}
+            maxSteps={activeGame.max_steps}
+            subtitle={`${roundData.verb} • ${TENSE_KEY_TO_DISPLAY_NAMES[roundData.tense] || roundData.tense}`}
+            timeLeft={timeLeft}
+            maxTime={activeGame.config.max_time || 30}
+            players={activeGame.players}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
+                <Card sx={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%)' }}>
                     <CardContent>
                         <Typography variant="h4" sx={{ fontWeight: 'bold', textAlign: 'center', mb: 1 }}>
                             {roundData.verb}
@@ -294,44 +287,47 @@ const WriteMeMultiplayer: React.FC = () => {
                         </Typography>
                     </CardContent>
                 </Card>
+            }
+            actionNode={
+                <>
+                    <Grid container spacing={2}>
+                        {roundData.pronouns.map((pronoun, index) => (
+                            <Grid item xs={12} md={6} key={`${pronoun}-${index}`}>
+                                <TextField
+                                    fullWidth
+                                    label={pronoun.trim() || PRONOUNS[index]}
+                                    value={userAnswers[index]}
+                                    onChange={(event) => handleAnswerChange(index, event.target.value)}
+                                    disabled={hasAnswered}
+                                    error={correctness[index] === false}
+                                    helperText={
+                                        correctness[index] === true
+                                            ? t('common.correct', 'Correct')
+                                            : correctness[index] === false
+                                            ? roundData.correctAnswers[index]
+                                            : ' '
+                                    }
+                                />
+                            </Grid>
+                        ))}
+                    </Grid>
 
-                <Grid container spacing={2}>
-                    {roundData.pronouns.map((pronoun, index) => (
-                        <Grid item xs={12} md={6} key={`${pronoun}-${index}`}>
-                            <TextField
-                                fullWidth
-                                label={pronoun.trim() || PRONOUNS[index]}
-                                value={userAnswers[index]}
-                                onChange={(event) => handleAnswerChange(index, event.target.value)}
-                                disabled={hasAnswered}
-                                error={correctness[index] === false}
-                                helperText={
-                                    correctness[index] === true
-                                        ? t('common.correct', 'Correct')
-                                        : correctness[index] === false
-                                        ? roundData.correctAnswers[index]
-                                        : ' '
-                                }
-                            />
-                        </Grid>
-                    ))}
-                </Grid>
+                    {!hasAnswered && (
+                        <Box sx={{ mt: 3, textAlign: 'center' }}>
+                            <Button variant="contained" size="large" onClick={() => void submitAnswers(userAnswers)}>
+                                {t('common.submit')}
+                            </Button>
+                        </Box>
+                    )}
 
-                {!hasAnswered && (
-                    <Box sx={{ mt: 3, textAlign: 'center' }}>
-                        <Button variant="contained" size="large" onClick={() => void submitAnswers(userAnswers)}>
-                            {t('common.submit')}
-                        </Button>
-                    </Box>
-                )}
-
-                {allPlayersAnswered && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                        <Chip icon={<CheckCircleIcon />} label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')} color="success" sx={{ fontWeight: 'bold' }} />
-                    </Box>
-                )}
-            </Paper>
-        </Box>
+                    {allPlayersAnswered && (
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Chip icon={<CheckCircleIcon />} label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')} color="success" sx={{ fontWeight: 'bold' }} />
+                        </Box>
+                    )}
+                </>
+            }
+        />
     );
 
     return (

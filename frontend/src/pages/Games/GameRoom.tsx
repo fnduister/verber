@@ -285,7 +285,6 @@ const GameRoom = () => {
             
             try {
                 console.log('Creating multiplayer game with data:', {
-                    title: gameData.title,
                     game_type: gameData.game_type,
                     max_players: gameData.max_players,
                     verbs: currentVerbs,
@@ -294,7 +293,6 @@ const GameRoom = () => {
 
                 // Create multiplayer game with configured verbs and tenses
                 const game = await multiplayerAPI.createGame({
-                    title: gameData.title,
                     game_type: gameData.game_type,
                     max_players: gameData.max_players,
                     max_steps: ongoingGameInfo.maxStep,

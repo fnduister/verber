@@ -1,13 +1,12 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { Box, Button, Card, CardContent, Chip, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, CircularProgress, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
 import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
@@ -139,7 +138,7 @@ const RaceMultiplayer: React.FC = () => {
                 answer,
                 is_correct: isCorrect,
                 points,
-                time_spent: timeSpent * 1000,
+                time_spent: Math.max(0, Math.round(timeSpent * 1000)),
             });
         } catch (err: unknown) {
             const errMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -233,26 +232,21 @@ const RaceMultiplayer: React.FC = () => {
             <CircularProgress />
         </Box>
     ) : (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            <MultiplayerScoreBar
-                players={activeGame.players}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
-
-            <Paper sx={{ p: 4 }}>
-                <MultiplayerRoundHeader
-                    roundNumber={currentRound.round_number}
-                    maxSteps={activeGame.max_steps}
-                    subtitle={t('games.race.title', 'Conjugation Race')}
-                    timeLeft={timeLeft}
-                    maxTime={activeGame.config.max_time || 30}
-                />
-
-                <Card sx={{ mb: 4, background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)' }}>
+        <MultiplayerGameScaffold
+            gameTitle={t('games.race.title', 'Conjugation Race')}
+            gameTypeColor="#dc2626"
+            roundNumber={currentRound.round_number}
+            maxSteps={activeGame.max_steps}
+            subtitle={t('games.race.title', 'Conjugation Race')}
+            timeLeft={timeLeft}
+            maxTime={activeGame.config.max_time || 30}
+            players={activeGame.players}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
+                <Card sx={{ background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)' }}>
                     <CardContent>
                         <Typography variant="h5" sx={{ textAlign: 'center', color: 'text.secondary' }}>
                             {roundData.pronoun}{roundData.displayedWord}
@@ -262,91 +256,94 @@ const RaceMultiplayer: React.FC = () => {
                         </Typography>
                     </CardContent>
                 </Card>
+            }
+            actionNode={
+                <>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="center" alignItems="stretch" sx={{ gap: 2, flexWrap: 'wrap' }}>
+                        {roundData.visibleTenses.map((tense, index) => {
+                            const isSelected = selectedTense === tense;
+                            const isCorrectAnswer = roundData.correctTense === tense;
+                            const showCorrectState = hasAnswered && isCorrectAnswer;
+                            const showIncorrectState = hasAnswered && isSelected && !isCorrectAnswer;
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="center" alignItems="stretch" sx={{ gap: 2, flexWrap: 'wrap' }}>
-                    {roundData.visibleTenses.map((tense, index) => {
-                        const isSelected = selectedTense === tense;
-                        const isCorrectAnswer = roundData.correctTense === tense;
-                        const showCorrectState = hasAnswered && isCorrectAnswer;
-                        const showIncorrectState = hasAnswered && isSelected && !isCorrectAnswer;
+                            const background = showCorrectState
+                                ? 'linear-gradient(145deg, #16a34a, #15803d)'
+                                : showIncorrectState
+                                ? 'linear-gradient(145deg, #ef4444, #dc2626)'
+                                : isSelected
+                                ? 'linear-gradient(145deg, #2563eb, #1d4ed8)'
+                                : 'linear-gradient(145deg, #ffffff, #f8fafc)';
 
-                        const background = showCorrectState
-                            ? 'linear-gradient(145deg, #16a34a, #15803d)'
-                            : showIncorrectState
-                            ? 'linear-gradient(145deg, #ef4444, #dc2626)'
-                            : isSelected
-                            ? 'linear-gradient(145deg, #2563eb, #1d4ed8)'
-                            : 'linear-gradient(145deg, #ffffff, #f8fafc)';
+                            const borderColor = showCorrectState
+                                ? '#15803d'
+                                : showIncorrectState
+                                ? '#dc2626'
+                                : isSelected
+                                ? '#1d4ed8'
+                                : '#dbeafe';
 
-                        const borderColor = showCorrectState
-                            ? '#15803d'
-                            : showIncorrectState
-                            ? '#dc2626'
-                            : isSelected
-                            ? '#1d4ed8'
-                            : '#dbeafe';
+                            const boxShadow = showCorrectState
+                                ? '0 0 24px rgba(22,163,74,0.35)'
+                                : showIncorrectState
+                                ? '0 0 24px rgba(239,68,68,0.35)'
+                                : isSelected
+                                ? '0 0 24px rgba(37,99,235,0.28)'
+                                : '0 4px 18px rgba(15,23,42,0.08)';
 
-                        const boxShadow = showCorrectState
-                            ? '0 0 24px rgba(22,163,74,0.35)'
-                            : showIncorrectState
-                            ? '0 0 24px rgba(239,68,68,0.35)'
-                            : isSelected
-                            ? '0 0 24px rgba(37,99,235,0.28)'
-                            : '0 4px 18px rgba(15,23,42,0.08)';
+                            const textColor = showCorrectState || showIncorrectState || isSelected ? '#ffffff' : '#111827';
 
-                        const textColor = showCorrectState || showIncorrectState || isSelected ? '#ffffff' : '#111827';
-
-                        return (
-                            <motion.div
-                                key={tense}
-                                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ duration: 0.35, delay: index * 0.08 }}
-                                whileHover={{ scale: hasAnswered ? 1 : 1.03 }}
-                                whileTap={{ scale: hasAnswered ? 1 : 0.98 }}
-                            >
-                                <Button
-                                    variant="contained"
-                                    disabled={hasAnswered || isSubmitting()}
-                                    onClick={() => {
-                                        setSelectedTense(tense);
-                                        void submitAnswer(tense);
-                                    }}
-                                    sx={{
-                                        minWidth: 240,
-                                        minHeight: 110,
-                                        fontSize: '1.05rem',
-                                        fontWeight: 'bold',
-                                        textTransform: 'none',
-                                        borderRadius: 3,
-                                        background,
-                                        color: textColor,
-                                        border: '2px solid',
-                                        borderColor,
-                                        boxShadow,
-                                        '&:hover': {
-                                            background: hasAnswered
-                                                ? background
-                                                : isSelected
-                                                ? 'linear-gradient(145deg, #2563eb, #1d4ed8)'
-                                                : 'linear-gradient(145deg, #ffffff, #eff6ff)',
-                                        },
-                                    }}
+                            return (
+                                <motion.div
+                                    key={tense}
+                                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    transition={{ duration: 0.35, delay: index * 0.08 }}
+                                    whileHover={{ scale: hasAnswered ? 1 : 1.03 }}
+                                    whileTap={{ scale: hasAnswered ? 1 : 0.98 }}
                                 >
-                                    {TENSE_KEY_TO_DISPLAY_NAMES[tense] || tense}
-                                </Button>
-                            </motion.div>
-                        );
-                    })}
-                </Stack>
+                                    <Button
+                                        variant="contained"
+                                        disabled={hasAnswered || isSubmitting()}
+                                        onClick={() => {
+                                            setSelectedTense(tense);
+                                            void submitAnswer(tense);
+                                        }}
+                                        sx={{
+                                            minWidth: 240,
+                                            minHeight: 110,
+                                            fontSize: '1.05rem',
+                                            fontWeight: 'bold',
+                                            textTransform: 'none',
+                                            borderRadius: 3,
+                                            background,
+                                            color: textColor,
+                                            border: '2px solid',
+                                            borderColor,
+                                            boxShadow,
+                                            '&:hover': {
+                                                background: hasAnswered
+                                                    ? background
+                                                    : isSelected
+                                                    ? 'linear-gradient(145deg, #2563eb, #1d4ed8)'
+                                                    : 'linear-gradient(145deg, #ffffff, #eff6ff)',
+                                            },
+                                        }}
+                                    >
+                                        {TENSE_KEY_TO_DISPLAY_NAMES[tense] || tense}
+                                    </Button>
+                                </motion.div>
+                            );
+                        })}
+                    </Stack>
 
-                {allPlayersAnswered && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                        <Chip icon={<CheckCircleIcon />} label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')} color="success" sx={{ fontWeight: 'bold' }} />
-                    </Box>
-                )}
-            </Paper>
-        </Box>
+                    {allPlayersAnswered && (
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Chip icon={<CheckCircleIcon />} label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')} color="success" sx={{ fontWeight: 'bold' }} />
+                        </Box>
+                    )}
+                </>
+            }
+        />
     );
 
     return (

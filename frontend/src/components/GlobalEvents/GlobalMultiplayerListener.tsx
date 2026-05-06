@@ -1,7 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { multiplayerAPI } from '../../services/multiplayerApi';
 import { toastService } from '../../services/toastService';
 import { RootState } from '../../store/store';
+
+const ROUTE_BY_GAME_TYPE: Record<string, string> = {
+  'find-error': 'find-error',
+  matching: 'matching',
+  'write-me': 'write-me',
+  race: 'race',
+  'random-verb': 'random-verb',
+  sentence: 'sentence',
+  participe: 'participe',
+};
 
 const buildWsUrl = (token: string) => {
   const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
@@ -14,8 +26,12 @@ const buildWsUrl = (token: string) => {
 
 export const GlobalMultiplayerListener: React.FC = () => {
   const token = useSelector((state: RootState) => state.auth.token);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const navigate = useNavigate();
+  const location = useLocation();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const handledStatusRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     if (!token) {
@@ -68,7 +84,61 @@ export const GlobalMultiplayerListener: React.FC = () => {
             const receiver = payload?.receiver?.username || 'player';
             toastService.info(`${receiver} declined the invite`);
           }
-          // We could handle presence/game update globally later if needed
+
+          if (message.type === 'game_updated' && payload?.game_id && (payload?.status === 'starting' || payload?.status === 'in_progress')) {
+            const gameId = String(payload.game_id);
+            const status = String(payload.status);
+            const dedupeKey = `${gameId}:${status}:${payload?.countdown ?? ''}`;
+            if (handledStatusRef.current[gameId] === dedupeKey) {
+              return;
+            }
+            handledStatusRef.current[gameId] = dedupeKey;
+
+            void (async () => {
+              try {
+                const game = await multiplayerAPI.getGame(gameId);
+                if (!currentUser?.id) {
+                  return;
+                }
+
+                const isInGame = Array.isArray(game.players) && game.players.some((p) => p.user_id === currentUser.id);
+                if (!isInGame) {
+                  return;
+                }
+
+                const routeGameType = ROUTE_BY_GAME_TYPE[game.game_type];
+                if (!routeGameType) {
+                  return;
+                }
+
+                const targetPath = `/games/multiplayer/${routeGameType}/${game.id}`;
+                const livePathname = window.location.pathname || location.pathname;
+                const normalizedPath = livePathname.replace(/\/+$/, '');
+                const normalizedTargetPath = targetPath.replace(/\/+$/, '');
+                const roomMatch = normalizedPath.match(/^\/games\/multiplayer\/[^/]+\/([^/]+)$/);
+                const currentRoomGameId = roomMatch?.[1] ?? null;
+                const isAlreadyInTargetRoom =
+                  normalizedPath === normalizedTargetPath ||
+                  normalizedPath.startsWith(`${normalizedTargetPath}/`) ||
+                  currentRoomGameId === gameId;
+
+                if (isAlreadyInTargetRoom) {
+                  return;
+                }
+
+                if (status === 'starting' && typeof payload?.countdown === 'number') {
+                  toastService.info(`Your game starts in ${payload.countdown}...`, 900);
+                }
+
+                if (normalizedPath !== normalizedTargetPath && (game.status === 'starting' || game.status === 'in_progress')) {
+                  toastService.info('Game is starting. Redirecting you to the room...', 1000);
+                  navigate(targetPath);
+                }
+              } catch {
+                // Ignore fetch/navigation failures from transient updates
+              }
+            })();
+          }
         } catch (err) {
           // console.error('[GlobalWS] parse error', err);
         }
@@ -100,7 +170,7 @@ export const GlobalMultiplayerListener: React.FC = () => {
       } catch {}
       wsRef.current = null;
     };
-  }, [token]);
+  }, [token, currentUser?.id, location.pathname, navigate]);
 
   return null;
 };

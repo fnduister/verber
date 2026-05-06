@@ -93,7 +93,6 @@ const Multiplayer: React.FC = () => {
     const [filterDifficulty, setFilterDifficulty] = useState('all');
     
     // Create game form state
-    const [newGameTitle, setNewGameTitle] = useState('');
     const [selectedGameType, setSelectedGameType] = useState('');
     const [maxPlayers, setMaxPlayers] = useState(4);
     const [difficulty, setDifficulty] = useState('medium');
@@ -268,12 +267,11 @@ const Multiplayer: React.FC = () => {
     }, [waitingRooms, searchQuery, filterGameType, filterPlayers, filterDifficulty]);
 
     const handleCreateGame = () => {
-        if (!newGameTitle.trim() || !selectedGameType) {
+        if (!selectedGameType) {
             return;
         }
         // Store game creation data in session storage
         sessionStorage.setItem('multiplayerGameData', JSON.stringify({
-            title: newGameTitle.trim(),
             game_type: selectedGameType,
             max_players: maxPlayers,
             difficulty,
@@ -1075,13 +1073,9 @@ const Multiplayer: React.FC = () => {
                                 You already created a game. Leave or finish it before creating another one.
                             </Typography>
                         )}
-                        <TextField
-                            fullWidth
-                            label={t('games.multiplayer.gameTitle')}
-                            value={newGameTitle}
-                            onChange={(e) => setNewGameTitle(e.target.value)}
-                            placeholder={t('games.multiplayer.gameTitlePlaceholder')}
-                        />
+                        <Typography variant="body2" color="text.secondary">
+                            Game name is auto-generated from a god list.
+                        </Typography>
                         
                         <FormControl fullWidth>
                             <InputLabel>{t('games.multiplayer.selectGame')}</InputLabel>
@@ -1150,7 +1144,7 @@ const Multiplayer: React.FC = () => {
                     <Button
                         variant="contained"
                         onClick={handleCreateGame}
-                        disabled={!newGameTitle.trim() || !selectedGameType || hasCreatedGame}
+                        disabled={!selectedGameType || hasCreatedGame}
                         sx={{ 
                             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                             '&:hover': {

@@ -49,7 +49,7 @@ interface MultiplayerGamePhaseProps {
     children: React.ReactNode;
 }
 
-const MultiplayerGamePhase: React.FC<MultiplayerGamePhaseProps> = ({
+export default function MultiplayerGamePhase({
     loading,
     error,
     game,
@@ -74,7 +74,7 @@ const MultiplayerGamePhase: React.FC<MultiplayerGamePhaseProps> = ({
     onAcceptInvite,
     onDeclineInvite,
     children,
-}) => {
+}: MultiplayerGamePhaseProps) {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -159,6 +159,4 @@ const MultiplayerGamePhase: React.FC<MultiplayerGamePhaseProps> = ({
     }
 
     return <>{children}</>;
-};
-
-export default MultiplayerGamePhase;
+}

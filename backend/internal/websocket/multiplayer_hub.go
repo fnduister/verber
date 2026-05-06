@@ -38,9 +38,55 @@ const (
 	// Presence
 	TypePresenceUpdate MessageType = "presence_update"
 
+	// Preset reactions
+	TypeQuickReaction MessageType = "quick_reaction"
+
 	// Errors
 	TypeError MessageType = "error"
 )
+
+var allowedReactionPrompts = map[string]struct{}{
+	"nice_try":      {},
+	"you_got_this":  {},
+	"wow_fast":      {},
+	"great_round":   {},
+	"high_five":     {},
+	"lets_go":       {},
+	"ready_to_play": {},
+	"good_luck":     {},
+	"i_am_excited":  {},
+}
+
+var allowedReactionEmojis = map[string]struct{}{
+	"😀": {},
+	"👏": {},
+	"🔥": {},
+	"👍": {},
+	"💪": {},
+	"🎉": {},
+	"🤩": {},
+	"❤️": {},
+}
+
+var allowedReactionContexts = map[string]struct{}{
+	"answer_submitted": {},
+	"round_end":        {},
+	"game_event":       {},
+}
+
+type quickReactionPayload struct {
+	PromptID string `json:"prompt_id"`
+	Emoji    string `json:"emoji"`
+	Context  string `json:"context"`
+}
+
+type quickReactionBroadcast struct {
+	SenderID uint   `json:"sender_id"`
+	PromptID string `json:"prompt_id"`
+	Emoji    string `json:"emoji"`
+	Context  string `json:"context"`
+	GameID   string `json:"game_id"`
+}
 
 // Message represents a WebSocket message
 type Message struct {
@@ -340,6 +386,42 @@ func (c *Client) ReadPump() {
 		}
 
 		log.Printf("Received message from client %s: %s", c.ID, msg.Type)
+
+		switch msg.Type {
+		case TypeQuickReaction:
+			var payload quickReactionPayload
+			if err := json.Unmarshal(msg.Data, &payload); err != nil {
+				_ = c.Hub.SendToUser(c.UserID, TypeError, map[string]string{"message": "Invalid reaction payload"})
+				continue
+			}
+
+			if _, ok := allowedReactionPrompts[payload.PromptID]; !ok {
+				_ = c.Hub.SendToUser(c.UserID, TypeError, map[string]string{"message": "Invalid reaction prompt"})
+				continue
+			}
+
+			if _, ok := allowedReactionEmojis[payload.Emoji]; !ok {
+				_ = c.Hub.SendToUser(c.UserID, TypeError, map[string]string{"message": "Invalid reaction emoji"})
+				continue
+			}
+
+			if _, ok := allowedReactionContexts[payload.Context]; !ok {
+				_ = c.Hub.SendToUser(c.UserID, TypeError, map[string]string{"message": "Invalid reaction context"})
+				continue
+			}
+
+			reaction := quickReactionBroadcast{
+				SenderID: c.UserID,
+				PromptID: payload.PromptID,
+				Emoji:    payload.Emoji,
+				Context:  payload.Context,
+				GameID:   c.GameID,
+			}
+
+			if err := c.Hub.BroadcastToGame(c.GameID, TypeQuickReaction, reaction); err != nil {
+				log.Printf("Error broadcasting quick reaction: %v", err)
+			}
+		}
 	}
 }
 

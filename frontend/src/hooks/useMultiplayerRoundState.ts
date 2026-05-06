@@ -38,7 +38,7 @@ export const useMultiplayerRoundState = ({
         const calculateTimeLeft = () => {
             const roundStartTime = new Date(currentRound.started_at).getTime();
             const now = Date.now();
-            const elapsedSeconds = Math.floor((now - roundStartTime) / 1000);
+            const elapsedSeconds = (now - roundStartTime) / 1000;
             return Math.max(0, maxTime - elapsedSeconds);
         };
 
@@ -59,7 +59,7 @@ export const useMultiplayerRoundState = ({
 
     useEffect(() => {
         if (
-            timeLeft === 0 &&
+            timeLeft <= 0.05 &&
             currentRound &&
             !hasAnswered &&
             timerStartedRef.current &&

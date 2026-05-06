@@ -81,7 +81,7 @@ export interface GameRound {
 
 export interface CreateGameRequest {
     game_type: string;
-    title: string;
+    title?: string;
     max_players: number;
     max_steps: number;
     difficulty: string;

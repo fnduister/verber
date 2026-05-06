@@ -1,11 +1,10 @@
-import { Box, Button, Card, CardContent, Chip, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Stack, TextField, Typography } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
 import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
@@ -210,7 +209,7 @@ const SentenceMultiplayer: React.FC = () => {
                     answer: userAnswer.trim(),
                     is_correct: isCorrect,
                     points,
-                    time_spent: (game!.config.max_time - timeLeft) * 1000,
+                    time_spent: Math.max(0, Math.round((game!.config.max_time - timeLeft) * 1000)),
                 }
             );
 
@@ -226,48 +225,34 @@ const SentenceMultiplayer: React.FC = () => {
             <CircularProgress />
         </Box>
     ) : (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            <MultiplayerRoundHeader
-                roundNumber={currentRound.round_number}
-                maxSteps={game?.max_steps || 5}
-                subtitle={t('games.sentence.title', 'Sentence')}
-                timeLeft={timeLeft}
-                maxTime={game?.config.max_time || 30}
-            />
-
-            <MultiplayerScoreBar
-                players={game?.players || []}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
-
-            {/* Tense chip */}
-            <Box sx={{ textAlign: 'center', my: 2 }}>
-                <Chip
-                    label={TENSE_KEY_TO_DISPLAY_NAMES[roundData.tense] || roundData.tense}
-                    sx={{
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        padding: '20px 16px',
-                        background: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 100%)',
-                        color: 'white',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                    }}
-                />
-            </Box>
-
-            <Card sx={{
-                mt: 2,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%)',
-                borderRadius: 4,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                border: '2px solid #06b6d4',
-            }}>
-                <CardContent sx={{ p: 4 }}>
-                    {/* Sentence with verb hint and blank */}
+        <MultiplayerGameScaffold
+            gameTitle={t('games.sentence.title', 'Sentence')}
+            gameTypeColor="#4338ca"
+            roundNumber={currentRound.round_number}
+            maxSteps={game?.max_steps || 5}
+            subtitle={t('games.sentence.title', 'Sentence')}
+            timeLeft={timeLeft}
+            maxTime={game?.config.max_time || 30}
+            players={game?.players || []}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
+                <>
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                        <Chip
+                            label={TENSE_KEY_TO_DISPLAY_NAMES[roundData.tense] || roundData.tense}
+                            sx={{
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                padding: '20px 16px',
+                                background: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 100%)',
+                                color: 'white',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                            }}
+                        />
+                    </Box>
                     {(() => {
                         const correctAnswer = roundData.correctAnswers?.[0] || '';
                         const isCorrect = hasAnswered && compareConjugations(userAnswer.trim(), correctAnswer);
@@ -276,7 +261,6 @@ const SentenceMultiplayer: React.FC = () => {
                                 variant="h5"
                                 sx={{
                                     textAlign: 'center',
-                                    mb: 4,
                                     color: '#0c4a6e',
                                     lineHeight: 1.9,
                                     fontWeight: 500,
@@ -331,7 +315,10 @@ const SentenceMultiplayer: React.FC = () => {
                             </Typography>
                         );
                     })()}
-
+                </>
+            }
+            actionNode={
+                <>
                     <Stack spacing={2} alignItems="center">
                         <TextField
                             fullWidth
@@ -356,9 +343,9 @@ const SentenceMultiplayer: React.FC = () => {
                     >
                         {isSubmitting() ? <CircularProgress size={24} /> : t('common.submit')}
                     </Button>
-                </CardContent>
-            </Card>
-        </Box>
+                </>
+            }
+        />
     );
 
     return (

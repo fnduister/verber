@@ -1,11 +1,10 @@
-import { Box, Button, Card, CardContent, Chip, CircularProgress, Stack, TextField, Typography } from '@mui/material';
-import React, { useRef, useState } from 'react';
+import { Box, Button, Chip, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
 import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
 import { useMultiplayerRoundState } from '../../../hooks/useMultiplayerRoundState';
@@ -111,6 +110,10 @@ const ParticipeMultiplayer: React.FC = () => {
         },
     });
 
+    const handleRoundEnd = useCallback((data: Parameters<typeof onRoundEnd>[0]) => {
+        onRoundEnd(data);
+    }, [onRoundEnd]);
+
     const { isConnected } = useMultiplayerWebSocket({
         gameId: gameId!,
         enabled: !loading && !!game,
@@ -167,7 +170,7 @@ const ParticipeMultiplayer: React.FC = () => {
             setRoundData(normalizedRoundData);
             setUserAnswer('');
         },
-        onRoundEnd,
+        onRoundEnd: handleRoundEnd,
         onGameFinished: (data) => {
             setFinalResults(data);
             setShowFinalResults(true);
@@ -195,7 +198,7 @@ const ParticipeMultiplayer: React.FC = () => {
                     answer: userAnswer.trim(),
                     is_correct: isCorrect,
                     points,
-                    time_spent: (game!.config.max_time - timeLeft) * 1000,
+                    time_spent: Math.max(0, Math.round((game!.config.max_time - timeLeft) * 1000)),
                 }
             );
 
@@ -216,48 +219,34 @@ const ParticipeMultiplayer: React.FC = () => {
             <CircularProgress />
         </Box>
     ) : (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            <MultiplayerRoundHeader
-                roundNumber={currentRound.round_number}
-                maxSteps={game?.max_steps || 5}
-                subtitle={t('games.participe.title', 'Participle')}
-                timeLeft={timeLeft}
-                maxTime={game?.config.max_time || 30}
-            />
-
-            <MultiplayerScoreBar
-                players={game?.players || []}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
-
-            {/* Participle type chip */}
-            <Box sx={{ textAlign: 'center', my: 2 }}>
-                <Chip
-                    label={participleType}
-                    sx={{
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        padding: '20px 16px',
-                        background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
-                        color: 'white',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                    }}
-                />
-            </Box>
-
-            <Card sx={{
-                mt: 2,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                borderRadius: 4,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                border: '2px solid #ec4899',
-            }}>
-                <CardContent sx={{ p: 4 }}>
-                    {/* Verb */}
+        <MultiplayerGameScaffold
+            gameTitle={t('games.participe.title', 'Participle')}
+            roundNumber={currentRound.round_number}
+            maxSteps={game?.max_steps || 5}
+            subtitle={t('games.participe.title', 'Participle')}
+            gameTypeColor="#059669"
+            timeLeft={timeLeft}
+            maxTime={game?.config.max_time || 30}
+            players={game?.players || []}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
+                <>
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                        <Chip
+                            label={participleType}
+                            sx={{
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                padding: '20px 16px',
+                                background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                                color: 'white',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                            }}
+                        />
+                    </Box>
                     <Typography
                         variant="h2"
                         sx={{
@@ -267,13 +256,14 @@ const ParticipeMultiplayer: React.FC = () => {
                             WebkitBackgroundClip: 'text',
                             color: 'transparent',
                             textAlign: 'center',
-                            mb: 4,
                         }}
                     >
                         {roundData.verb}
                     </Typography>
-
-                    {/* Input */}
+                </>
+            }
+            actionNode={
+                <>
                     <Stack spacing={2} alignItems="center">
                         <TextField
                             fullWidth
@@ -301,7 +291,6 @@ const ParticipeMultiplayer: React.FC = () => {
                         />
                     </Stack>
 
-                    {/* Correct answer reveal */}
                     {hasAnswered && (() => {
                         const correctAnswer = roundData.correctAnswers[0] || '';
                         const isCorrect = compareConjugations(userAnswer.trim(), correctAnswer);
@@ -348,9 +337,9 @@ const ParticipeMultiplayer: React.FC = () => {
                     >
                         {isSubmitting() ? <CircularProgress size={24} /> : t('common.submit')}
                     </Button>
-                </CardContent>
-            </Card>
-        </Box>
+                </>
+            }
+        />
     );
 
     return (

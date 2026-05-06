@@ -31,6 +31,23 @@ var activeLobbyStatuses = []models.MultiplayerGameStatus{
 
 var multiplayerPronouns = []string{"je/j' ", "tu ", "il/elle ", "nous ", "vous ", "ils/elles "}
 
+var godNames = []string{
+	"Zeus", "Hera", "Poseidon", "Demeter", "Athena", "Apollo", "Artemis", "Ares", "Aphrodite", "Hephaestus",
+	"Hermes", "Dionysus", "Hestia", "Persephone", "Hades", "Eros", "Nike", "Iris", "Nemesis", "Tyche",
+	"Helios", "Selene", "Eos", "Pan", "Asclepius", "Hypnos", "Thanatos", "Morpheus", "Rhea", "Gaia",
+	"Cronus", "Oceanus", "Tethys", "Themis", "Mnemosyne", "Phoebe", "Coeus", "Hyperion", "Iapetus", "Atlas",
+	"Thor", "Odin", "Frigg", "Loki", "Freya", "Freyr", "Tyr", "Heimdall", "Baldr", "Njord",
+	"Skadi", "Bragi", "Idunn", "Sif", "Hel", "Fenrir", "Jormungandr", "Mimir", "Ran", "Aegir",
+	"Ra", "Isis", "Osiris", "Horus", "Anubis", "Bastet", "Sekhmet", "Thoth", "Hathor", "Ptah",
+	"Set", "Nephthys", "Maat", "Amun", "Khonsu", "Sobek", "Khepri", "Nut", "Geb", "Taweret",
+	"Shiva", "Vishnu", "Brahma", "Lakshmi", "Saraswati", "Parvati", "Kali", "Durga", "Ganesha", "Kartikeya",
+	"Indra", "Agni", "Varuna", "Surya", "Chandra", "Yama", "Kubera", "Vayu", "Rama", "Krishna",
+	"Amaterasu", "Tsukuyomi", "Susanoo", "Inari", "Izanagi", "Izanami", "Hachiman", "Raijin", "Fujin", "Benzaiten",
+	"Quetzalcoatl", "Tezcatlipoca", "Tlaloc", "Huitzilopochtli", "Coatlicue", "XipeTotec", "Tonatiuh", "Mictlantecuhtli", "Chalchiuhtlicue", "Xochiquetzal",
+	"Olorun", "Yemoja", "Oshun", "Shango", "Ogun", "Eshu", "Obatala", "Oya", "Orunmila", "BabaluAye",
+	"Tane", "Tangaroa", "Rongo", "Tawhirimatea", "HineNuiTePo", "Pele", "Kanaloa", "Lono", "Ku", "Maui",
+}
+
 func NewMultiplayerService(db *gorm.DB) *MultiplayerService {
 	return &MultiplayerService{
 		db: db,
@@ -79,6 +96,54 @@ func (ms *MultiplayerService) getActiveLobbyGameID(userID uint) (string, error) 
 	return row.GameID, nil
 }
 
+func normalizeGameTitle(title string) string {
+	return strings.ToLower(strings.TrimSpace(title))
+}
+
+func (ms *MultiplayerService) getActiveOrPendingGameTitles() (map[string]struct{}, error) {
+	var titles []string
+	if err := ms.db.
+		Model(&models.MultiplayerGame{}).
+		Where("status IN ?", activeHostStatuses).
+		Pluck("title", &titles).Error; err != nil {
+		return nil, err
+	}
+
+	used := make(map[string]struct{}, len(titles))
+	for _, title := range titles {
+		used[normalizeGameTitle(title)] = struct{}{}
+	}
+
+	return used, nil
+}
+
+func (ms *MultiplayerService) generateUniqueGodGameTitle() (string, error) {
+	usedTitles, err := ms.getActiveOrPendingGameTitles()
+	if err != nil {
+		return "", err
+	}
+
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	order := rng.Perm(len(godNames))
+
+	for _, idx := range order {
+		candidate := godNames[idx]
+		if _, exists := usedTitles[normalizeGameTitle(candidate)]; !exists {
+			return candidate, nil
+		}
+	}
+
+	base := godNames[rng.Intn(len(godNames))]
+	for suffix := 2; suffix <= 10000; suffix++ {
+		candidate := fmt.Sprintf("%s %d", base, suffix)
+		if _, exists := usedTitles[normalizeGameTitle(candidate)]; !exists {
+			return candidate, nil
+		}
+	}
+
+	return "", errors.New("unable to generate unique game title")
+}
+
 // CreateGame creates a new multiplayer game session
 func (ms *MultiplayerService) CreateGame(hostID uint, gameType, title string, maxPlayers int, maxSteps int, difficulty string, duration int, config models.GameConfig) (*models.MultiplayerGame, error) {
 	if activeHostedGameID, err := ms.getActiveHostedGameID(hostID); err != nil {
@@ -98,10 +163,15 @@ func (ms *MultiplayerService) CreateGame(hostID uint, gameType, title string, ma
 		maxSteps = 10
 	}
 
+	autoTitle, err := ms.generateUniqueGodGameTitle()
+	if err != nil {
+		return nil, err
+	}
+
 	game := &models.MultiplayerGame{
 		ID:         gameID,
 		GameType:   gameType,
-		Title:      title,
+		Title:      autoTitle,
 		HostID:     hostID,
 		MaxPlayers: maxPlayers,
 		MaxSteps:   maxSteps,
@@ -393,7 +463,7 @@ func (ms *MultiplayerService) StartGame(gameID string) error {
 
 	// Update game status
 	result := ms.db.Model(&models.MultiplayerGame{}).
-		Where("id = ? AND status = ?", gameID, models.GameStatusWaiting).
+		Where("id = ? AND status IN ?", gameID, []models.MultiplayerGameStatus{models.GameStatusWaiting, models.GameStatusStarting}).
 		Updates(map[string]interface{}{
 			"status":     models.GameStatusInProgress,
 			"started_at": now,
@@ -405,6 +475,23 @@ func (ms *MultiplayerService) StartGame(gameID string) error {
 
 	if result.RowsAffected == 0 {
 		return errors.New("game not found or already started")
+	}
+
+	return nil
+}
+
+// MarkGameStarting marks a waiting game as starting.
+func (ms *MultiplayerService) MarkGameStarting(gameID string) error {
+	result := ms.db.Model(&models.MultiplayerGame{}).
+		Where("id = ? AND status = ?", gameID, models.GameStatusWaiting).
+		Update("status", models.GameStatusStarting)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("game not found or cannot be marked as starting")
 	}
 
 	return nil

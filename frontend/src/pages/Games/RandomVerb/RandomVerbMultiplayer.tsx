@@ -1,11 +1,10 @@
-import { Box, Button, Card, CardContent, CircularProgress, Stack, TextField, Typography } from '@mui/material';
-import React, { useRef, useState } from 'react';
+import { Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
 import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
 import { useMultiplayerRoundState } from '../../../hooks/useMultiplayerRoundState';
@@ -111,6 +110,10 @@ const RandomVerbMultiplayer: React.FC = () => {
         },
     });
 
+    const handleRoundEnd = useCallback((data: Parameters<typeof onRoundEnd>[0]) => {
+        onRoundEnd(data);
+    }, [onRoundEnd]);
+
     const { isConnected } = useMultiplayerWebSocket({
         gameId: gameId!,
         enabled: !loading && !!game,
@@ -152,7 +155,7 @@ const RandomVerbMultiplayer: React.FC = () => {
             setRoundData(round.round_data as unknown as RandomVerbRoundData);
             setUserAnswers(Array(6).fill(''));
         },
-        onRoundEnd,
+        onRoundEnd: handleRoundEnd,
         onGameFinished: (data) => {
             setFinalResults(data);
             setShowFinalResults(true);
@@ -197,7 +200,7 @@ const RandomVerbMultiplayer: React.FC = () => {
                     answer: userAnswers.join(','),
                     is_correct: score === maxScore,
                     points: Math.round(finalScore),
-                    time_spent: (game!.config.max_time - timeLeft) * 1000,
+                    time_spent: Math.max(0, Math.round((game!.config.max_time - timeLeft) * 1000)),
                 }
             );
 
@@ -213,33 +216,29 @@ const RandomVerbMultiplayer: React.FC = () => {
             <CircularProgress />
         </Box>
     ) : (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            <MultiplayerRoundHeader
-                roundNumber={currentRound.round_number}
-                maxSteps={game?.max_steps || 5}
-                subtitle={t('games.randomVerb.title', 'Random Verb')}
-                timeLeft={timeLeft}
-                maxTime={game?.config.max_time || 30}
-            />
-
-            <MultiplayerScoreBar
-                players={game?.players || []}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
-
-            <Card sx={{ mt: 4 }}>
-                <CardContent>
-                    <Typography variant="h6" sx={{ mb: 3 }}>
-                        {t('games.randomVerb.conjugate', {
-                            verb: roundData.verb,
-                            tense: roundData.tense
-                        })}
-                    </Typography>
-
+        <MultiplayerGameScaffold
+            gameTitle={t('games.randomVerb.title', 'Random Verb')}
+            roundNumber={currentRound.round_number}
+            maxSteps={game?.max_steps || 5}
+            subtitle={t('games.randomVerb.title', 'Random Verb')}
+            gameTypeColor="#7c3aed"
+            timeLeft={timeLeft}
+            maxTime={game?.config.max_time || 30}
+            players={game?.players || []}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
+                <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 600 }}>
+                    {t('games.randomVerb.conjugate', {
+                        verb: roundData.verb,
+                        tense: roundData.tense
+                    })}
+                </Typography>
+            }
+            actionNode={
+                <>
                     <Stack spacing={2}>
                         {roundData.pronouns.map((pronoun, index) => (
                             <Box key={index}>
@@ -265,9 +264,9 @@ const RandomVerbMultiplayer: React.FC = () => {
                     >
                         {isSubmitting() ? <CircularProgress size={24} /> : t('common.submit')}
                     </Button>
-                </CardContent>
-            </Card>
-        </Box>
+                </>
+            }
+        />
     );
 
     return (

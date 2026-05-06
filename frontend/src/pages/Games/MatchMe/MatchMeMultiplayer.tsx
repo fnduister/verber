@@ -11,15 +11,14 @@ import {
     Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { TENSE_KEY_TO_DISPLAY_NAMES } from '../../../constants';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
 import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
@@ -308,6 +307,10 @@ const MatchMeMultiplayer: React.FC = () => {
         deriveRoundWinners: (_scoreGains, payload) => payload.round_winners || [],
     });
 
+    const handleRoundEnd = useCallback((data: Parameters<typeof onRoundEnd>[0]) => {
+        onRoundEnd(data);
+    }, [onRoundEnd]);
+
     const tenseEntries = useMemo(() => Object.keys(correctMatches).sort(), [correctMatches]);
 
     const getMatchItem = (id: string | undefined) => roundItems.find((item) => item.id === id);
@@ -386,7 +389,7 @@ const MatchMeMultiplayer: React.FC = () => {
                 answer: JSON.stringify(activeMatches),
                 is_correct: total > 0 && correctCount === total,
                 points,
-                time_spent: Math.max(0, timeSpent) * 1000,
+                time_spent: Math.max(0, Math.round(timeSpent * 1000)),
             });
         } catch (err: unknown) {
             const errMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -455,7 +458,7 @@ const MatchMeMultiplayer: React.FC = () => {
             setRoundItems(roundData.match_items);
             setCorrectMatches(roundData.matches);
         },
-        onRoundEnd,
+        onRoundEnd: handleRoundEnd,
         onGameFinished: (data) => {
             setFinalResults(data);
             setShowFinalResults(true);
@@ -477,44 +480,27 @@ const MatchMeMultiplayer: React.FC = () => {
         </Box>
     ) : (
         <DndProvider backend={HTML5Backend}>
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            <MultiplayerScoreBar
-                players={activeGame.players}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
-
-            <Paper sx={{ p: 4 }}>
-                <MultiplayerRoundHeader
-                    roundNumber={currentRound.round_number}
-                    maxSteps={activeGame.max_steps}
-                    subtitle="Match the conjugations to the correct tense"
-                    timeLeft={timeLeft}
-                    maxTime={activeGame.config.max_time || 30}
-                />
-
+        <MultiplayerGameScaffold
+            gameTitle={t('games.matching.title', 'Match Me')}
+            gameTypeColor="#0f766e"
+            roundNumber={currentRound.round_number}
+            maxSteps={activeGame.max_steps}
+            subtitle="Match the conjugations to the correct tense"
+            timeLeft={timeLeft}
+            maxTime={activeGame.config.max_time || 30}
+            players={activeGame.players}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
                 <Card sx={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                     borderRadius: 4,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    mb: 4,
                     minHeight: 180,
                 }}>
                     <CardContent>
-                        <Typography
-                            variant="h5"
-                            sx={{
-                                mb: 3,
-                                fontWeight: 'bold',
-                                textAlign: 'center',
-                                color: '#4f46e5',
-                            }}
-                        >
-                            Conjugations
-                        </Typography>
                         <PoolDropZone disabled={hasAnswered} onDropToPool={handleDropToPool}>
                             {roundItems.map((item, index) => {
                                 const isUsed = Object.values(userMatches).includes(item.id);
@@ -531,65 +517,68 @@ const MatchMeMultiplayer: React.FC = () => {
                         </PoolDropZone>
                     </CardContent>
                 </Card>
+            }
+            actionNode={
+                <>
+                    <Grid container spacing={3}>
+                        {tenseEntries.map((tenseId) => {
+                            const assignedConjugationId = userMatches[tenseId];
+                            const assignedItem = getMatchItem(assignedConjugationId);
+                            const tenseValue = roundItems.find((item) => correctMatches[tenseId] === item.id)?.tense || 'Unknown tense';
+                            return (
+                                <Grid item xs={12} md={4} key={tenseId}>
+                                    <TenseDropZone tenseId={tenseId} disabled={hasAnswered} onDrop={handleAssignToTense}>
+                                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 2, textAlign: 'center' }}>
+                                            {TENSE_KEY_TO_DISPLAY_NAMES[tenseValue] || tenseValue}
+                                        </Typography>
+                                        <Box sx={{ minHeight: 60, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                                            {assignedItem ? (
+                                                <DraggableConjugation
+                                                    item={assignedItem}
+                                                    isDisabled={hasAnswered}
+                                                    isUsed={false}
+                                                    isMatched={hasAnswered}
+                                                    isCorrect={hasAnswered ? (correctMatches[tenseId] === assignedConjugationId) : false}
+                                                />
+                                            ) : (
+                                                <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic', textAlign: 'center' }}>
+                                                    Drag a conjugation here
+                                                </Typography>
+                                            )}
+                                        </Box>
 
-                <Grid container spacing={3}>
-                    {tenseEntries.map((tenseId) => {
-                        const assignedConjugationId = userMatches[tenseId];
-                        const assignedItem = getMatchItem(assignedConjugationId);
-                        const tenseValue = roundItems.find((item) => correctMatches[tenseId] === item.id)?.tense || 'Unknown tense';
-                        return (
-                            <Grid item xs={12} md={4} key={tenseId}>
-                                <TenseDropZone tenseId={tenseId} disabled={hasAnswered} onDrop={handleAssignToTense}>
-                                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 2, textAlign: 'center' }}>
-                                        {TENSE_KEY_TO_DISPLAY_NAMES[tenseValue] || tenseValue}
-                                    </Typography>
-                                    <Box sx={{ minHeight: 60, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                                        {assignedItem ? (
-                                            <DraggableConjugation
-                                                item={assignedItem}
-                                                isDisabled={hasAnswered}
-                                                isUsed={false}
-                                                isMatched={hasAnswered}
-                                                isCorrect={hasAnswered ? (correctMatches[tenseId] === assignedConjugationId) : false}
-                                            />
-                                        ) : (
-                                            <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic', textAlign: 'center' }}>
-                                                Drag a conjugation here
-                                            </Typography>
+                                        {!hasAnswered && assignedItem && (
+                                            <Button size="small" sx={{ mt: 1 }} onClick={() => handleUnassignTense(tenseId)}>
+                                                Clear
+                                            </Button>
                                         )}
-                                    </Box>
+                                    </TenseDropZone>
+                                </Grid>
+                            );
+                        })}
+                    </Grid>
 
-                                    {!hasAnswered && assignedItem && (
-                                        <Button size="small" sx={{ mt: 1 }} onClick={() => handleUnassignTense(tenseId)}>
-                                            Clear
-                                        </Button>
-                                    )}
-                                </TenseDropZone>
-                            </Grid>
-                        );
-                    })}
-                </Grid>
+                    {!hasAnswered && (
+                        <Box sx={{ mt: 3, textAlign: 'center' }}>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={() => void handleSubmitMatches()}
+                                disabled={Object.keys(userMatches).length !== tenseEntries.length}
+                            >
+                                {t('common.submit')}
+                            </Button>
+                        </Box>
+                    )}
 
-                {!hasAnswered && (
-                    <Box sx={{ mt: 3, textAlign: 'center' }}>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={() => void handleSubmitMatches()}
-                            disabled={Object.keys(userMatches).length !== tenseEntries.length}
-                        >
-                            {t('common.submit')}
-                        </Button>
-                    </Box>
-                )}
-
-                {allPlayersAnswered && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                        <Chip icon={<CheckCircleIcon />} label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')} color="success" sx={{ fontWeight: 'bold' }} />
-                    </Box>
-                )}
-            </Paper>
-        </Box>
+                    {allPlayersAnswered && (
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Chip icon={<CheckCircleIcon />} label={t('games.multiplayer.allPlayersAnswered', 'All players have answered!')} color="success" sx={{ fontWeight: 'bold' }} />
+                        </Box>
+                    )}
+                </>
+            }
+        />
         </DndProvider>
     );
 

@@ -1,5 +1,7 @@
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
-    Box, Button, CircularProgress, Paper, Stack, Typography
+    Box, Button, CircularProgress,
+    Stack, Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useRef, useState } from 'react';
@@ -7,8 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import MultiplayerGamePhase from '../../../components/Multiplayer/MultiplayerGamePhase';
-import MultiplayerRoundHeader from '../../../components/Multiplayer/MultiplayerRoundHeader';
-import MultiplayerScoreBar from '../../../components/Multiplayer/MultiplayerScoreBar';
+import MultiplayerGameScaffold from '../../../components/Multiplayer/MultiplayerGameScaffold';
 import { useMultiplayerGameEventHandlers } from '../../../hooks/useMultiplayerGameEventHandlers';
 import { useMultiplayerGameSession } from '../../../hooks/useMultiplayerGameSession';
 import { useMultiplayerRoundState } from '../../../hooks/useMultiplayerRoundState';
@@ -42,6 +43,8 @@ const FindErrorMultiplayer: React.FC = () => {
     const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
     const [roundWinners, setRoundWinners] = useState<number[]>([]);
     const [roundScoreGains, setRoundScoreGains] = useState<{[userId: number]: number}>({});
+
+    const formatTenseLabel = (tense: string) => tense.replace(/[_-]+/g, ' ').trim();
 
     const {
         game,
@@ -273,7 +276,7 @@ const FindErrorMultiplayer: React.FC = () => {
                 answer: JSON.stringify(selectedList),
                 is_correct: correctCount === gameData.visibleWords.length,
                 points,
-                time_spent: timeSpent * 1000,
+                time_spent: Math.max(0, Math.round(timeSpent * 1000)),
             };
             await multiplayerAPI.submitAnswer(gameId, currentRound.id, payload);
         } catch (err: unknown) {
@@ -300,145 +303,126 @@ const FindErrorMultiplayer: React.FC = () => {
             <CircularProgress />
         </Box>
     ) : (
-        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-            {/* Header with scores */}
-            <MultiplayerScoreBar
-                players={activeGame.players}
-                playersAnswered={playersAnswered}
-                roundScoreGains={roundScoreGains}
-                roundWinners={roundWinners}
-                allPlayersAnswered={allPlayersAnswered}
-                sticky
-            />
+        <MultiplayerGameScaffold
+            gameTitle={t('games.findError.title', 'Find Error')}
+            gameTypeIcon={<SearchRoundedIcon fontSize="medium" />}
+            gameTypeColor="#2563eb"
+            roundNumber={currentRound?.round_number || 1}
+            maxSteps={activeGame.max_steps}
+            subtitle={t('findError.findTheError')}
+            timeLeft={timeLeft}
+            maxTime={activeGame.config.max_time || 30}
+            players={activeGame.players}
+            playersAnswered={playersAnswered}
+            roundScoreGains={roundScoreGains}
+            roundWinners={roundWinners}
+            allPlayersAnswered={allPlayersAnswered}
+            contextNode={
+                <Box sx={{ textAlign: 'center' }}>
+                    <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                            mb: 0.25,
+                            fontSize: '0.6rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            display: 'block',
+                        }}
+                    >
+                        {t('games.common.tense', 'Tense')}
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 800, lineHeight: 1.05, fontSize: { xs: '1.9rem', md: '2.2rem' } }}>
+                        {formatTenseLabel(gameData.stepTense)}
+                    </Typography>
+                </Box>
+            }
+            actionNode={
+                <>
+                    <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{ flexWrap: 'wrap', gap: 1.25, mb: 2 }}
+                    >
+                        {gameData.visibleWords.map((word, index) => {
+                            const isSelected = selectedWords.has(word);
 
-            {/* Game content */}
-            <Paper sx={{ p: 4 }}>
-                {/* Round and Timer Info */}
-                {currentRound && (
-                    <MultiplayerRoundHeader
-                        roundNumber={currentRound.round_number}
-                        maxSteps={activeGame.max_steps}
-                        subtitle={`${t('findError.findTheError')} (${gameData.stepTense})`}
-                        timeLeft={timeLeft}
-                        maxTime={activeGame.config.max_time || 30}
-                    />
-                )}
-
-                {/* Sentence Display */}
-                {gameData.sentence && (
-                    <Box sx={{ mb: 4, textAlign: 'center' }}>
-                        <Typography variant="h4" sx={{ 
-                            fontWeight: 'bold',
-                            color: 'text.primary',
-                            p: 3,
-                            background: 'linear-gradient(145deg, #f0f4f8, #d6e4ed)',
-                            borderRadius: 3,
-                            border: '2px solid',
-                            borderColor: 'primary.light'
-                        }}>
-                            {gameData.sentence}
-                        </Typography>
-                    </Box>
-                )}
-
-                {/* Instruction */}
-                <Typography 
-                    variant="h5" 
-                    textAlign="center" 
-                    sx={{ 
-                        mb: 4,
-                        fontWeight: 'bold',
-                        color: 'text.primary'
-                    }}
-                >
-                    {t('games.findError.instruction')}
-                </Typography>
-
-                {/* Answer Options */}
-                <Stack
-                    direction={{ xs: 'column', sm: 'row' }}
-                    justifyContent="center"
-                    alignItems="center"
-                    sx={{ flexWrap: 'wrap', gap: 2, mb: 4 }}
-                >
-                    {gameData.visibleWords.map((word, index) => {
-                        const isSelected = selectedWords.has(word);
-                        
-                        return (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ duration: 0.4, delay: index * 0.1 }}
-                                whileHover={{ scale: !hasAnswered ? 1.05 : 1 }}
-                                whileTap={{ scale: !hasAnswered ? 0.95 : 1 }}
-                            >
-                                <Button
-                                    onClick={() => handleSelectWord(word)}
-                                    color={isSelected ? 'primary' : 'secondary'}
-                                    variant="contained"
-                                    disabled={hasAnswered}
-                                    sx={{
-                                        minWidth: 240,
-                                        minHeight: 120,
-                                        fontSize: '1.2rem',
-                                        fontWeight: 'bold',
-                                        borderRadius: 3,
-                                        textTransform: 'none',
-                                        background: isSelected
-                                            ? 'linear-gradient(145deg, #2196f3, #1976d2)'
-                                            : 'linear-gradient(145deg, #ffffff, #f5f5f5)',
-                                        boxShadow: isSelected
-                                            ? '0 0 25px rgba(33,150,243,0.5)'
-                                            : '0 4px 20px rgba(0,0,0,0.1)',
-                                        border: isSelected
-                                            ? '2px solid #1976d2'
-                                            : '2px solid #e0e0e0',
-                                        color: isSelected ? '#ffffff' : 'inherit',
-                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        '&:hover': {
-                                            transform: !hasAnswered ? 'translateY(-2px)' : 'none',
-                                            boxShadow: !hasAnswered 
-                                                ? '0 6px 25px rgba(0,0,0,0.15)'
-                                                : undefined,
-                                        },
-                                        ...(isSelected && {
-                                            transform: 'scale(0.98)',
-                                            boxShadow: '0 0 25px rgba(33,150,243,0.5)'
-                                        })
-                                    }}
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                                    whileHover={{ scale: !hasAnswered ? 1.05 : 1 }}
+                                    whileTap={{ scale: !hasAnswered ? 0.95 : 1 }}
                                 >
-                                    <span>{word}</span>
-                                </Button>
-                            </motion.div>
-                        );
-                    })}
-                </Stack>
+                                    <Button
+                                        onClick={() => handleSelectWord(word)}
+                                        color={isSelected ? 'primary' : 'secondary'}
+                                        variant="contained"
+                                        disabled={hasAnswered}
+                                        sx={{
+                                            minWidth: 190,
+                                            minHeight: 88,
+                                            fontSize: '1rem',
+                                            fontWeight: 'bold',
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            background: isSelected
+                                                ? 'linear-gradient(145deg, #2196f3, #1976d2)'
+                                                : 'linear-gradient(145deg, #ffffff, #f5f5f5)',
+                                            boxShadow: isSelected
+                                                ? '0 0 25px rgba(33,150,243,0.5)'
+                                                : '0 4px 20px rgba(0,0,0,0.1)',
+                                            border: isSelected
+                                                ? '2px solid #1976d2'
+                                                : '2px solid #e0e0e0',
+                                            color: isSelected ? '#ffffff' : 'inherit',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            '&:hover': {
+                                                transform: !hasAnswered ? 'translateY(-2px)' : 'none',
+                                                boxShadow: !hasAnswered
+                                                    ? '0 6px 25px rgba(0,0,0,0.15)'
+                                                    : undefined,
+                                            },
+                                            ...(isSelected && {
+                                                transform: 'scale(0.98)',
+                                                boxShadow: '0 0 25px rgba(33,150,243,0.5)'
+                                            })
+                                        }}
+                                    >
+                                        <span>{word}</span>
+                                    </Button>
+                                </motion.div>
+                            );
+                        })}
+                    </Stack>
 
-                {/* Submit Button */}
-                {!hasAnswered && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            size="large"
-                            onClick={handleSubmitSelection}
-                            disabled={selectedWords.size === 0}
-                            sx={{
-                                minWidth: 200,
-                                fontSize: '1.1rem',
-                                fontWeight: 'bold',
-                                py: 1.5
-                            }}
-                        >
-                            Submit ({selectedWords.size})
-                        </Button>
-                    </Box>
-                )}
-
-            </Paper>
-
-        </Box>
+                    {!hasAnswered && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5, mb: 0.5 }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="large"
+                                onClick={handleSubmitSelection}
+                                disabled={selectedWords.size === 0}
+                                sx={{
+                                    minWidth: 170,
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    py: 1
+                                }}
+                            >
+                                Submit ({selectedWords.size})
+                            </Button>
+                        </Box>
+                    )}
+                </>
+            }
+            contextMinHeight={80}
+            actionMinHeight={0}
+        />
     );
 
     return (

@@ -16,7 +16,8 @@ export interface WebSocketMessage {
         | 'invite_sent'
         | 'invite_accepted'
         | 'invite_declined'
-        | 'invite_expired';
+        | 'invite_expired'
+        | 'quick_reaction';
     data: unknown;
 }
 
@@ -78,6 +79,14 @@ export interface AnswerSubmittedData {
     player_id: number;
 }
 
+export interface QuickReactionData {
+    sender_id: number;
+    prompt_id: string;
+    emoji: string;
+    context: 'answer_submitted' | 'round_end' | 'game_event';
+    game_id: string;
+}
+
 interface UseMultiplayerWebSocketParams {
     gameId: string;
     enabled?: boolean; // Add enabled flag to control when to connect
@@ -90,6 +99,7 @@ interface UseMultiplayerWebSocketParams {
     onGameFinished?: (data: GameFinishedData) => void;
     onTimerSync?: (data: TimerSyncData) => void;
     onAnswerSubmitted?: (data: AnswerSubmittedData) => void;
+    onQuickReaction?: (data: QuickReactionData) => void;
     onInviteEvent?: (type: InviteEventType, data: unknown) => void;
     onError?: (error: Error) => void;
     onFatalError?: (error: Error) => void;
@@ -107,6 +117,7 @@ export const useMultiplayerWebSocket = ({
     onGameFinished,
     onTimerSync,
     onAnswerSubmitted,
+    onQuickReaction,
     onInviteEvent,
     onError,
     onFatalError,
@@ -117,6 +128,7 @@ export const useMultiplayerWebSocket = ({
     const fallbackRoundFetchRef = useRef<NodeJS.Timeout | null>(null);
     const awaitingRoundStartRef = useRef(false);
     const lastRoundIdRef = useRef<number | null>(null);
+    const gameStartedAtRef = useRef<number | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [hasFatalError, setHasFatalError] = useState(false);
     const maxReconnectAttempts = 5;
@@ -132,6 +144,7 @@ export const useMultiplayerWebSocket = ({
         onGameFinished,
         onTimerSync,
         onAnswerSubmitted,
+        onQuickReaction,
         onInviteEvent,
         onError,
         onFatalError,
@@ -149,11 +162,12 @@ export const useMultiplayerWebSocket = ({
             onGameFinished,
             onTimerSync,
             onAnswerSubmitted,
+            onQuickReaction,
             onInviteEvent,
             onError,
             onFatalError,
         };
-    }, [onPlayerJoined, onPlayerLeft, onPlayerReady, onGameStarting, onRoundStart, onRoundEnd, onGameFinished, onTimerSync, onAnswerSubmitted, onInviteEvent, onError, onFatalError]);
+    }, [onPlayerJoined, onPlayerLeft, onPlayerReady, onGameStarting, onRoundStart, onRoundEnd, onGameFinished, onTimerSync, onAnswerSubmitted, onQuickReaction, onInviteEvent, onError, onFatalError]);
 
     const connect = useCallback(() => {
         if (!enabled) {
@@ -194,6 +208,7 @@ export const useMultiplayerWebSocket = ({
                             break;
                         case 'game_started':
                             awaitingRoundStartRef.current = true;
+                            gameStartedAtRef.current = Date.now();
                             if (fallbackRoundFetchRef.current) {
                                 clearTimeout(fallbackRoundFetchRef.current);
                             }
@@ -203,8 +218,22 @@ export const useMultiplayerWebSocket = ({
                                 }
                                 try {
                                     const latestRound = await multiplayerAPI.getLatestRound(gameId);
-                                    if (latestRound && latestRound.id !== lastRoundIdRef.current) {
+                                    const latestRoundStartedAt = Date.parse(latestRound.started_at);
+                                    const gameStartedAt = gameStartedAtRef.current;
+                                    const isActiveRound = !latestRound.finished_at;
+                                    const isFromCurrentStart =
+                                        gameStartedAt === null ||
+                                        !Number.isFinite(latestRoundStartedAt) ||
+                                        latestRoundStartedAt >= gameStartedAt - 5000;
+
+                                    if (
+                                        latestRound &&
+                                        latestRound.id !== lastRoundIdRef.current &&
+                                        isActiveRound &&
+                                        isFromCurrentStart
+                                    ) {
                                         lastRoundIdRef.current = latestRound.id;
+                                        awaitingRoundStartRef.current = false;
                                         callbacksRef.current.onRoundStart?.({ round: latestRound });
                                     }
                                 } catch {
@@ -216,6 +245,9 @@ export const useMultiplayerWebSocket = ({
                             // Backend sends round object directly, wrap it in expected format
                             {
                                 const round = message.data as GameRound;
+                                if (round.id === lastRoundIdRef.current) {
+                                    break;
+                                }
                                 awaitingRoundStartRef.current = false;
                                 lastRoundIdRef.current = round.id;
                                 if (fallbackRoundFetchRef.current) {
@@ -236,6 +268,9 @@ export const useMultiplayerWebSocket = ({
                             break;
                         case 'answer_submitted':
                             callbacksRef.current.onAnswerSubmitted?.(message.data as AnswerSubmittedData);
+                            break;
+                        case 'quick_reaction':
+                            callbacksRef.current.onQuickReaction?.(message.data as QuickReactionData);
                             break;
                         case 'invite_sent':
                         case 'invite_accepted':
@@ -311,6 +346,7 @@ export const useMultiplayerWebSocket = ({
             fallbackRoundFetchRef.current = null;
         }
         awaitingRoundStartRef.current = false;
+        gameStartedAtRef.current = null;
 
         setIsConnected(false);
         reconnectAttemptsRef.current = 0;

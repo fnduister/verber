@@ -81,10 +81,8 @@ func (mh *MultiplayerHandler) completeRoundAndAdvance(gameID string, roundID uin
 
 	if game.CurrentStep < game.MaxSteps {
 		go func(currentStep int) {
-			for i := 3; i > 0; i-- {
-				mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("Next round in %d...", i)})
-				time.Sleep(1 * time.Second)
-			}
+			mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": 1, "message": fmt.Sprintf("Next round in %d...", 1)})
+			time.Sleep(1 * time.Second)
 
 			nextStep := currentStep + 1
 
@@ -109,7 +107,8 @@ func (mh *MultiplayerHandler) completeRoundAndAdvance(gameID string, roundID uin
 	}
 
 	go func() {
-		time.Sleep(3 * time.Second)
+		// Keep a short pause so clients can process round_end, then move quickly to final scores.
+		time.Sleep(500 * time.Millisecond)
 		mh.multiplayerService.FinishGame(gameID)
 		finalPlayers, _ := mh.multiplayerService.GetGamePlayers(gameID)
 		mh.hub.BroadcastToGame(gameID, ws.TypeGameFinished, gin.H{
@@ -215,7 +214,7 @@ func (mh *MultiplayerHandler) CreateGame(c *gin.Context) {
 
 	var req struct {
 		GameType   string            `json:"game_type" binding:"required"`
-		Title      string            `json:"title" binding:"required"`
+		Title      string            `json:"title"`
 		MaxPlayers int               `json:"max_players" binding:"required,min=2,max=8"`
 		MaxSteps   int               `json:"max_steps" binding:"omitempty,oneof=5 10 15 20"`
 		Difficulty string            `json:"difficulty"`
@@ -391,12 +390,20 @@ func (mh *MultiplayerHandler) StartGame(c *gin.Context) {
 
 	log.Printf("StartGame: MANUALLY STARTING game %s", gameID)
 
+	if err := mh.multiplayerService.MarkGameStarting(gameID); err != nil {
+		log.Printf("StartGame: failed to mark game as starting: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_ = mh.hub.BroadcastAll(ws.MessageType("game_updated"), gin.H{"game_id": gameID, "status": "starting", "countdown": 3})
+
 	// Broadcast countdown before game starts
 	go func() {
 		log.Printf("StartGame goroutine: beginning countdown for game %s", gameID)
 		// Countdown from 3 to 1
 		for i := 3; i > 0; i-- {
 			mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("Starting in %d...", i)})
+			_ = mh.hub.BroadcastAll(ws.MessageType("game_updated"), gin.H{"game_id": gameID, "status": "starting", "countdown": i})
 			time.Sleep(1 * time.Second)
 		}
 
@@ -408,6 +415,7 @@ func (mh *MultiplayerHandler) StartGame(c *gin.Context) {
 		}
 
 		mh.hub.BroadcastToGame(gameID, ws.TypeGameStarted, gin.H{"message": "Game started!"})
+		_ = mh.hub.BroadcastAll(ws.MessageType("game_updated"), gin.H{"game_id": gameID, "status": "in_progress"})
 		log.Printf("StartGame goroutine: game_started broadcast sent for %s", gameID)
 
 		// Generate and broadcast first round
@@ -467,12 +475,19 @@ func (mh *MultiplayerHandler) SetReady(c *gin.Context) {
 	log.Printf("SetReady: gameID=%s, userID=%d, is_ready=%v, allReady=%v", gameID, userID, req.IsReady, allReady)
 	if err == nil && allReady {
 		log.Printf("SetReady: AUTO-STARTING game %s", gameID)
+		if err := mh.multiplayerService.MarkGameStarting(gameID); err != nil {
+			log.Printf("SetReady: failed to mark game as starting: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		_ = mh.hub.BroadcastAll(ws.MessageType("game_updated"), gin.H{"game_id": gameID, "status": "starting", "countdown": 3})
 		// Start countdown in goroutine
 		go func() {
 			log.Printf("AutoStart goroutine: beginning countdown for game %s", gameID)
 			// Countdown from 3 to 1
 			for i := 3; i > 0; i-- {
 				mh.hub.BroadcastToGame(gameID, ws.TypeGameStarting, gin.H{"countdown": i, "message": fmt.Sprintf("All ready! Starting in %d...", i)})
+				_ = mh.hub.BroadcastAll(ws.MessageType("game_updated"), gin.H{"game_id": gameID, "status": "starting", "countdown": i})
 				time.Sleep(1 * time.Second)
 			}
 
@@ -484,6 +499,7 @@ func (mh *MultiplayerHandler) SetReady(c *gin.Context) {
 			}
 
 			mh.hub.BroadcastToGame(gameID, ws.TypeGameStarted, gin.H{"message": "Game started!"})
+			_ = mh.hub.BroadcastAll(ws.MessageType("game_updated"), gin.H{"game_id": gameID, "status": "in_progress"})
 			log.Printf("AutoStart goroutine: game_started broadcast sent for %s", gameID)
 
 			// Generate and broadcast first round
