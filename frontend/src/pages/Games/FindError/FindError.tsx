@@ -64,6 +64,7 @@ const FindError: React.FC = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timerRef = useRef<number | null>(null);
     const pauseTimeRef = useRef<number>(0);
+    const answerLockRef = useRef(false);
 
     const initializeGame = useCallback(() => {
         setHasError(false);
@@ -160,6 +161,7 @@ const FindError: React.FC = () => {
             maxStep: steps.length,
         });
         setTimeLeft(ongoingGameInfo.maxTime);
+        answerLockRef.current = false;
     }, [currentTenses, currentVerbs, allVerbs, ongoingGameInfo.maxTime, ongoingGameInfo.maxStep]);
 
     // Fetch verbs when component mounts
@@ -180,8 +182,9 @@ const FindError: React.FC = () => {
     }, [currentVerbs.length, currentTenses.length, initializeGame, navigate]);
 
     const handleAnswer = useCallback((answer: string) => {
-        // Prevent multiple calls or processing during transition
-        if (selectedAnswer !== null || isProcessingAnswer) return;
+        // Synchronous lock prevents multi-click races before React state updates.
+        if (answerLockRef.current || selectedAnswer !== null || isProcessingAnswer) return;
+        answerLockRef.current = true;
 
         // Set processing state immediately to prevent race conditions
         setIsProcessingAnswer(true);
@@ -195,6 +198,7 @@ const FindError: React.FC = () => {
         const currentQuestion = gameData[gameScore.currentStep];
         if (!currentQuestion) {
             setIsProcessingAnswer(false);
+            answerLockRef.current = false;
             return; // Safety check
         }
         
@@ -230,6 +234,7 @@ const FindError: React.FC = () => {
         setSelectedAnswer(null);
         setIsCorrect(null);
         setIsProcessingAnswer(false);
+        answerLockRef.current = false;
         
         if (gameScore.currentStep + 1 >= gameScore.maxStep) {
             setShowScore(true);

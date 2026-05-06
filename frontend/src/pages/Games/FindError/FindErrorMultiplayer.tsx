@@ -223,10 +223,8 @@ const FindErrorMultiplayer: React.FC = () => {
         }
 
         setSelectedWords(prev => {
-            const updated = new Set(prev);
-            if (updated.has(word)) {
-                updated.delete(word);
-            } else {
+            const updated = new Set<string>();
+            if (!prev.has(word)) {
                 updated.add(word);
             }
             return updated;
@@ -253,28 +251,20 @@ const FindErrorMultiplayer: React.FC = () => {
             const maxTime = game?.config.max_time || 30;
             const timeSpent = maxTime - timeLeft;
 
-            // Count correct identifications:
-            // - 1 point if error word is selected
-            // - 1 point for each correct word (non-error) selected
-            let correctCount = 0;
-            if (selectedList.includes(gameData.correctAnswer)) {
-                correctCount++; // Found the error
-            }
-            // Count correct words (non-error words)
-            const correctWords = gameData.visibleWords.filter(w => w !== gameData.correctAnswer);
-            correctCount += correctWords.filter(w => selectedList.includes(w)).length;
+            const selectedWord = selectedList[0] || '';
+            const isCorrect = selectedWord === gameData.correctAnswer;
 
-            // Scoring formula: points = correctCount * basePoints + timeBonus
+            // Single-answer scoring: correct answer gets base points + time bonus.
             let points = 0;
-            if (correctCount >= 1) {
+            if (isCorrect) {
                 const basePoints = 100;
                 const timeBonus = Math.floor((timeLeft / maxTime) * 100);
-                points = basePoints * correctCount + timeBonus;
+                points = basePoints + timeBonus;
             }
 
             const payload = {
                 answer: JSON.stringify(selectedList),
-                is_correct: correctCount === gameData.visibleWords.length,
+                is_correct: isCorrect,
                 points,
                 time_spent: Math.max(0, Math.round(timeSpent * 1000)),
             };
