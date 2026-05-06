@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"gorm.io/gorm"
 )
 
 type MultiplayerHandler struct {
@@ -654,6 +656,11 @@ func (mh *MultiplayerHandler) SendHeartbeat(c *gin.Context) {
 	// Update player's last_seen timestamp
 	err := mh.multiplayerService.UpdatePlayerHeartbeat(gameID, userID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Player may have left or been removed; treat heartbeat as no-op.
+			c.JSON(http.StatusOK, gin.H{"status": "inactive"})
+			return
+		}
 		log.Printf("Error updating heartbeat for user %d in game %s: %v", userID, gameID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update heartbeat"})
 		return

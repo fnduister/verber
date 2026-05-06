@@ -1649,7 +1649,18 @@ func (ms *MultiplayerService) GetActivePlayers(gameID string) ([]models.Multipla
 
 // UpdatePlayerHeartbeat updates the player's last seen timestamp
 func (ms *MultiplayerService) UpdatePlayerHeartbeat(gameID string, userID uint) error {
-	return ms.db.Model(&models.MultiplayerGamePlayer{}).
+	now := time.Now()
+	result := ms.db.Model(&models.MultiplayerGamePlayer{}).
 		Where("game_id = ? AND user_id = ? AND left_at IS NULL", gameID, userID).
-		Update("updated_at", time.Now()).Error
+		Update("last_seen_at", now)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }

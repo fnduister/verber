@@ -36,8 +36,11 @@ case "$ENV" in
         ;;
 esac
 
-# Override deploy dir if running locally
-if [[ ! -d "$DEPLOY_DIR" ]] && [[ -f "docker-compose.prod.yml" ]]; then
+# Prefer the current working directory when it contains the selected compose file.
+# This avoids accidentally operating on /opt/verber when running from a checked-out repo.
+if [[ -f "$(pwd)/$COMPOSE_FILE" ]]; then
+    DEPLOY_DIR="$(pwd)"
+elif [[ ! -d "$DEPLOY_DIR" ]] && [[ -f "docker-compose.prod.yml" ]]; then
     DEPLOY_DIR="$(pwd)"
 fi
 
@@ -85,6 +88,7 @@ check_deploy_dir() {
     fi
     
     echo -e "${BLUE}📁 Environment: ${ENV}${NC}"
+    echo -e "${BLUE}📂 Deploy dir: ${DEPLOY_DIR}${NC}"
     echo -e "${BLUE}📄 Compose file: ${COMPOSE_FILE}${NC}"
     echo ""
 }

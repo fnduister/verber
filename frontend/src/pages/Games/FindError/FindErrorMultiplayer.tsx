@@ -37,7 +37,7 @@ const FindErrorMultiplayer: React.FC = () => {
 
     const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
     const [gameData, setGameData] = useState<FindErrorGameData | null>(null);
-    const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
+    const [selectedWord, setSelectedWord] = useState<string | null>(null);
     const [showFinalResults, setShowFinalResults] = useState(false);
     const [finalResults, setFinalResults] = useState<unknown>(null);
     const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
@@ -187,7 +187,7 @@ const FindErrorMultiplayer: React.FC = () => {
 
             // Reset all state for new round - ORDER MATTERS!
             // 1. Update data first
-            setSelectedWords(new Set()); // Clear selection
+            setSelectedWord(null); // Clear selection
             setRoundWinners([]); // Clear round winners
             setRoundScoreGains({}); // Clear score gains
             resetForNewRound(game.players, game?.config.max_time || 30);
@@ -222,25 +222,17 @@ const FindErrorMultiplayer: React.FC = () => {
             return;
         }
 
-        setSelectedWords(prev => {
-            const updated = new Set(prev);
-            if (updated.has(word)) {
-                updated.delete(word);
-            } else {
-                updated.add(word);
-            }
-            return updated;
-        });
+        setSelectedWord((prev) => (prev === word ? null : word));
     };
 
     const handleSubmitSelection = () => {
         if (!gameId || !currentRound || !gameData || hasAnswered || isSubmitting()) {
             return;
         }
-        void handleSubmitAnswer(Array.from(selectedWords));
+        void handleSubmitAnswer(selectedWord);
     };
 
-    const handleSubmitAnswer = async (selectedList: string[]) => {
+    const handleSubmitAnswer = async (choice: string | null) => {
         if (!gameId || !currentRound || !gameData) {
             return;
         }
@@ -252,29 +244,14 @@ const FindErrorMultiplayer: React.FC = () => {
         try {
             const maxTime = game?.config.max_time || 30;
             const timeSpent = maxTime - timeLeft;
-
-            // Count correct identifications:
-            // - 1 point if error word is selected
-            // - 1 point for each correct word (non-error) selected
-            let correctCount = 0;
-            if (selectedList.includes(gameData.correctAnswer)) {
-                correctCount++; // Found the error
-            }
-            // Count correct words (non-error words)
-            const correctWords = gameData.visibleWords.filter(w => w !== gameData.correctAnswer);
-            correctCount += correctWords.filter(w => selectedList.includes(w)).length;
-
-            // Scoring formula: points = correctCount * basePoints + timeBonus
-            let points = 0;
-            if (correctCount >= 1) {
-                const basePoints = 100;
-                const timeBonus = Math.floor((timeLeft / maxTime) * 100);
-                points = basePoints * correctCount + timeBonus;
-            }
+            const isCorrect = choice === gameData.correctAnswer;
+            const points = isCorrect
+                ? 100 + Math.floor((timeLeft / maxTime) * 100)
+                : 0;
 
             const payload = {
-                answer: JSON.stringify(selectedList),
-                is_correct: correctCount === gameData.visibleWords.length,
+                answer: JSON.stringify(choice ? [choice] : []),
+                is_correct: isCorrect,
                 points,
                 time_spent: Math.max(0, Math.round(timeSpent * 1000)),
             };
@@ -289,7 +266,7 @@ const FindErrorMultiplayer: React.FC = () => {
     };
 
     submitAnswerRef.current = () => {
-        void handleSubmitAnswer(Array.from(selectedWords));
+        void handleSubmitAnswer(selectedWord);
     };
 
     // Keep round results visible until the next onRoundStart arrives
@@ -346,7 +323,7 @@ const FindErrorMultiplayer: React.FC = () => {
                         sx={{ flexWrap: 'wrap', gap: 1.25, mb: 2 }}
                     >
                         {gameData.visibleWords.map((word, index) => {
-                            const isSelected = selectedWords.has(word);
+                            const isSelected = selectedWord === word;
 
                             return (
                                 <motion.div
@@ -356,44 +333,43 @@ const FindErrorMultiplayer: React.FC = () => {
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
                                     whileHover={{ scale: !hasAnswered ? 1.05 : 1 }}
                                     whileTap={{ scale: !hasAnswered ? 0.95 : 1 }}
+                                <Button
+                                    onClick={() => handleSelectWord(word)}
+                                    color={isSelected ? 'primary' : 'secondary'}
+                                    variant="contained"
+                                    disabled={hasAnswered || isSubmitting()}
+                                    sx={{
+                                        minWidth: 190,
+                                        minHeight: 88,
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold',
+                                        borderRadius: 2,
+                                        textTransform: 'none',
+                                        background: isSelected
+                                            ? 'linear-gradient(145deg, #2196f3, #1976d2)'
+                                            : 'linear-gradient(145deg, #ffffff, #f5f5f5)',
+                                        boxShadow: isSelected
+                                            ? '0 0 25px rgba(33,150,243,0.5)'
+                                            : '0 4px 20px rgba(0,0,0,0.1)',
+                                        border: isSelected
+                                            ? '2px solid #1976d2'
+                                            : '2px solid #e0e0e0',
+                                        color: isSelected ? '#ffffff' : 'inherit',
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        '&:hover': {
+                                            transform: !hasAnswered ? 'translateY(-2px)' : 'none',
+                                            boxShadow: !hasAnswered 
+                                                ? '0 6px 25px rgba(0,0,0,0.15)'
+                                                : undefined,
+                                        },
+                                        ...(isSelected && {
+                                            transform: 'scale(0.98)',
+                                            boxShadow: '0 0 25px rgba(33,150,243,0.5)'
+                                        })
+                                    }}
                                 >
-                                    <Button
-                                        onClick={() => handleSelectWord(word)}
-                                        color={isSelected ? 'primary' : 'secondary'}
-                                        variant="contained"
-                                        disabled={hasAnswered}
-                                        sx={{
-                                            minWidth: 190,
-                                            minHeight: 88,
-                                            fontSize: '1rem',
-                                            fontWeight: 'bold',
-                                            borderRadius: 2,
-                                            textTransform: 'none',
-                                            background: isSelected
-                                                ? 'linear-gradient(145deg, #2196f3, #1976d2)'
-                                                : 'linear-gradient(145deg, #ffffff, #f5f5f5)',
-                                            boxShadow: isSelected
-                                                ? '0 0 25px rgba(33,150,243,0.5)'
-                                                : '0 4px 20px rgba(0,0,0,0.1)',
-                                            border: isSelected
-                                                ? '2px solid #1976d2'
-                                                : '2px solid #e0e0e0',
-                                            color: isSelected ? '#ffffff' : 'inherit',
-                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            '&:hover': {
-                                                transform: !hasAnswered ? 'translateY(-2px)' : 'none',
-                                                boxShadow: !hasAnswered
-                                                    ? '0 6px 25px rgba(0,0,0,0.15)'
-                                                    : undefined,
-                                            },
-                                            ...(isSelected && {
-                                                transform: 'scale(0.98)',
-                                                boxShadow: '0 0 25px rgba(33,150,243,0.5)'
-                                            })
-                                        }}
-                                    >
-                                        <span>{word}</span>
-                                    </Button>
+                                    <span>{word}</span>
+                                </Button>
                                 </motion.div>
                             );
                         })}
@@ -406,7 +382,7 @@ const FindErrorMultiplayer: React.FC = () => {
                                 color="primary"
                                 size="large"
                                 onClick={handleSubmitSelection}
-                                disabled={selectedWords.size === 0}
+                                disabled={!selectedWord || isSubmitting()}
                                 sx={{
                                     minWidth: 170,
                                     fontSize: '1rem',
@@ -414,7 +390,7 @@ const FindErrorMultiplayer: React.FC = () => {
                                     py: 1
                                 }}
                             >
-                                Submit ({selectedWords.size})
+                                {isSubmitting() ? <CircularProgress size={24} /> : 'Submit'}
                             </Button>
                         </Box>
                     )}

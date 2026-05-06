@@ -59,6 +59,7 @@ const FindError: React.FC = () => {
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [animateBackground, setAnimateBackground] = useState<string>('white');
     const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+    const isProcessingRef = useRef(false);
     const [isPaused, setIsPaused] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -181,9 +182,11 @@ const FindError: React.FC = () => {
 
     const handleAnswer = useCallback((answer: string) => {
         // Prevent multiple calls or processing during transition
-        if (selectedAnswer !== null || isProcessingAnswer) return;
+        // Use ref for synchronous check (state updates are async and can't stop fast double-clicks)
+        if (selectedAnswer !== null || isProcessingRef.current) return;
+        isProcessingRef.current = true;
 
-        // Set processing state immediately to prevent race conditions
+        // Set processing state for UI
         setIsProcessingAnswer(true);
 
         // Immediately stop the timer
@@ -227,6 +230,7 @@ const FindError: React.FC = () => {
     }, [gameData, gameScore.currentStep, gameScore.maxStep, selectedAnswer, isProcessingAnswer, playSuccess, playFailure]);
 
     const handleNext = () => {
+        isProcessingRef.current = false;
         setSelectedAnswer(null);
         setIsCorrect(null);
         setIsProcessingAnswer(false);
@@ -328,6 +332,10 @@ const FindError: React.FC = () => {
     };
 
     const handlePlayAgain = () => {
+        isProcessingRef.current = false;
+        setSelectedAnswer(null);
+        setIsCorrect(null);
+        setIsProcessingAnswer(false);
         setShowScore(false);
         setHasError(false);
         initializeGame();

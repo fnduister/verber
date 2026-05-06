@@ -76,6 +76,7 @@ type MultiplayerGamePlayer struct {
 	IsReady  bool            `json:"is_ready" gorm:"default:false"`
 	IsHost   bool            `json:"is_host" gorm:"default:false"`
 	JoinedAt time.Time       `json:"joined_at"`
+	LastSeenAt *time.Time    `json:"last_seen_at,omitempty"`
 	LeftAt   *time.Time      `json:"left_at"`
 }
 
