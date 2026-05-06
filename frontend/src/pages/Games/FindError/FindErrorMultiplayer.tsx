@@ -222,7 +222,13 @@ const FindErrorMultiplayer: React.FC = () => {
             return;
         }
 
-        setSelectedWord((prev) => (prev === word ? null : word));
+        setSelectedWords(prev => {
+            const updated = new Set<string>();
+            if (!prev.has(word)) {
+                updated.add(word);
+            }
+            return updated;
+        });
     };
 
     const handleSubmitSelection = () => {
@@ -244,13 +250,20 @@ const FindErrorMultiplayer: React.FC = () => {
         try {
             const maxTime = game?.config.max_time || 30;
             const timeSpent = maxTime - timeLeft;
-            const isCorrect = choice === gameData.correctAnswer;
-            const points = isCorrect
-                ? 100 + Math.floor((timeLeft / maxTime) * 100)
-                : 0;
+
+            const selectedWord = selectedList[0] || '';
+            const isCorrect = selectedWord === gameData.correctAnswer;
+
+            // Single-answer scoring: correct answer gets base points + time bonus.
+            let points = 0;
+            if (isCorrect) {
+                const basePoints = 100;
+                const timeBonus = Math.floor((timeLeft / maxTime) * 100);
+                points = basePoints + timeBonus;
+            }
 
             const payload = {
-                answer: JSON.stringify(choice ? [choice] : []),
+                answer: JSON.stringify(selectedList),
                 is_correct: isCorrect,
                 points,
                 time_spent: Math.max(0, Math.round(timeSpent * 1000)),
